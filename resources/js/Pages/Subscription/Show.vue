@@ -1,0 +1,186 @@
+<script setup>
+import AppLayout from '@/Layouts/AppLayout.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
+
+const props = defineProps({
+    subscription: Object,
+    plans: Array,
+    currency: String,
+});
+
+const billingCycle = ref('monthly');
+const form = useForm({
+    plan_id: null,
+    billing_cycle: 'monthly',
+});
+
+const featureNames = {
+    'text_support': 'Text Messages',
+    'image_support': 'Image Support',
+    'file_support': 'File Attachments',
+    'scheduling': 'Message Scheduling',
+    'pdf_support': 'PDF Support',
+    'link_preview': 'Link Previews',
+    'auto_reply': 'Auto Replies',
+    'message_preview': 'Message Previews',
+    'multi_user': 'Multi-User Support',
+    'webhooks': 'Webhook Integration',
+    'api_access': 'API Access',
+};
+
+const getActiveFeatures = (plan) => {
+    const features = plan.limits.features || {};
+    return Object.keys(features)
+        .filter(key => features[key])
+        .map(key => featureNames[key] || key);
+};
+
+const isDowngrade = (plan) => {
+    if (!props.subscription) return false;
+    return Number(plan.monthly_price) < Number(props.subscription.plan.monthly_price);
+};
+
+const selectPlan = (plan) => {
+    if (props.subscription?.plan?.id === plan.id) return;
+    if (isDowngrade(plan)) return;
+    
+    form.plan_id = plan.id;
+    form.billing_cycle = billingCycle.value;
+    form.post(route('payments.initiate'));
+};
+</script>
+
+<template>
+    <AppLayout title="My Subscription">
+        <template #header>
+            <h2 class="font-bold text-xl text-slate-800 leading-tight">
+                Membership Hub
+            </h2>
+        </template>
+
+        <div class="py-12">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <!-- Current Subscription Status -->
+                <div class="bg-white overflow-hidden shadow-xl sm:rounded-3xl border border-slate-100 mb-12">
+                    <div class="p-8 sm:p-12">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                            <div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-2 leading-none">Active Membership</h3>
+                                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">Manage your high-performance plan</p>
+                            </div>
+                            <div v-if="subscription" class="mt-6 md:mt-0 px-8 py-4 bg-red-50 border border-red-100 rounded-[1.5rem] flex items-center shadow-sm">
+                                <span class="size-2.5 bg-[#f7b538] rounded-full mr-3 animate-pulse shadow-sm shadow-orange-300"></span>
+                                <span class="text-[#780116] font-black tracking-widest uppercase text-xs">{{ subscription.status }} : {{ subscription.plan.name }}</span>
+                            </div>
+                            <div v-else class="mt-6 md:mt-0 px-8 py-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] flex items-center">
+                                <span class="size-2.5 bg-slate-300 rounded-full mr-3"></span>
+                                <span class="text-slate-400 font-black tracking-widest uppercase text-xs">Awaiting Activation</span>
+                            </div>
+                        </div>
+
+                        <div v-if="subscription" class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 group">
+                                <p class="text-[10px] font-black text-slate-300 group-hover:text-[#780116] uppercase tracking-[0.2em] mb-3 transition-colors">Tier Architecture</p>
+                                <p class="text-2xl font-black text-slate-900 tracking-tight">{{ subscription.plan.name }} Edition</p>
+                            </div>
+                            <div class="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 group">
+                                <p class="text-[10px] font-black text-slate-300 group-hover:text-[#db7c26] uppercase tracking-[0.2em] mb-3 transition-colors">Billing Quantum</p>
+                                <p class="text-2xl font-black text-slate-900 tracking-tight">{{ currency }} {{ Number(subscription.plan.monthly_price).toFixed(2) }} <span class="text-xs text-slate-400">/ mo</span></p>
+                            </div>
+                            <div v-if="subscription.ends_at" class="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 group">
+                                <p class="text-[10px] font-black text-slate-300 group-hover:text-[#f7b538] uppercase tracking-[0.2em] mb-3 transition-colors">Synchronization Date</p>
+                                <p class="text-2xl font-black text-slate-900 tracking-tight">{{ new Date(subscription.ends_at).toLocaleDateString() }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upgrade Options -->
+                <div class="text-center mb-12">
+                    <h3 class="text-4xl font-black text-slate-900 mb-4 tracking-tight">Available Plans</h3>
+                    <p class="text-slate-500 font-medium max-w-2xl mx-auto">Scale your performance with our premium features. Upgrade your subscription anytime.</p>
+                
+                    <!-- Billing Switcher -->
+                    <div class="mt-8 flex justify-center">
+                        <div class="flex items-center space-x-2 bg-white p-2 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-100">
+                            <button 
+                                @click="billingCycle = 'monthly'"
+                                :class="billingCycle === 'monthly' ? 'bg-[#780116] text-white shadow-xl shadow-red-100' : 'text-slate-400 hover:text-slate-700'"
+                                class="px-10 py-4 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest transition-all duration-300"
+                            >
+                                Monthly
+                            </button>
+                            <button 
+                                @click="billingCycle = 'yearly'"
+                                :class="billingCycle === 'yearly' ? 'bg-[#780116] text-white shadow-xl shadow-red-100' : 'text-slate-400 hover:text-slate-700'"
+                                class="px-10 py-4 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center"
+                            >
+                                Yearly Access
+                                <span class="ml-3 px-2 py-0.5 rounded-lg bg-[#f7b538] text-[9px] text-[#780116] font-black tracking-normal" :class="billingCycle === 'yearly' ? 'bg-white/20 text-white' : ''">
+                                    - 20%
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+                    <div v-for="plan in plans" :key="plan.id" 
+                         class="bg-white rounded-[2.5rem] border border-slate-100 p-8 flex flex-col transition-all duration-500 hover:shadow-2xl sm:hover:-translate-y-4"
+                         :class="{'ring-2 ring-[#780116] ring-offset-4': plan.name === 'Pro'}">
+                        
+                        <div class="mb-10 lg:mb-12">
+                            <h4 class="text-xl font-black text-slate-900 mb-4 tracking-tight">{{ plan.name }}</h4>
+                            <div class="flex items-baseline mb-2">
+                                <span class="text-4xl font-black text-slate-900 tracking-tighter">{{ currency }} {{ billingCycle === 'monthly' ? Number(plan.monthly_price).toFixed(2) : (Number(plan.yearly_price) / 12).toFixed(2) }}</span>
+                                <span class="ml-2 text-slate-400 font-black text-[10px] uppercase tracking-widest">/mo</span>
+                            </div>
+                            <div v-if="billingCycle === 'yearly' && plan.yearly_price > 0" class="text-[9px] font-black text-[#780116] uppercase tracking-widest bg-red-50 inline-block px-2 py-0.5 rounded-lg">
+                                Billed Annually
+                            </div>
+                        </div>
+
+                        <ul class="space-y-4 mb-12 flex-grow border-t border-slate-50 pt-8">
+                            <li class="flex items-center text-sm font-bold text-slate-600">
+                                <div class="size-6 rounded-lg bg-red-50 text-[#780116] flex items-center justify-center mr-4 shrink-0 shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                                <span class="text-[13px]">{{ plan.limits.whatsapp_nos }} Node Capacity</span>
+                            </li>
+                            <li class="flex items-center text-sm font-bold text-slate-600">
+                                <div class="size-6 rounded-lg bg-orange-50 text-[#db7c26] flex items-center justify-center mr-4 shrink-0 shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                                <span class="text-[13px]">{{ plan.limits.contacts }} Directory Slots</span>
+                            </li>
+                            <li v-for="feature in getActiveFeatures(plan)" :key="feature" class="flex items-center text-sm font-bold text-slate-600">
+                                <div class="size-6 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center mr-4 shrink-0 shadow-sm group-hover:bg-red-50 group-hover:text-[#780116] transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                                <span class="text-[13px]">{{ feature }}</span>
+                            </li>
+                        </ul>
+
+                        <button 
+                            @click="selectPlan(plan)"
+                            :disabled="subscription?.plan?.id === plan.id || isDowngrade(plan) || form.processing"
+                            :class="[
+                                subscription?.plan?.id === plan.id ? 'bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100' :
+                                isDowngrade(plan) ? 'bg-slate-50 text-slate-200 cursor-not-allowed border border-slate-50 shadow-none' :
+                                (plan.name === 'Pro' ? 'bg-[#780116] text-white hover:bg-[#c32f27] shadow-xl shadow-red-200/50' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-200/30'),
+                                'w-full py-5 rounded-2xl font-black text-[11px] tracking-[0.2em] uppercase transition-all flex items-center justify-center transform active:scale-95'
+                            ]"
+                        >
+                            <span v-if="form.processing && form.plan_id === plan.id" class="mr-3 animate-spin size-4 border-2 border-white/30 border-t-white rounded-full"></span>
+                            {{ 
+                                subscription?.plan?.id === plan.id ? 'Current Tier' : 
+                                isDowngrade(plan) ? 'Locked Tier' : 'Migrate Now' 
+                            }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </AppLayout>
+</template>

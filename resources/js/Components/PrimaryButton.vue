@@ -1,0 +1,14 @@
+<script setup>
+defineProps({
+    type: {
+        type: String,
+        default: 'submit',
+    },
+});
+</script>
+
+<template>
+    <button :type="type" class="inline-flex items-center justify-center px-6 py-3 bg-[#780116] border border-transparent rounded-xl font-bold text-sm text-white uppercase tracking-widest hover:bg-[#c32f27] focus:bg-[#c32f27] active:bg-[#780116] focus:outline-none focus:ring-2 focus:ring-[#f7b538] focus:ring-offset-2 disabled:opacity-50 transition ease-in-out duration-150">
+        <slot />
+    </button>
+</template>
