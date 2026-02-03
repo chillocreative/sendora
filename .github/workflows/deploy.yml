@@ -1,4 +1,4 @@
-name: Deploy to cPanel
+name: Deploy to cPanel (SSH/Rsync)
 
 on:
   push:
@@ -7,33 +7,33 @@ on:
 
 jobs:
   web-deploy:
-    name: 🎉 Deploy
+    name: 🎉 Deploy via SSH
     runs-on: ubuntu-latest
     steps:
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
-      
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          
+
       - name: 🔨 Install & Build Assets
         run: |
           npm ci
           npm run build
-      
-      - name: 📂 Sync files
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+
+      - name: 🚀 Deploy via Rsync
+        uses: easingthemes/ssh-deploy@v5.1.0
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /public_html/  # CHANGE THIS to your actual subdirectory if needed (e.g. /public_html/app/)
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/tests/**
-            .env
-            /storage/*.key
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rlgoDzvO --delete"
+          SOURCE: "/"
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: ${{ secrets.REMOTE_TARGET }}
+          EXCLUDE: "/.git/, /.github/, /node_modules/, /.env, /storage/*.key, /tests/"
+          SCRIPT_BEFORE: |
+            echo "Starting deployment..."
+          SCRIPT_AFTER: |
+            echo "Deployment complete!"
