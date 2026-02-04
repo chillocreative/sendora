@@ -49,6 +49,24 @@ const selectPlan = (plan) => {
     form.billing_cycle = billingCycle.value;
     form.post(route('payments.initiate'));
 };
+
+const cancelForm = useForm({});
+const confirmCancel = ref(false);
+
+const cancelSubscription = () => {
+    cancelForm.post(route('subscription.cancel'), {
+        onSuccess: () => confirmCancel.value = false,
+    });
+};
+
+const formatDate = (date) => {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+};
 </script>
 
 <template>
@@ -92,6 +110,34 @@ const selectPlan = (plan) => {
                                 <p class="text-[10px] font-black text-slate-300 group-hover:text-[#f7b538] uppercase tracking-[0.2em] mb-3 transition-colors">Synchronization Date</p>
                                 <p class="text-2xl font-black text-slate-900 tracking-tight">{{ new Date(subscription.ends_at).toLocaleDateString() }}</p>
                             </div>
+                        </div>
+                        <div v-if="subscription" class="mt-12 flex justify-end pt-6 border-t border-slate-50">
+                             <div v-if="!subscription.cancelled_at">
+                                <button @click="confirmCancel = true" class="text-xs text-red-500 font-bold hover:underline">Cancel Subscription</button>
+                             </div>
+                             <div v-else class="px-5 py-3 bg-red-50 text-red-700 rounded-xl text-xs font-bold border border-red-100">
+                                Cancellation Scheduled for {{ formatDate(subscription.ends_at) }}
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cancel Confirmation Modal -->
+                <div v-if="confirmCancel" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div class="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl border border-slate-100">
+                        <div class="size-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6 text-[#780116]">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <h3 class="text-2xl font-black text-slate-900 mb-2">Cancel Subscription?</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed mb-8">
+                            Are you sure you want to cancel? You will retain access to all features until <span class="font-bold text-slate-900">{{ formatDate(subscription?.ends_at) }}</span>.
+                        </p>
+                        <div class="flex gap-4">
+                            <button @click="confirmCancel = false" class="flex-1 py-3 bg-slate-50 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition border border-slate-200">Keep Plan</button>
+                            <button @click="cancelSubscription" :disabled="cancelForm.processing" class="flex-1 py-3 bg-[#780116] text-white font-bold rounded-xl hover:bg-[#c32f27] transition flex justify-center items-center shadow-lg shadow-red-200">
+                                <span v-if="cancelForm.processing" class="animate-spin mr-2 h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
+                                Confirm Cancel
+                            </button>
                         </div>
                     </div>
                 </div>

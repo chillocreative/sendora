@@ -12,10 +12,12 @@ class UserSubscription extends Model
         'status',
         'ends_at',
         'messages_used_this_month',
+        'cancelled_at',
     ];
 
     protected $casts = [
         'ends_at' => 'datetime',
+        'cancelled_at' => 'datetime',
     ];
 
     public function user()

@@ -21,4 +21,26 @@ class SubscriptionController extends Controller
             'currency' => Setting::where('key', 'currency')->value('value') ?? 'MYR',
         ]);
     }
+
+    public function cancel(Request $request)
+    {
+        $user = auth()->user();
+        $subscription = $user->activeSubscription()->first();
+
+        if ($subscription) {
+            $subscription->update([
+                'cancelled_at' => now(),
+            ]);
+
+            return back()->with('flash', [
+                'banner' => 'Subscription cancelled. You will retain access until the end of your billing period.',
+                'bannerStyle' => 'success',
+            ]);
+        }
+
+        return back()->with('flash', [
+            'banner' => 'No active subscription found.',
+            'bannerStyle' => 'danger',
+        ]);
+    }
 }
