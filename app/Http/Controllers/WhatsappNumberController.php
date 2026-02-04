@@ -12,7 +12,11 @@ class WhatsappNumberController extends Controller
 
     public function __construct()
     {
-        $this->waServerUrl = env('WA_SERVER_URL', 'http://localhost:3000');
+        $this->waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
+                             ?? env('WA_SERVER_URL', 'http://localhost:3000');
+        
+        // Ensure no trailing slash
+        $this->waServerUrl = rtrim($this->waServerUrl, '/');
     }
 
     public function index()

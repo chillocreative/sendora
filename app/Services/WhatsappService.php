@@ -30,7 +30,9 @@ class WhatsappService
      */
     public function sendMessage(WhatsappNumber $whatsappNumber, $to, $message, $mediaUrl = null, $mediaType = null)
     {
-        $waServerUrl = env('WA_SERVER_URL', 'http://localhost:3000');
+        $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
+                       ?? env('WA_SERVER_URL', 'http://localhost:3000');
+        $waServerUrl = rtrim($waServerUrl, '/');
         
         $payload = [
             'user_id' => $whatsappNumber->user_id,
