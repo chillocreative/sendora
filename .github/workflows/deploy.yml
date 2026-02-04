@@ -35,17 +35,18 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: 🚀 SCP public files
-        uses: appleboy/scp-action@v0.1.7
+      - name: 🚀 Deploy via Git Pull
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "public/*"
-          target: "${{ secrets.REMOTE_TARGET }}/public"
-          strip_components: 1
-          overwrite: true
+          script: |
+            cd ${{ secrets.REMOTE_TARGET }}
+            git pull origin main
+            php artisan optimize:clear
+            touch whatsapp-server-temp/tmp/restart.txt
 
       - name: ⚙️ Run Remote Commands via SSH
         uses: appleboy/ssh-action@v1.0.3

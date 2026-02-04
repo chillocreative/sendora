@@ -61,7 +61,13 @@ class WhatsappService
         try {
             $response = Http::withoutVerifying()->timeout(35)->post("{$waServerUrl}/send-message", $payload);
             
-            if ($response->failed()) {
+            if ($response->successful()) {
+                \Illuminate\Support\Facades\Log::info('WhatsappService send successful', [
+                    'url' => "{$waServerUrl}/send-message",
+                    'id' => $response->json('message_id'),
+                    'payload' => $payload
+                ]);
+            } else {
                 \Illuminate\Support\Facades\Log::error('WhatsappService send failed', [
                     'url' => "{$waServerUrl}/send-message",
                     'status' => $response->status(),
