@@ -59,13 +59,6 @@ const hideTooltip = () => {
                 <h2 class="font-black text-2xl text-slate-800 leading-tight tracking-tight">
                     Performance Terminal
                 </h2>
-                <div class="flex items-center gap-2">
-                    <span class="relative flex h-3 w-3">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                    </span>
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Live Integration</span>
-                </div>
             </div>
         </template>
 
