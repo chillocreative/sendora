@@ -50,8 +50,11 @@ jobs:
             git reset --hard origin/main
             
             # 2. Build & Migrate
-            # (Assets are already built in Github Actions if we committed the build artifacts, 
-            # but usually we just deploy source. Assuming we deploy source for now.)
+            export PATH=$PATH:/usr/local/bin
+            
+            # Install & Build Assets (Server-side)
+            npm install --omit=dev || npm install
+            npm run build
             
             php artisan optimize:clear
             php artisan migrate --force
