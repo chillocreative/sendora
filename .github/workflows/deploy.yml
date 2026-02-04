@@ -35,18 +35,16 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: 🚀 Copy files via SSH (SCP)
-        uses: appleboy/scp-action@v0.1.7
+      - name: 🔍 Debug SSH Connection
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "./"
-          target: ${{ secrets.REMOTE_TARGET }}
-          rm: false
-          strip_components: 0
-          overwrite: true
+          script: |
+            echo "SSH Connection OK" > ${{ secrets.REMOTE_TARGET }}/public/ssh_debug.txt
+            date >> ${{ secrets.REMOTE_TARGET }}/public/ssh_debug.txt
 
       - name: ⚙️ Run Remote Commands via SSH
         uses: appleboy/ssh-action@v1.0.3
