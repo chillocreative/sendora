@@ -70,10 +70,6 @@ jobs:
             cd ${{ secrets.REMOTE_TARGET }}
             php artisan optimize:clear
             php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            
             # Cleanup redundant folder if exists
             rm -rf whatsapp-engine
             
@@ -88,11 +84,6 @@ jobs:
             # Auto-update Laravel Settings via Tinker
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3000'])"
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
-
-            # Install Node Dependencies for WhatsApp Engine
-            if [ -d "whatsapp-server-temp" ]; then
-              cd whatsapp-server-temp && npm install --production && cd ..
-            fi
 
             # Trigger Restart for Passenger
             mkdir -p whatsapp-server-temp/tmp
