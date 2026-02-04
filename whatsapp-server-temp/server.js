@@ -44,6 +44,26 @@ if (!fs.existsSync(sessionsDir)) {
     fs.mkdirSync(sessionsDir, { recursive: true });
 }
 
+// Log file for debugging
+const logFile = path.join(__dirname, 'server.log');
+const logStream = fs.createWriteStream(logFile, { flags: 'a' });
+
+function safeLog(msg, data = null) {
+    const timestamp = new Date().toISOString();
+    let formattedData = '';
+    if (data) {
+        if (typeof data === 'string') formattedData = data;
+        else {
+            try { formattedData = JSON.stringify(data); } catch (e) { formattedData = '[Circular]'; }
+        }
+    }
+    const output = `[${timestamp}] ${msg} ${formattedData}\n`;
+    process.stdout.write(output);
+    logStream.write(output);
+}
+
+safeLog('Server initializing...');
+
 async function connectToWhatsApp(userId, whatsappNumberId) {
     const key = `${userId}_${whatsappNumberId}`;
     const sessionPath = path.join(sessionsDir, `session_${userId}_${whatsappNumberId}`);
@@ -149,7 +169,7 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
                     }, 5000);
                 }
             } else if (connection === 'open') {
-                console.log(`[${key}] ✅ Connected!`);
+                safeLog(`[${key}] ✅ Connected!`, sock.user);
                 connectionData.status = 'connected';
                 connectionData.qr = null;
                 connectionData.phoneInfo = sock.user;
@@ -163,9 +183,9 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
                         status: 'connected',
                         phone_info: connectionData.phoneInfo,
                     });
-                    console.log(`[${key}] Backend notified of connection`);
+                    safeLog(`[${key}] Backend notified of connection`);
                 } catch (error) {
-                    console.error(`[${key}] Backend notification failed: ${error.message}${error.response ? ' - ' + JSON.stringify(error.response.data) : ''}`);
+                    safeLog(`[${key}] Backend notification failed: ${error.message}`);
                 }
             }
         });
@@ -332,7 +352,10 @@ app.post('/send-message', async (req, res) => {
     const key = `${user_id}_${phone_number}`;
     const conn = connections.get(key);
 
+    safeLog(`[${key}] Sending message to ${to}`, { hasMedia: !!media_url, type: media_type });
+
     if (!conn || conn.status !== 'connected') {
+        safeLog(`[${key}] Failed: WhatsApp not connected. Status: ${conn ? conn.status : 'not_init'}`);
         return res.status(503).json({ error: 'WhatsApp not connected' });
     }
 
@@ -347,6 +370,7 @@ app.post('/send-message', async (req, res) => {
         let sentResult;
 
         if (media_url) {
+            safeLog(`[${key}] Downloading media: ${media_url}`);
             let mediaContent = { url: media_url };
             let sendObj = {};
 
@@ -382,12 +406,14 @@ app.post('/send-message', async (req, res) => {
             }
         }
 
+        safeLog(`[${key}] Message sent! ID: ${sentResult?.key?.id}`);
+
         res.status(200).json({
             success: true,
             message_id: sentResult?.key?.id
         });
     } catch (e) {
-        console.error(`[${key}] Send error:`, e);
+        safeLog(`[${key}] Send error: ${e.message}`, e);
         res.status(500).json({ error: e.message });
     }
 });
@@ -432,6 +458,16 @@ app.get('/health', (req, res) => {
 // Root route
 app.get('/', (req, res) => {
     res.send('🚀 Blaster WhatsApp Server is Running!');
+});
+
+// Debug logs
+app.get('/debug-logs', (req, res) => {
+    const logFile = path.join(__dirname, 'server.log');
+    if (fs.existsSync(logFile)) {
+        res.sendFile(logFile);
+    } else {
+        res.send('Log file not found');
+    }
 });
 
 // Global status (for backward compatibility)
