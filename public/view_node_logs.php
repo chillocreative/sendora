@@ -1,11 +1,26 @@
 <?php
-$logFile = __DIR__.'/../whatsapp-server-temp/server.log';
-if (file_exists($logFile)) {
-    header('Content-Type: text/plain');
-    echo file_get_contents($logFile);
-} else {
-    echo "Node log not found at: " . $logFile . "\n";
-    // Try to list files in the folder
-    echo "FILES IN whatsapp-server-temp:\n";
-    print_r(scandir(__DIR__.'/../whatsapp-server-temp'));
+echo "SEARCHING FOR server.log...\n";
+$dirs = [
+    __DIR__.'/../whatsapp-server-temp',
+    __DIR__.'/../',
+    __DIR__
+];
+
+foreach ($dirs as $dir) {
+    if (file_exists($dir.'/server.log')) {
+        echo "FOUND AT: $dir/server.log\n";
+        echo "--- CONTENT ---\n";
+        echo file_get_contents($dir.'/server.log');
+        exit;
+    }
+}
+
+echo "LOG NOT FOUND. LISTING FILES:\n";
+foreach ($dirs as $dir) {
+    echo "IN $dir:\n";
+    if (file_exists($dir)) {
+        print_r(scandir($dir));
+    } else {
+        echo "DIR NOT FOUND\n";
+    }
 }
