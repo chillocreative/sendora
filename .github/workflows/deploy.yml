@@ -35,8 +35,8 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: 🚀 Copy files via SSH (SCP)
-        uses: appleboy/scp-action@v0.1.7
+      - name: 🚀 Copy files via SSH (Rsync)
+        uses: appleboy/rsync-action@v0.1.3
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
@@ -44,20 +44,7 @@ jobs:
           port: 22
           source: "./"
           target: ${{ secrets.REMOTE_TARGET }}
-          rm: false
-          strip_components: 0
-          overwrite: true
-          exclude: |
-            .git/
-            .github/
-            node_modules/
-            .env
-            storage/*.key
-            tests/
-            database/database.sqlite
-            whatsapp-server-temp/.env
-            whatsapp-server-temp/.baileys-session/
-            whatsapp-server-temp/sessions/
+          args: "-avz --exclude='.git/' --exclude='.github/' --exclude='node_modules/' --exclude='.env' --exclude='storage/*.key' --exclude='tests/' --exclude='database/database.sqlite' --exclude='whatsapp-server-temp/.env' --exclude='whatsapp-server-temp/.baileys-session/' --exclude='whatsapp-server-temp/sessions/'"
 
       - name: ⚙️ Run Remote Commands via SSH
         uses: appleboy/ssh-action@v1.0.3
