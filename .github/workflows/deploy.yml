@@ -78,9 +78,17 @@ jobs:
             rm -rf whatsapp-engine
             
             # Fix Node.js Environment & Restart
-            if [ -f "whatsapp-server-temp/.env" ]; then
+            if [ ! -f "whatsapp-server-temp/.env" ]; then
+              echo "WA_SERVER_PORT=3000" > whatsapp-server-temp/.env
+              echo "API_BASE_URL=https://sendora.cc" >> whatsapp-server-temp/.env
+            else
               sed -i 's|API_BASE_URL=.*|API_BASE_URL=https://sendora.cc|' whatsapp-server-temp/.env
             fi
+
+            # Auto-update Laravel Settings via Tinker
+            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'https://sendora.cc/whatsapp-server-temp'])"
+            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
+
             mkdir -p whatsapp-server-temp/tmp
             touch whatsapp-server-temp/tmp/restart.txt
             
