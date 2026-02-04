@@ -113,7 +113,10 @@ const formatDate = (date) => {
                         </div>
                         <div v-if="subscription" class="mt-12 flex justify-end pt-6 border-t border-slate-50">
                              <div v-if="!subscription.cancelled_at">
-                                <button @click="confirmCancel = true" class="text-xs text-red-500 font-bold hover:underline">Cancel Subscription</button>
+                                <button @click="confirmCancel = true" class="px-6 py-2 bg-red-50 text-red-600 font-bold text-xs rounded-full hover:bg-red-100 transition-colors flex items-center mb-1">
+                                    <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    Cancel Subscription
+                                </button>
                              </div>
                              <div v-else class="px-5 py-3 bg-red-50 text-red-700 rounded-xl text-xs font-bold border border-red-100">
                                 Cancellation Scheduled for {{ formatDate(subscription.ends_at) }}

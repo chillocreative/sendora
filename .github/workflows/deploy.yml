@@ -35,6 +35,16 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
+      - name: 📂 Upload Build Artifacts (SCP)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "public/build"
+          target: ${{ secrets.REMOTE_TARGET }}
+
       - name: 🚀 Deploy & Configure via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -49,12 +59,8 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             
-            # 2. Build & Migrate
-            export PATH=$PATH:/usr/local/bin
-            
-            # Install & Build Assets (Server-side)
-            npm install --omit=dev || npm install
-            npm run build
+            # 2. Migrate & optimize
+            # Note: We uploaded public/build via SCP, so no need to build on server.
             
             php artisan optimize:clear
             php artisan migrate --force
