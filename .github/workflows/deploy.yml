@@ -55,7 +55,9 @@ jobs:
             storage/*.key
             tests/
             database/database.sqlite
-            whatsapp-server-temp/.baileys-session/
+            whatsapp-engine/.env
+            whatsapp-engine/.baileys-session/
+            whatsapp-engine/sessions/
 
       - name: ⚙️ Run Remote Commands via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -70,4 +72,12 @@ jobs:
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
+            
+            # Fix Node.js Environment & Restart
+            if [ -f "whatsapp-engine/.env" ]; then
+              sed -i 's|API_BASE_URL=.*|API_BASE_URL=https://sendora.cc|' whatsapp-engine/.env
+            fi
+            mkdir -p whatsapp-engine/tmp
+            touch whatsapp-engine/tmp/restart.txt
+            
             echo "Deployment complete!"
