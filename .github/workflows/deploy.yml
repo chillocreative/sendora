@@ -35,17 +35,36 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: 🚀 Deploy via Rsync
-        uses: easingthemes/ssh-deploy@v5.1.0
+      - name: 🚀 Copy files via SSH (SCP)
+        uses: appleboy/scp-action@v0.1.7
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          ARGS: "-rlgoDzvO --delete"
-          SOURCE: "/"
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: ${{ secrets.REMOTE_TARGET }}
-          EXCLUDE: "/.git/, /.github/, /node_modules/, /.env, /storage/*.key, /tests/, /database/database.sqlite"
-          SCRIPT_AFTER: |
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "./"
+          target: ${{ secrets.REMOTE_TARGET }}
+          rm: false
+          strip_components: 0
+          overwrite: true
+          exclude: |
+            .git/
+            .github/
+            node_modules/
+            .env
+            storage/*.key
+            tests/
+            database/database.sqlite
+            whatsapp-server-temp/.baileys-session/
+
+      - name: ⚙️ Run Remote Commands via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
             cd ${{ secrets.REMOTE_TARGET }}
             php artisan migrate --force
             php artisan config:cache
