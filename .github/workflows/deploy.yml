@@ -62,11 +62,17 @@ jobs:
             # 2. Migrate & optimize
             # Note: We uploaded public/build via SCP, so no need to build on server.
             
+            rm -f bootstrap/cache/*.php
+            
             php artisan optimize:clear
             php artisan route:clear
-            php artisan route:cache
-            php artisan config:cache
-            php artisan view:cache
+            php artisan config:clear
+            php artisan view:clear
+            
+            # Skip caching commands to avoid environment mismatch issues causing 404s
+            # php artisan route:cache
+            # php artisan config:cache
+            # php artisan view:cache
             
             php artisan migrate --force
             php artisan storage:link || true
