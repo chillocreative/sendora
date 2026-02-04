@@ -8,3 +8,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 \Illuminate\Support\Facades\Schedule::command('campaigns:dispatch')->everyMinute();
+\Illuminate\Support\Facades\Schedule::command('warmer:process-pool')->everyThirtyMinutes();

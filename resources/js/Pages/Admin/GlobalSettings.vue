@@ -24,6 +24,7 @@ const form = useForm({
     mail_from_name: props.settings.mail_from_name || 'Sendora',
     warmer_min_delay: props.settings.warmer_min_delay || 15,
     warmer_max_delay: props.settings.warmer_max_delay || 30,
+    openai_api_key: props.settings.openai_api_key || '',
 });
 
 const submit = () => {
@@ -79,10 +80,15 @@ const submit = () => {
                         </div>
 
                         <!-- Warmer Settings (Added) -->
-                        <div class="bg-white overflow-hidden shadow-xl sm:rounded-[2rem] p-8 border border-slate-100">
-                            <h3 class="text-xl font-black text-slate-900 border-b border-slate-50 pb-6 mb-8 tracking-tight">Warmer AI Configuration</h3>
+                        <div class="bg-white overflow-hidden shadow-xl sm:rounded-[2rem] p-8 border border-slate-100 relative group">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-green-100/50 transition-colors"></div>
+                            <h3 class="text-xl font-black text-slate-900 border-b border-slate-50 pb-6 mb-8 tracking-tight relative z-10">Warmer AI Configuration</h3>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">OpenAI API Key (For AI Warmer)</label>
+                                    <input v-model="form.openai_api_key" type="password" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none" placeholder="sk-...">
+                                </div>
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Warmer Min Delay (Seconds)</label>
                                     <input v-model="form.warmer_min_delay" type="number" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none" placeholder="15">
@@ -92,8 +98,8 @@ const submit = () => {
                                     <input v-model="form.warmer_max_delay" type="number" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none" placeholder="30">
                                 </div>
                             </div>
-                            <p class="text-[10px] text-slate-400 font-bold mt-4 uppercase tracking-wider ml-1">
-                                Controls the randomization range for the Human-Stagger AI when enabled by users.
+                            <p class="text-[10px] text-slate-400 font-bold mt-4 uppercase tracking-wider ml-1 relative z-10">
+                                Controls the AI powered conversations and randomization range for the Human-Stagger logic.
                             </p>
                         </div>
 

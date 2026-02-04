@@ -286,6 +286,7 @@ class AdminController extends Controller
             'mail_encryption' => 'tls',
             'mail_from_address' => 'hello@sendora.com',
             'mail_from_name' => 'Sendora',
+            'openai_api_key' => '',
         ];
 
         foreach ($defaults as $key => $val) {

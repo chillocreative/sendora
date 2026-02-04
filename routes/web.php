@@ -129,6 +129,7 @@ Route::middleware([
     // WhatsApp Warmer Routes
     Route::get('/warmer', [\App\Http\Controllers\WarmerController::class, 'index'])->name('warmer.index');
     Route::post('/warmer/toggle', [\App\Http\Controllers\WarmerController::class, 'toggle'])->name('warmer.toggle');
+    Route::post('/warmer/pool/{id}', [\App\Http\Controllers\WarmerController::class, 'togglePool'])->name('warmer.pool.toggle');
 
     // Admin Routes
     Route::prefix('admin')->name('admin.')->group(function () {
