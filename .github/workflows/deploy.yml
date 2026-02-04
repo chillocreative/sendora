@@ -94,4 +94,8 @@ jobs:
               cd whatsapp-server-temp && npm install --production && cd ..
             fi
 
+            # Trigger Restart for Passenger
+            mkdir -p whatsapp-server-temp/tmp
+            touch whatsapp-server-temp/tmp/restart.txt
+
             echo "Deployment complete!"
