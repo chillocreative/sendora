@@ -38,16 +38,22 @@ class PaymentController extends Controller
         $plan = \App\Models\SubscriptionPlan::findOrFail($request->plan_id);
         $amount = $request->billing_cycle === 'monthly' ? $plan->monthly_price : $plan->yearly_price;
 
+        // Create or update pending subscription
+        $subscription = \App\Models\UserSubscription::updateOrCreate(
+            ['user_id' => $user->id, 'status' => 'waiting_for_payment'],
+            [
+                'subscription_plan_id' => $plan->id,
+                'status' => 'waiting_for_payment',
+                // specific ends_at will be set on success
+            ]
+        );
+
         // 1. FREE PLAN
         if ($amount <= 0) {
-            \App\Models\UserSubscription::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'subscription_plan_id' => $plan->id,
-                    'status' => 'active',
-                    'ends_at' => null, 
-                ]
-            );
+            $subscription->update([
+                'status' => 'active',
+                'ends_at' => null, 
+            ]);
             return redirect()->route('dashboard')->with('flash.banner', 'You represent subscribed to the ' . $plan->name . ' plan!');
         }
 
@@ -79,7 +85,7 @@ class PaymentController extends Controller
                 'currency' => $transaction->currency,
                 'products' => [
                     [
-                        'name' => 'Subscription: ' . $plan->name,
+                        'name' => 'Subscription: ' . $plan->name . ' (' . ucfirst($request->billing_cycle) . ')',
                         'price' => (int) ($amount * 100), // Chip-in typically uses cents
                         'quantity' => 1,
                     ]
@@ -133,28 +139,59 @@ class PaymentController extends Controller
             $transaction = \App\Models\Transaction::where('reference_id', $reference)->first();
             
             if ($transaction && $transaction->status !== 'paid') {
-                // Optimistically mark as paid for UX (In production, verify signature or wait for webhook)
                 $transaction->update(['status' => 'paid']);
                 
                 // Activate Subscription
-                $subscription = \App\Models\UserSubscription::where('subscription_plan_id', $transaction->subscription_plan_id)
-                    ->where('user_id', $transaction->user_id)
-                    ->where('status', 'waiting_for_payment')
+                $subscription = \App\Models\UserSubscription::where('user_id', $transaction->user_id)
+                    ->where(function($query) {
+                        $query->where('status', 'waiting_for_payment')
+                              ->orWhere('status', 'active'); // Allow renewing active subs
+                    })
                     ->latest()
                     ->first();
-                    
-                if ($subscription) {
-                    $subscription->update([
-                        'status' => 'active',
-                        // 'starts_at' or 'created_at' handles start. 
-                        // If we need strict start tracking, we need a column. 
-                        // For now, assuming created_at is start, or just activating.
+
+                if (!$subscription) {
+                    // Create if not exists (fallback)
+                    $subscription = \App\Models\UserSubscription::create([
+                        'user_id' => $transaction->user_id,
+                        'subscription_plan_id' => $transaction->subscription_plan_id,
+                        'status' => 'waiting_for_payment',
                     ]);
                 }
+                    
+                // Calculate Expiry based on Amount vs Plan Price
+                $plan = \App\Models\SubscriptionPlan::find($transaction->subscription_plan_id);
+                $isYearly = $plan && abs($transaction->amount - $plan->yearly_price) < 0.1;
+                
+                // Determine start date: extend if current global active, otherwise start now
+                $currentActive = \App\Models\UserSubscription::where('user_id', $transaction->user_id)
+                    ->where('status', 'active')
+                    ->where('id', '!=', $subscription->id)
+                    ->where('ends_at', '>', now())
+                    ->orderBy('ends_at', 'desc')
+                    ->first();
+                
+                $startDate = now();
+                if ($subscription->status === 'active' && $subscription->ends_at > now()) {
+                    $startDate = $subscription->ends_at;
+                } elseif ($currentActive) {
+                    $startDate = $currentActive->ends_at; // Stack subscriptions if user buys another
+                    $currentActive->update(['status' => 'cancelled']); // Replace old
+                    $subscription->subscription_plan_id = $transaction->subscription_plan_id; // Update plan if changed
+                }
+
+                $endsAt = $isYearly ? $startDate->copy()->addYear() : $startDate->copy()->addMonth();
+
+                $subscription->update([
+                    'status' => 'active',
+                    'subscription_plan_id' => $transaction->subscription_plan_id,
+                    'ends_at' => $endsAt,
+                    'cancelled_at' => null, // Reset cancellation if re-subscribing
+                ]);
             }
         }
 
-        return redirect()->route('campaigns.index')->with('flash.banner', 'Payment successful! Your subscription is now active.')
+        return redirect()->route('subscription.show')->with('flash.banner', 'Payment successful! Your subscription is now active.')
                                                   ->with('flash.bannerStyle', 'success');
     }
 
