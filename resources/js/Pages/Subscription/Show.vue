@@ -54,8 +54,13 @@ const cancelForm = useForm({});
 const confirmCancel = ref(false);
 
 const cancelSubscription = () => {
-    cancelForm.post(route('subscription.cancel'), {
+    cancelForm.post('/subscription/cancel', {
+        preserveScroll: true,
         onSuccess: () => confirmCancel.value = false,
+        onError: () => {
+            // Optional: handle error visually if needed, usually global flash handles it
+            confirmCancel.value = false;
+        }
     });
 };
 
@@ -136,8 +141,8 @@ const formatDate = (date) => {
                             Are you sure you want to cancel? You will retain access to all features until <span class="font-bold text-slate-900">{{ formatDate(subscription?.ends_at) }}</span>.
                         </p>
                         <div class="flex gap-4">
-                            <button @click="confirmCancel = false" class="flex-1 py-3 bg-slate-50 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition border border-slate-200">Keep Plan</button>
-                            <button @click="cancelSubscription" :disabled="cancelForm.processing" class="flex-1 py-3 bg-[#780116] text-white font-bold rounded-xl hover:bg-[#c32f27] transition flex justify-center items-center shadow-lg shadow-red-200">
+                            <button type="button" @click="confirmCancel = false" class="flex-1 py-3 bg-slate-50 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition border border-slate-200">Keep Plan</button>
+                            <button type="button" @click="cancelSubscription" :disabled="cancelForm.processing" class="flex-1 py-3 bg-[#780116] text-white font-bold rounded-xl hover:bg-[#c32f27] transition flex justify-center items-center shadow-lg shadow-red-200">
                                 <span v-if="cancelForm.processing" class="animate-spin mr-2 h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
                                 Confirm Cancel
                             </button>
