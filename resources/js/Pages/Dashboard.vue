@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
     subscription: Object,
@@ -12,13 +12,29 @@ const props = defineProps({
     recentCampaigns: Array,
 });
 
+// Auto-refresh for live data
+let pollInterval;
+onMounted(() => {
+    pollInterval = setInterval(() => {
+        router.reload({
+            only: ['whatsappCount', 'contactCount', 'chartData', 'overallStats', 'recentCampaigns'],
+            preserveScroll: true,
+            preserveState: true,
+        });
+    }, 10000); // 10 seconds
+});
+
+onUnmounted(() => {
+    if (pollInterval) clearInterval(pollInterval);
+});
+
 // Chart tooltip
 const hoveredDay = ref(null);
 const tooltipData = ref(null);
 
 const maxSent = computed(() => {
     if (!props.chartData || props.chartData.length === 0) return 1;
-    return Math.max(...props.chartData.map(d => d.sent), 1);
+    return Math.max(...props.chartData.map(d => d.sent), 5); // Minimum 5 for scale
 });
 
 const getBarHeight = (value) => {
@@ -39,9 +55,18 @@ const hideTooltip = () => {
 <template>
     <AppLayout title="Dashboard">
         <template #header>
-            <h2 class="font-black text-2xl text-slate-800 leading-tight tracking-tight">
-                Performance Terminal
-            </h2>
+            <div class="flex justify-between items-center">
+                <h2 class="font-black text-2xl text-slate-800 leading-tight tracking-tight">
+                    Performance Terminal
+                </h2>
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Live Integration</span>
+                </div>
+            </div>
         </template>
 
         <div class="py-8">
@@ -60,25 +85,29 @@ const hideTooltip = () => {
 
                 <!-- Performance Rates Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center hover:shadow-md transition-shadow">
-                        <div class="text-3xl font-black text-[#f7b538]">{{ overallStats?.send_rate || 0 }}%</div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-[#f7b538]"></div>
+                        <div class="text-3xl font-black text-[#f7b538] group-hover:scale-110 transition-transform">{{ overallStats?.send_rate || 0 }}%</div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Send Rate</p>
-                        <p class="text-xs text-slate-500 mt-1">{{ overallStats?.sent || 0 }} / {{ overallStats?.total_messages || 0 }}</p>
+                        <p class="text-xs text-slate-500 mt-1 font-medium">{{ overallStats?.sent || 0 }} / {{ overallStats?.total_messages || 0 }}</p>
                     </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center hover:shadow-md transition-shadow">
-                        <div class="text-3xl font-black text-[#db7c26]">{{ overallStats?.delivery_rate || 0 }}%</div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-[#db7c26]"></div>
+                        <div class="text-3xl font-black text-[#db7c26] group-hover:scale-110 transition-transform">{{ overallStats?.delivery_rate || 0 }}%</div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Delivery Rate</p>
-                        <p class="text-xs text-slate-500 mt-1">{{ overallStats?.delivered || 0 }} delivered</p>
+                        <p class="text-xs text-slate-500 mt-1 font-medium">{{ overallStats?.delivered || 0 }} delivered</p>
                     </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center hover:shadow-md transition-shadow">
-                        <div class="text-3xl font-black text-[#d8572a]">{{ overallStats?.open_rate || 0 }}%</div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-[#d8572a]"></div>
+                        <div class="text-3xl font-black text-[#d8572a] group-hover:scale-110 transition-transform">{{ overallStats?.open_rate || 0 }}%</div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Open Rate</p>
-                        <p class="text-xs text-slate-500 mt-1">{{ overallStats?.opened || 0 }} opened</p>
+                        <p class="text-xs text-slate-500 mt-1 font-medium">{{ overallStats?.opened || 0 }} opened</p>
                     </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center hover:shadow-md transition-shadow">
-                        <div class="text-3xl font-black text-[#c32f27]">{{ overallStats?.click_rate || 0 }}%</div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-[#c32f27]"></div>
+                        <div class="text-3xl font-black text-[#c32f27] group-hover:scale-110 transition-transform">{{ overallStats?.click_rate || 0 }}%</div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Click Rate</p>
-                        <p class="text-xs text-slate-500 mt-1">{{ overallStats?.clicked || 0 }} clicked</p>
+                        <p class="text-xs text-slate-500 mt-1 font-medium">{{ overallStats?.clicked || 0 }} clicked</p>
                     </div>
                 </div>
 
@@ -86,21 +115,21 @@ const hideTooltip = () => {
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 sm:p-8">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                         <div>
-                            <h3 class="text-lg font-black text-slate-900">Campaign Performance</h3>
-                            <p class="text-sm text-slate-500">Last 14 days message activity</p>
+                            <h3 class="text-lg font-black text-slate-900">Live Campaign Performance</h3>
+                            <p class="text-sm text-slate-500">Real-time breakdown of message statuses</p>
                         </div>
                         <div class="flex items-center gap-6 text-xs">
                             <div class="flex items-center gap-2">
                                 <div class="w-3 h-3 rounded-full bg-[#f7b538]"></div>
-                                <span class="text-slate-500 font-medium">Sent</span>
+                                <span class="text-slate-500 font-bold">Sent</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="w-3 h-3 rounded-full bg-[#db7c26]"></div>
-                                <span class="text-slate-500 font-medium">Delivered</span>
+                                <span class="text-slate-500 font-bold">Delivered</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="w-3 h-3 rounded-full bg-[#d8572a]"></div>
-                                <span class="text-slate-500 font-medium">Opened</span>
+                                <span class="text-slate-500 font-bold">Opened</span>
                             </div>
                         </div>
                     </div>
@@ -115,40 +144,71 @@ const hideTooltip = () => {
                         </div>
 
                         <!-- Chart Area -->
-                        <div class="ml-12 h-full flex items-end gap-1 sm:gap-2 pb-8">
+                        <div class="ml-12 h-full flex items-end gap-2 pb-8 border-b border-slate-50">
                             <div 
                                 v-for="(day, index) in chartData" 
                                 :key="index"
-                                class="flex-1 flex flex-col items-center gap-1 group relative cursor-pointer"
+                                class="flex-1 flex flex-col items-center justify-end h-full gap-1 group relative cursor-pointer hover:bg-slate-50 rounded-t-lg transition-colors"
                                 @mouseenter="showTooltip(day, $event)"
                                 @mouseleave="hideTooltip"
                             >
-                                <!-- Stacked Bars -->
-                                <div class="w-full flex flex-col-reverse gap-0.5" style="height: calc(100% - 24px)">
+                                <!-- Stacked/Layered Bars -->
+                                <div class="w-full relative flex items-end px-1" style="height: 100%">
+                                    
+                                    <!-- Sent Layer (Back) -->
                                     <div 
-                                        class="w-full bg-[#f7b538] rounded-t transition-all duration-300 group-hover:bg-[#db7c26]"
+                                        class="w-full absolute bottom-0 bg-[#f7b538] rounded-t-sm z-10 transition-all duration-500 group-hover:opacity-90"
                                         :style="{ height: getBarHeight(day.sent) + '%' }"
+                                    ></div>
+
+                                    <!-- Delivered Layer (Middle) -->
+                                    <div 
+                                        class="w-full absolute bottom-0 bg-[#db7c26] rounded-t-sm z-20 transition-all duration-500"
+                                        :style="{ height: getBarHeight(day.delivered) + '%' }"
+                                    ></div>
+
+                                     <!-- Opened Layer (Front) -->
+                                    <div 
+                                        class="w-full absolute bottom-0 bg-[#d8572a] rounded-t-sm z-30 transition-all duration-500"
+                                        :style="{ height: getBarHeight(day.opened) + '%' }"
                                     ></div>
                                 </div>
                                 
                                 <!-- X-axis label -->
-                                <span class="text-[8px] sm:text-[10px] text-slate-400 font-bold whitespace-nowrap absolute bottom-0">
+                                <span class="text-[9px] text-slate-400 font-bold whitespace-nowrap absolute -bottom-6 group-hover:text-slate-600">
                                     {{ day.date?.split(' ')[1] || '' }}
                                 </span>
 
                                 <!-- Tooltip -->
                                 <div 
                                     v-if="hoveredDay === day.date"
-                                    class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-3 rounded-xl text-xs shadow-2xl z-50 whitespace-nowrap"
+                                    class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-3 rounded-xl text-xs shadow-2xl z-50 whitespace-nowrap border border-slate-700 min-w-[120px]"
                                 >
-                                    <p class="font-black text-sm mb-2">{{ day.date }}</p>
-                                    <div class="flex flex-col gap-1">
-                                        <p><span class="text-[#f7b538]">●</span> Sent: {{ day.sent }}</p>
-                                        <p><span class="text-[#db7c26]">●</span> Delivered: {{ day.delivered }}</p>
-                                        <p><span class="text-[#d8572a]">●</span> Opened: {{ day.opened }}</p>
-                                        <p><span class="text-[#c32f27]">●</span> Clicked: {{ day.clicked }}</p>
-                                        <p><span class="text-[#780116]">●</span> Failed: {{ day.failed }}</p>
+                                    <p class="font-black text-sm mb-2 text-center border-b border-white/10 pb-2">{{ day.date }}</p>
+                                    <div class="flex flex-col gap-1.5">
+                                        <div class="flex justify-between items-center gap-4">
+                                            <span class="text-[#f7b538] font-bold">Sent</span>
+                                            <span class="font-mono">{{ day.sent }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center gap-4">
+                                            <span class="text-[#db7c26] font-bold">Delivered</span>
+                                            <span class="font-mono">{{ day.delivered }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center gap-4">
+                                            <span class="text-[#d8572a] font-bold">Opened</span>
+                                            <span class="font-mono">{{ day.opened }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center gap-4">
+                                            <span class="text-[#c32f27] font-bold">Clicked</span>
+                                            <span class="font-mono">{{ day.clicked }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center gap-4 border-t border-white/10 pt-1 mt-1">
+                                            <span class="text-red-400 font-bold">Failed</span>
+                                            <span class="font-mono">{{ day.failed }}</span>
+                                        </div>
                                     </div>
+                                    <!-- Tail -->
+                                    <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-800"></div>
                                 </div>
                             </div>
                         </div>
