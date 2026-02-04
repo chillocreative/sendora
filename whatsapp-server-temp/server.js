@@ -416,6 +416,11 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Root route
+app.get('/', (req, res) => {
+    res.send('🚀 Blaster WhatsApp Server is Running!');
+});
+
 // Global status (for backward compatibility)
 app.get('/status', (req, res) => {
     const allConnections = Array.from(connections.entries()).map(([key, conn]) => ({
