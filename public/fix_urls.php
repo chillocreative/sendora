@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Artisan;
 
 // Fix Settings
 Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc']);
-Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'https://sendora.cc/whatsapp-server-temp']);
+Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3000']);
 
 // Clear Caches
 Artisan::call('optimize:clear');
