@@ -371,20 +371,32 @@ app.post('/send-message', async (req, res) => {
 
         if (media_url) {
             safeLog(`[${key}] Downloading media: ${media_url}`);
-            let mediaContent = { url: media_url };
-            let sendObj = {};
+            try {
+                // Manually download media to handle 404s and timeouts gracefully
+                const mediaResponse = await axios.get(media_url, {
+                    responseType: 'arraybuffer',
+                    timeout: 15000 // 15s timeout
+                });
+                const mediaBuffer = Buffer.from(mediaResponse.data);
 
-            if (media_type === 'image') {
-                sendObj = { image: mediaContent, caption: message || '' };
-            } else if (media_type === 'video') {
-                sendObj = { video: mediaContent, caption: message || '' };
-            } else if (media_type === 'audio') {
-                sendObj = { audio: mediaContent, mimetype: 'audio/mp4' };
-            } else {
-                sendObj = { document: mediaContent, mimetype: media_type || 'application/pdf', fileName: filename || 'file', caption: message || '' };
+                let sendObj = {};
+                if (media_type === 'image') {
+                    sendObj = { image: mediaBuffer, caption: message || '' };
+                } else if (media_type === 'video') {
+                    sendObj = { video: mediaBuffer, caption: message || '' };
+                } else if (media_type === 'audio') {
+                    sendObj = { audio: mediaBuffer, mimetype: 'audio/mp4' };
+                } else {
+                    sendObj = { document: mediaBuffer, mimetype: media_type || 'application/pdf', fileName: filename || 'file', caption: message || '' };
+                }
+
+                sentResult = await conn.sock.sendMessage(jid, sendObj);
+            } catch (dlError) {
+                safeLog(`[${key}] Media download failed: ${dlError.message}`);
+                return res.status(422).json({
+                    error: `Media download failed: ${dlError.message}. Accessing: ${media_url}. Ensure storage link is correct.`
+                });
             }
-
-            sentResult = await conn.sock.sendMessage(jid, sendObj);
         } else {
             const urlRegex = /(https?:\/\/[^\s]+)/gi;
             const urls = message.match(urlRegex);
