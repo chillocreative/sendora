@@ -84,18 +84,26 @@ class TestMessageController extends Controller
             }
 
             // Send message via WhatsApp server
-            $response = Http::timeout(20)->post("{$this->waServerUrl}/send-message", $payload);
+            Log::info("Attempting to send test message", ['url' => "{$this->waServerUrl}/send-message", 'payload' => $payload]);
+            $response = Http::timeout(30)->post("{$this->waServerUrl}/send-message", $payload);
 
             if ($response->successful()) {
                 return back()->with('success', 'Message sent successfully!');
             } else {
+                Log::error("Test message server error", [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
                 $errorData = $response->json();
-                $errorMessage = $errorData['error'] ?? 'Failed to send message';
+                $errorMessage = $errorData['error'] ?? 'Failed to send message: ' . $response->status();
                 return back()->withErrors(['message' => $errorMessage]);
             }
         } catch (\Exception $e) {
-            Log::error('Test message send error: ' . $e->getMessage());
-            return back()->withErrors(['message' => 'Failed to send message. Please check your WhatsApp connection.']);
+            Log::error('Test message exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['message' => 'Failed to send message: ' . $e->getMessage()]);
         }
     }
 }
