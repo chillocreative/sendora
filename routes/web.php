@@ -114,8 +114,8 @@ Route::middleware([
         Route::delete('/auto-replies/{id}', [\App\Http\Controllers\AutoReplyController::class, 'destroy'])->name('auto-replies.destroy');
     });
 
+    Route::post('/subscription/cancel-plan', [\App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('subscription.cancel');
     Route::get('/subscription', [\App\Http\Controllers\SubscriptionController::class, 'show'])->name('subscription.show');
-    Route::post('/subscription/cancel', [\App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('subscription.cancel');
 
     Route::middleware(['subscription.limit:api_access'])->group(function () {
         // API Token Management

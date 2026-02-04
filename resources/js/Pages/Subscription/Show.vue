@@ -54,7 +54,7 @@ const cancelForm = useForm({});
 const confirmCancel = ref(false);
 
 const cancelSubscription = () => {
-    cancelForm.post('/subscription/cancel', {
+    cancelForm.post('/subscription/cancel-plan', {
         preserveScroll: true,
         onSuccess: () => confirmCancel.value = false,
         onError: () => {

@@ -63,6 +63,11 @@ jobs:
             # Note: We uploaded public/build via SCP, so no need to build on server.
             
             php artisan optimize:clear
+            php artisan route:clear
+            php artisan route:cache
+            php artisan config:cache
+            php artisan view:cache
+            
             php artisan migrate --force
             php artisan storage:link || true
             
