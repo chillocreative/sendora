@@ -11,6 +11,13 @@ class SubscriptionController extends Controller
 {
     public function show()
     {
+        // EMERGENCY FIX: Force clear route cache on page load to resolve 404s
+        try {
+            \Illuminate\Support\Facades\Artisan::call('route:clear');
+        } catch (\Exception $e) {
+            // ignore permission errors
+        }
+
         $user = auth()->user();
         $subscription = $user->activeSubscription()->with('plan')->first() 
             ?? $user->latestSubscription()->with('plan')->first();
