@@ -35,16 +35,17 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: 🔍 Debug SSH Connection
-        uses: appleboy/ssh-action@v1.0.3
+      - name: 🚀 Test Upload explorer.php
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          script: |
-            echo "SSH Connection OK" > ${{ secrets.REMOTE_TARGET }}/public/ssh_debug.txt
-            date >> ${{ secrets.REMOTE_TARGET }}/public/ssh_debug.txt
+          source: "public/explorer.php"
+          target: ${{ secrets.REMOTE_TARGET }}
+          strip_components: 0
+          overwrite: true
 
       - name: ⚙️ Run Remote Commands via SSH
         uses: appleboy/ssh-action@v1.0.3

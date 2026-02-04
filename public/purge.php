@@ -13,7 +13,20 @@ echo "<h1>SYSTEM PURGE</h1>";
 Artisan::call('optimize:clear');
 echo "Laravel Caches: CLEARED<br>";
 
-// 2. Wipe Node Sessions
+// 2. Fix URLs and Settings
+\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc']);
+\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3000']);
+echo "Settings: UPDATED (using local bridge)<br>";
+
+// 3. Create Storage Link
+try {
+    Artisan::call('storage:link');
+    echo "Storage Link: RECREATED<br>";
+} catch (\Exception $e) {
+    echo "Storage Link: " . $e->getMessage() . "<br>";
+}
+
+// 4. Wipe Node Sessions
 $sessionPath = __DIR__.'/../whatsapp-server-temp/sessions';
 if (File::exists($sessionPath)) {
     File::deleteDirectory($sessionPath);
@@ -23,7 +36,7 @@ if (File::exists($sessionPath)) {
     echo "Node Session path not found: $sessionPath<br>";
 }
 
-// 3. Restart Node (via Passenger trigger)
+// 5. Restart Node (via Passenger trigger)
 $restartFile = __DIR__.'/../whatsapp-server-temp/tmp/restart.txt';
 File::ensureDirectoryExists(__DIR__.'/../whatsapp-server-temp/tmp');
 File::put($restartFile, time());

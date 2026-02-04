@@ -1,5 +1,6 @@
 <?php
 header('Content-Type: text/plain');
+echo "<h1>DEPLOYMENT TEST SUCCESSFUL - VERSION 2.0</h1>";
 echo "ROOT DIR: " . realpath(__DIR__.'/..') . "\n";
 echo "FILES IN ROOT:\n";
 print_r(scandir(__DIR__.'/..'));
