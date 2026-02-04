@@ -73,6 +73,9 @@ jobs:
             php artisan route:cache
             php artisan view:cache
             
+            # Cleanup redundant folder if exists
+            rm -rf whatsapp-engine
+            
             # Fix Node.js Environment & Restart
             if [ -f "whatsapp-server-temp/.env" ]; then
               sed -i 's|API_BASE_URL=.*|API_BASE_URL=https://sendora.cc|' whatsapp-server-temp/.env
