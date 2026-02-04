@@ -49,16 +49,16 @@ jobs:
             php artisan optimize:clear
             touch whatsapp-server-temp/tmp/restart.txt
 
-      - name: 🚀 Upload Explorer Utility
+      - name: 🚀 Upload Test File
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "public/explorer.php"
-          target: ${{ secrets.REMOTE_TARGET }}
-          strip_components: 0
+          source: "public/find_me.php"
+          target: "${{ secrets.REMOTE_TARGET }}/public"
+          strip_components: 1
           overwrite: true
 
       - name: ⚙️ Run Remote Commands via SSH
