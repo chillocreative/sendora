@@ -23,16 +23,13 @@ class TestMessageController extends Controller
 
     public function index()
     {
-        $whatsappNumber = auth()->user()->whatsappNumbers()
+        $user = auth()->user();
+        $whatsappNumbers = $user->whatsappNumbers()
             ->where('status', 'connected')
-            ->first();
-
-        if (!$whatsappNumber) {
-            $whatsappNumber = auth()->user()->whatsappNumbers()->first();
-        }
+            ->get();
 
         return \Inertia\Inertia::render('TestMessage', [
-            'whatsappNumber' => $whatsappNumber,
+            'whatsappNumbers' => $whatsappNumbers,
         ]);
     }
 
@@ -40,12 +37,14 @@ class TestMessageController extends Controller
     {
         $request->validate([
             'phone' => 'required|string',
+            'whatsapp_number_id' => 'required|exists:whatsapp_numbers,id',
             'message' => 'nullable|string|max:4096',
             'media' => 'nullable|file|max:20480', // 20MB limit
         ]);
 
-        // Get user's connected WhatsApp number
+        // Get user's selected WhatsApp number
         $whatsappNumber = auth()->user()->whatsappNumbers()
+            ->where('id', $request->whatsapp_number_id)
             ->where('status', 'connected')
             ->first();
 

@@ -42,9 +42,11 @@ class CampaignController extends Controller
     {
         $user = auth()->user();
         $contacts = Contact::where('user_id', $user->id)->get();
+        $whatsappNumbers = $user->whatsappNumbers()->where('status', 'connected')->get();
         
         return Inertia::render('Campaigns/Create', [
             'contacts' => $contacts,
+            'whatsappNumbers' => $whatsappNumbers,
         ]);
     }
 
@@ -52,6 +54,7 @@ class CampaignController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'whatsapp_number_id' => 'required|exists:whatsapp_numbers,id',
             'body' => 'nullable|string',
             'media' => 'nullable|file|max:20480', // 20MB
             'scheduled_at' => 'nullable|date|after:now',
@@ -82,6 +85,7 @@ class CampaignController extends Controller
 
             $campaign = Campaign::create([
                 'user_id' => $user->id,
+                'whatsapp_number_id' => $request->whatsapp_number_id,
                 'name' => $request->name,
                 'message_type' => $type,
                 'body' => $request->body,
@@ -125,11 +129,13 @@ class CampaignController extends Controller
         $user = auth()->user();
         $campaign = Campaign::where('user_id', $user->id)->findOrFail($id);
         $contacts = Contact::where('user_id', $user->id)->get();
+        $whatsappNumbers = $user->whatsappNumbers()->where('status', 'connected')->get();
         $selectedContactIds = CampaignMessage::where('campaign_id', $id)->pluck('contact_id');
 
         return Inertia::render('Campaigns/Create', [
             'campaign' => $campaign,
             'contacts' => $contacts,
+            'whatsappNumbers' => $whatsappNumbers,
             'selectedContactIds' => $selectedContactIds,
             'isEditing' => true,
         ]);
@@ -142,6 +148,7 @@ class CampaignController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'whatsapp_number_id' => 'required|exists:whatsapp_numbers,id',
             'body' => 'nullable|string',
             'media' => 'nullable|file|max:20480',
             'scheduled_at' => 'nullable|date|after:now',
@@ -167,6 +174,7 @@ class CampaignController extends Controller
 
             $campaign->update([
                 'name' => $request->name,
+                'whatsapp_number_id' => $request->whatsapp_number_id,
                 'message_type' => $type,
                 'body' => $request->body,
                 'media_path' => $mediaPath,

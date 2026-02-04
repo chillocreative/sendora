@@ -8,6 +8,7 @@ class Campaign extends Model
 {
     protected $fillable = [
         'user_id',
+        'whatsapp_number_id',
         'name',
         'message_type',
         'body',
@@ -26,6 +27,11 @@ class Campaign extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function whatsappNumber()
+    {
+        return $this->belongsTo(WhatsappNumber::class);
     }
 
     public function messages()

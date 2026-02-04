@@ -8,6 +8,7 @@ import InputError from '@/Components/InputError.vue';
 
 const props = defineProps({
     contacts: Array,
+    whatsappNumbers: Array,
     campaign: Object,
     selectedContactIds: Array,
     isEditing: Boolean,
@@ -21,6 +22,7 @@ const hasLinkPreview = computed(() => {
 
 const form = useForm({
     name: props.campaign?.name || '',
+    whatsapp_number_id: props.campaign?.whatsapp_number_id || (props.whatsappNumbers.length > 0 ? props.whatsappNumbers[0].id : ''),
     body: props.campaign?.body || '',
     media: null,
     scheduled_at: props.campaign?.scheduled_at ? props.campaign.scheduled_at.slice(0, 16) : '',
@@ -98,6 +100,44 @@ const submit = () => {
                                         placeholder="E.g., VIP Flash Sale - February"
                                     />
                                     <InputError :message="form.errors.name" class="mt-2" />
+                                </div>
+
+                                <!-- Sender Selection -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    <div>
+                                        <InputLabel for="whatsapp_number_id" value="Select Sender Account" class="text-xs uppercase tracking-widest font-black text-slate-400 mb-3" />
+                                        <div class="relative group">
+                                            <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-300 group-focus-within:text-[#780116] transition-colors">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                                </svg>
+                                            </div>
+                                            <select 
+                                                id="whatsapp_number_id"
+                                                v-model="form.whatsapp_number_id"
+                                                class="w-full pl-14 pr-10 py-5 bg-slate-50 border-slate-100 focus:bg-white focus:border-[#780116] focus:ring-4 focus:ring-[#780116]/10 rounded-2xl text-slate-900 font-bold transition-all appearance-none shadow-sm"
+                                            >
+                                                <option value="" disabled>Select a connected number</option>
+                                                <option v-for="number in whatsappNumbers" :key="number.id" :value="number.id">
+                                                    {{ number.name || 'Unnamed Account' }} ({{ number.phone_number || number.id }})
+                                                </option>
+                                            </select>
+                                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                                <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                            </div>
+                                        </div>
+                                        <InputError :message="form.errors.whatsapp_number_id" class="mt-2" />
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div v-if="whatsappNumbers.length === 0" class="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 flex items-center gap-3">
+                                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                            <p class="text-[10px] font-black uppercase tracking-widest leading-tight">No connected WhatsApp accounts found. Please connect one first.</p>
+                                        </div>
+                                        <div v-else class="p-4 bg-orange-50 text-orange-700 rounded-2xl border border-orange-100 flex items-center gap-3">
+                                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            <p class="text-[10px] font-black uppercase tracking-widest leading-tight">Messages will be routed through this selected account.</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Message and Selection Row -->

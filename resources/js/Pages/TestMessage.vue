@@ -9,33 +9,28 @@
                 </div>
 
                 <!-- WhatsApp Status Card -->
-                <div v-if="whatsappNumber" class="mb-8 bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 p-8 border border-slate-100 transition-all hover:shadow-2xl">
+                <div v-if="whatsappNumbers.length > 0" class="mb-8 bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 p-8 border border-slate-100 transition-all hover:shadow-2xl">
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
                         <div class="flex items-center space-x-6 text-center sm:text-left flex-col sm:flex-row">
-                            <div class="w-20 h-20 rounded-3xl flex items-center justify-center relative" 
-                                 :class="whatsappNumber.status === 'connected' ? 'bg-red-50 text-[#780116]' : 'bg-slate-100 text-slate-400'">
-                                <svg v-if="whatsappNumber.status === 'connected'" class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-20 h-20 rounded-3xl bg-red-50 text-[#780116] flex items-center justify-center relative">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                 </svg>
-                                <svg v-else class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-                                </svg>
-                                <span v-if="whatsappNumber.status === 'connected'" class="absolute -top-1 -right-1 flex h-4 w-4">
+                                <span class="absolute -top-1 -right-1 flex h-4 w-4">
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#f7b538] opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-4 w-4 bg-[#f7b538]"></span>
                                 </span>
                             </div>
                             <div>
                                 <h3 class="font-black text-slate-900 text-xl tracking-tight leading-none mb-2">Protocol Interface</h3>
-                                <p class="text-xs font-black tracking-widest uppercase" :class="whatsappNumber.status === 'connected' ? 'text-[#db7c26]' : 'text-slate-400'">
-                                    {{ whatsappNumber.status === 'connected' ? 'Uplink Synchronized' : 'Uplink Terminated' }}
+                                <p class="text-xs font-black tracking-widest uppercase text-[#db7c26]">
+                                    {{ whatsappNumbers.length }} Uplinks Synchronized
                                 </p>
                             </div>
                         </div>
-                        <Link v-if="whatsappNumber.status !== 'connected'" 
-                              :href="route('whatsapp.show', whatsappNumber.id)"
-                              class="px-8 py-4 bg-[#780116] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-[#c32f27] transition shadow-xl shadow-red-200">
-                            Re-establish Link
+                        <Link :href="route('whatsapp.index')"
+                               class="px-8 py-4 bg-[#780116] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-[#c32f27] transition shadow-xl shadow-red-200">
+                            Manage Nodes
                         </Link>
                     </div>
                 </div>
@@ -55,8 +50,33 @@
                 </div>
 
                 <!-- Send Message Form -->
-                <div v-if="whatsappNumber && whatsappNumber.status === 'connected'" class="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 p-10 border border-slate-100">
+                <div v-if="whatsappNumbers.length > 0" class="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 p-10 border border-slate-100">
                     <form @submit.prevent="sendMessage">
+                        <!-- Sender Account -->
+                         <div class="mb-8">
+                            <label class="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                                Origin Node
+                            </label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-300 group-focus-within:text-[#780116] transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                </div>
+                                <select 
+                                    v-model="form.whatsapp_number_id" 
+                                    class="w-full pl-14 pr-10 py-5 bg-slate-50/50 border-slate-100 rounded-[1.5rem] focus:ring-4 focus:ring-red-50 focus:border-[#780116] transition-all font-bold appearance-none"
+                                    required
+                                >
+                                    <option v-for="number in whatsappNumbers" :key="number.id" :value="number.id">
+                                        {{ number.name || 'Unnamed Account' }} ({{ number.phone_number || number.id }})
+                                    </option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                    <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Phone Number -->
                         <div class="mb-8">
                             <label class="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">
@@ -186,11 +206,12 @@ import { router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
-    whatsappNumber: Object,
+    whatsappNumbers: Array,
 });
 
 const form = reactive({
     phone: '',
+    whatsapp_number_id: props.whatsappNumbers.length > 0 ? props.whatsappNumbers[0].id : '',
     message: '',
     media: null,
 });

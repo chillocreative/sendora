@@ -42,11 +42,19 @@ class ProcessCampaignJob implements ShouldQueue
         $appUrl = \App\Models\Setting::where('key', 'app_url')->value('value') ?? config('app.url');
         config(['app.url' => $appUrl]);
 
-        $whatsappNumber = $user->whatsappNumbers()->where('status', 'connected')->first();
+        // Use campaign's assigned number if available
+        if ($campaign->whatsapp_number_id) {
+            $whatsappNumber = $user->whatsappNumbers()
+                ->where('id', $campaign->whatsapp_number_id)
+                ->where('status', 'connected')
+                ->first();
+        } else {
+            $whatsappNumber = $user->whatsappNumbers()->where('status', 'connected')->first();
+        }
 
         if (!$whatsappNumber) {
             $campaign->update(['status' => 'failed']);
-            Log::error("Campaign {$campaign->id} failed: No connected WhatsApp number found for user {$user->id}.");
+            Log::error("Campaign {$campaign->id} failed: No connected WhatsApp number found for user {$user->id}. Selected Number ID: " . ($campaign->whatsapp_number_id ?? 'None'));
             return;
         }
 

@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 
 \Illuminate\Support\Facades\Schedule::command('campaigns:dispatch')->everyMinute();
 \Illuminate\Support\Facades\Schedule::command('warmer:process-pool')->everyThirtyMinutes();
+\Illuminate\Support\Facades\Schedule::command('queue:work --stop-when-empty')->everyMinute();
