@@ -26,6 +26,15 @@ app.use(cors({ origin: '*' }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// cPanel Subfolder Fix: Strip the base path from the URL if it exists
+app.use((req, res, next) => {
+    const basePath = '/whatsapp-server-temp';
+    if (req.url.startsWith(basePath)) {
+        req.url = req.url.replace(basePath, '') || '/';
+    }
+    next();
+});
+
 // Store multiple connections (one per user)
 const connections = new Map();
 const logger = pino({ level: 'error' });
