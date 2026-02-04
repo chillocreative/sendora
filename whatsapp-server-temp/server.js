@@ -17,7 +17,7 @@ const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.WA_SERVER_PORT || 3000;
+const port = process.env.PORT || process.env.WA_SERVER_PORT || 3000;
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
 const sessionsDir = path.join(__dirname, 'sessions');
 
