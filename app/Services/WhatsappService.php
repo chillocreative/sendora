@@ -48,9 +48,21 @@ class WhatsappService
 
         try {
             $response = Http::timeout(20)->post("{$waServerUrl}/send-message", $payload);
+            
+            if ($response->failed()) {
+                \Illuminate\Support\Facades\Log::error('WhatsappService send failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'payload' => $payload
+                ]);
+            }
+            
             return $response;
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('WhatsappService send error: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('WhatsappService send error', [
+                'message' => $e->getMessage(),
+                'payload' => $payload
+            ]);
             return null;
         }
     }

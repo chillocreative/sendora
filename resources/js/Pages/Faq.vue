@@ -16,7 +16,12 @@ const faqs = ref([
     },
     {
         question: "Is my WhatsApp number safe from being banned?",
-        answer: "Safety is our top priority. Sendora uses 'Human-Stagger' technology to simulate natural typing and sending patterns (variable time delays). However, we always recommend warming up new numbers and following WhatsApp's anti-spam guidelines.",
+        answer: "Safety is our top priority. Sendora uses 'Human-Stagger' technology to simulate natural typing and sending patterns (variable time delays). Additionally, our AI Warmer Pool helps you build a strong reputation before sending large campaigns.",
+        open: false
+    },
+    {
+        question: "How does the AI Warmer Pool work?",
+        answer: "The AI Warmer Pool is a community-powered feature. When enabled, your number will automatically exchange casual, realistic messages with other numbers in the Sendora community using OpenAI. This simulates natural human interaction, which builds trust with WhatsApp and significantly reduces the risk of bans. If you see casual messages from 'strangers' appearing in your chat, don't worry—that's just our AI helping you warm up!",
         open: false
     },
     {

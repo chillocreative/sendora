@@ -23,7 +23,6 @@ class ProcessCampaignJob implements ShouldQueue
     public function __construct(Campaign $campaign)
     {
         $this->campaign = $campaign;
-        $this->waServerUrl = env('WA_SERVER_URL', 'http://localhost:3000');
     }
 
     public function handle()
@@ -38,11 +37,16 @@ class ProcessCampaignJob implements ShouldQueue
         $campaign->update(['status' => 'processing']);
 
         $user = $campaign->user;
+        
+        // Use database setting for APP_URL if it exists (fixes asset() in production)
+        $appUrl = \App\Models\Setting::where('key', 'app_url')->value('value') ?? config('app.url');
+        config(['app.url' => $appUrl]);
+
         $whatsappNumber = $user->whatsappNumbers()->where('status', 'connected')->first();
 
         if (!$whatsappNumber) {
             $campaign->update(['status' => 'failed']);
-            Log::error("Campaign {$campaign->id} failed: No connected WhatsApp number found for user.");
+            Log::error("Campaign {$campaign->id} failed: No connected WhatsApp number found for user {$user->id}.");
             return;
         }
 
@@ -52,6 +56,8 @@ class ProcessCampaignJob implements ShouldQueue
             ->orderBy('sequence_order')
             ->with('contact')
             ->get();
+
+        Log::info("Starting campaign: {$campaign->name} (#{$campaign->id}) with " . $messages->count() . " messages.");
 
         // Determine delay between messages (drip sequence)
         $delaySeconds = $campaign->is_drip ? ($campaign->drip_delay_minutes * 60) : 0.5;
@@ -63,7 +69,14 @@ class ProcessCampaignJob implements ShouldQueue
                 break;
             }
 
-            $mediaUrl = $campaign->media_path ? asset('storage/' . $campaign->media_path) : null;
+            // Ensure we use the correct asset URL for media
+            $mediaUrl = null;
+            if ($campaign->media_path) {
+                $path = $campaign->media_path;
+                // If it's already a full URL, use it, otherwise use asset()
+                $mediaUrl = str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+            }
+            
             $mediaType = $campaign->message_type;
             $body = $campaign->body;
 
