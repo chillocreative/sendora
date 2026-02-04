@@ -20,3 +20,25 @@ if (file_exists($nodeLog)) {
 } else {
     echo "Node log NOT FOUND\n";
 }
+
+echo "\nSETTINGS CHECK:\n";
+try {
+    require __DIR__.'/../vendor/autoload.php';
+    $app = require_once __DIR__.'/../bootstrap/app.php';
+    $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+    $kernel->bootstrap();
+    
+    $settings = \Illuminate\Support\Facades\DB::table('settings')->get();
+    foreach($settings as $s) {
+        echo "{$s->key} = {$s->value}\n";
+    }
+
+    echo "\nNODE HEALTH CHECK:\n";
+    $healthUrl = 'https://sendora.cc/whatsapp-server-temp/health';
+    $health = @file_get_contents($healthUrl);
+    echo "URL: $healthUrl\n";
+    echo "RESPONSE: $health\n";
+
+} catch (\Exception $e) {
+    echo "Error: " . $e->getMessage();
+}
