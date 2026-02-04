@@ -2,3 +2,10 @@
 PassengerEnabled on
 PassengerAppType node
 PassengerStartupFile server.js
+
+RewriteEngine On
+RewriteBase /whatsapp-server-temp
+RewriteRule ^index\.js$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . server.js [L]
