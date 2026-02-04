@@ -48,6 +48,12 @@ class WhatsappService
         ];
 
         if ($mediaUrl) {
+            // Ensure media URL is absolute
+            if (!str_starts_with($mediaUrl, 'http')) {
+                $appUrl = \App\Models\Setting::where('key', 'app_url')->value('value') ?? config('app.url');
+                $appUrl = rtrim($appUrl, '/');
+                $mediaUrl = $appUrl . '/' . ltrim($mediaUrl, '/');
+            }
             $payload['media_url'] = $mediaUrl;
             $payload['media_type'] = $mediaType;
         }
