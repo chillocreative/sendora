@@ -12,7 +12,13 @@ class TestMessageController extends Controller
 
     public function __construct()
     {
-        $this->waServerUrl = env('WA_SERVER_URL', 'http://localhost:3000');
+        $this->waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
+                             ?? env('WA_SERVER_URL', 'http://localhost:3000');
+        $this->waServerUrl = rtrim($this->waServerUrl, '/');
+        
+        // Ensure asset() uses the correct production URL
+        $appUrl = \App\Models\Setting::where('key', 'app_url')->value('value') ?? env('APP_URL');
+        config(['app.url' => $appUrl]);
     }
 
     public function index()

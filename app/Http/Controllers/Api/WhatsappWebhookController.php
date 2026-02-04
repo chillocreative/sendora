@@ -94,7 +94,9 @@ class WhatsappWebhookController extends Controller
                 Log::info('Auto-reply match found!', ['reply' => $autoReply->reply_message]);
                 
                 // Send auto-reply via WhatsApp server
-                $waServerUrl = env('WA_SERVER_URL', 'http://localhost:3000');
+                $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
+                               ?? env('WA_SERVER_URL', 'http://localhost:3000');
+                $waServerUrl = rtrim($waServerUrl, '/');
                 
                 $response = \Illuminate\Support\Facades\Http::post("{$waServerUrl}/send-message", [
                     'user_id' => $request->user_id,
