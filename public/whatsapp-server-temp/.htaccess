@@ -1,0 +1,2 @@
+# Dummy .htaccess to satisfy cPanel Node.js passenger routing
+RewriteEngine On
