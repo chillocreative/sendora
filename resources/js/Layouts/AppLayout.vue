@@ -105,21 +105,6 @@ const navigation = computed(() => {
                     </template>
                 </nav>
 
-                <!-- User Profile / Footer -->
-                <div class="p-6 border-t border-white/5">
-                    <div class="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
-                        <div class="relative">
-                            <img class="h-10 w-10 rounded-xl object-cover border border-white/10 group-hover:border-[#f7b538]/50 transition-colors" :src="$page.props.auth.user.profile_photo_url" :alt="$page.props.auth.user.name">
-                            <div class="absolute -bottom-1 -right-1 size-3 bg-green-500 border-2 border-slate-900 rounded-full"></div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-[11px] font-black text-white truncate tracking-wide">{{ $page.props.auth.user.name }}</p>
-                            <p class="text-[9px] font-bold text-slate-500 truncate uppercase tracking-widest mt-0.5">
-                                {{ $page.props.auth.user.is_admin ? 'Super Admin' : ($page.props.auth.user.active_subscription?.plan?.name || 'Free Member') }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
             </aside>
 
             <!-- Mobile Menu Overlay -->
