@@ -35,17 +35,17 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: ⚙️ Inspect Server
-        uses: appleboy/ssh-action@v1.0.3
+      - name: 🚀 SCP public files
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          script: |
-            echo "PWD: $(pwd)" > ${{ secrets.REMOTE_TARGET }}/public/server_info.txt
-            echo "TARGET: ${{ secrets.REMOTE_TARGET }}" >> ${{ secrets.REMOTE_TARGET }}/public/server_info.txt
-            ls -la ${{ secrets.REMOTE_TARGET }}/public >> ${{ secrets.REMOTE_TARGET }}/public/server_info.txt
+          source: "public/*"
+          target: "${{ secrets.REMOTE_TARGET }}/public"
+          strip_components: 1
+          overwrite: true
 
       - name: ⚙️ Run Remote Commands via SSH
         uses: appleboy/ssh-action@v1.0.3
