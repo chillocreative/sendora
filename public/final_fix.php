@@ -10,17 +10,23 @@ use Illuminate\Support\Facades\Artisan;
 header('Content-Type: text/html');
 echo "<h1>FINAL RECOVERY SCRIPT</h1>";
 
-// 1. SET PUBLIC URL (More reliable for cPanel/Passenger)
-$publicUrl = "https://sendora.cc/whatsapp-server-temp";
-Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => $publicUrl]);
-echo "WA_SERVER_URL set to: $publicUrl<br>";
-
-Setting::updateOrCreate(['key' => 'app_url'], ['value' => "https://sendora.cc"]);
-echo "APP_URL set to: https://sendora.cc<br>";
-
-// 2. FORCE CLEAR ALL CACHES
+// Ensure settings are correct
+Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'https://sendora.cc/whatsapp-server-temp']);
+Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc']);
 Artisan::call('optimize:clear');
-echo "Caches Purged.<br>";
 
-echo "<h2>SYSTEM RESTORED</h2>";
-echo "Please wait 10 seconds, then go back to WhatsApp Manager and refresh.";
+echo "<h2>NODE LOG</h2>";
+$log = __DIR__.'/../whatsapp-server-temp/server.log';
+if (file_exists($log)) {
+    echo "<pre>" . htmlspecialchars(file_get_contents($log)) . "</pre>";
+} else {
+    echo "Log file not found.<br>";
+}
+
+echo "<h2>WHATSAPP STATUS</h2>";
+try {
+    $resp = file_get_contents("https://sendora.cc/whatsapp-server-temp/status");
+    echo "Status Response: " . htmlspecialchars($resp) . "<br>";
+} catch(\Exception $e) {
+    echo "Status Error: " . $e->getMessage() . "<br>";
+}
