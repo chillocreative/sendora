@@ -44,9 +44,22 @@ jobs:
           port: 22
           script: |
             cd ${{ secrets.REMOTE_TARGET }}
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             php artisan optimize:clear
             touch whatsapp-server-temp/tmp/restart.txt
+
+      - name: 🚀 Upload Explorer Utility
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "public/explorer.php"
+          target: ${{ secrets.REMOTE_TARGET }}
+          strip_components: 0
+          overwrite: true
 
       - name: ⚙️ Run Remote Commands via SSH
         uses: appleboy/ssh-action@v1.0.3
