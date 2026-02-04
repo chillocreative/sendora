@@ -53,7 +53,7 @@ class WhatsappNumberController extends Controller
         // If disconnected, initiate connection
         if ($number->status === 'disconnected') {
             try {
-                $response = Http::timeout(10)->post("{$this->waServerUrl}/connect", [
+                $response = Http::withoutVerifying()->timeout(15)->post("{$this->waServerUrl}/connect", [
                     'user_id' => auth()->id(),
                     'phone_number' => $number->id,
                 ]);
@@ -71,7 +71,7 @@ class WhatsappNumberController extends Controller
         } else {
             // Fetch current status for this specific user's connection
             try {
-                $response = Http::timeout(5)->get("{$this->waServerUrl}/status/" . auth()->id() . "/{$number->id}");
+                $response = Http::withoutVerifying()->timeout(10)->get("{$this->waServerUrl}/status/" . auth()->id() . "/{$number->id}");
                 
                 if ($response->successful()) {
                     $data = $response->json();
