@@ -34,6 +34,12 @@ class WhatsappService
                        ?? env('WA_SERVER_URL', 'http://localhost:3000');
         $waServerUrl = rtrim($waServerUrl, '/');
         
+        // Clean the recipient number
+        $to = preg_replace('/[^0-9]/', '', $to);
+        if (str_starts_with($to, '0')) {
+            $to = '6' . $to; // Default to Malaysia country code if starting with 0
+        }
+
         $payload = [
             'user_id' => $whatsappNumber->user_id,
             'phone_number' => $whatsappNumber->id,
@@ -47,10 +53,11 @@ class WhatsappService
         }
 
         try {
-            $response = Http::timeout(20)->post("{$waServerUrl}/send-message", $payload);
+            $response = Http::timeout(30)->post("{$waServerUrl}/send-message", $payload);
             
             if ($response->failed()) {
                 \Illuminate\Support\Facades\Log::error('WhatsappService send failed', [
+                    'url' => "{$waServerUrl}/send-message",
                     'status' => $response->status(),
                     'body' => $response->body(),
                     'payload' => $payload
@@ -60,6 +67,7 @@ class WhatsappService
             return $response;
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('WhatsappService send error', [
+                'url' => "{$waServerUrl}/send-message",
                 'message' => $e->getMessage(),
                 'payload' => $payload
             ]);

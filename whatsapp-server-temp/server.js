@@ -337,7 +337,11 @@ app.post('/send-message', async (req, res) => {
     }
 
     try {
-        const jid = to.includes('@') ? to : (to.replace(/\D/g, '') + '@s.whatsapp.net');
+        let cleanTo = to.replace(/\D/g, '');
+        if (cleanTo.startsWith('0')) {
+            cleanTo = '6' + cleanTo; // Default to Malaysia if starting with 0
+        }
+        const jid = to.includes('@') ? to : (cleanTo + '@s.whatsapp.net');
 
         conn.lastActivity = new Date();
         let sentResult;

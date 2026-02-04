@@ -89,7 +89,9 @@ jobs:
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'https://sendora.cc/whatsapp-server-temp'])"
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
 
-            mkdir -p whatsapp-server-temp/tmp
-            touch whatsapp-server-temp/tmp/restart.txt
-            
+            # Install Node Dependencies for WhatsApp Engine
+            if [ -d "whatsapp-server-temp" ]; then
+              cd whatsapp-server-temp && npm install --production && cd ..
+            fi
+
             echo "Deployment complete!"

@@ -52,11 +52,17 @@ class TestMessageController extends Controller
             return back()->withErrors(['message' => 'No WhatsApp account connected. Please connect your WhatsApp first.']);
         }
 
+        // Create clean phone number for WhatsApp
+        $phone = preg_replace('/[^0-9]/', '', $request->phone);
+        if (str_starts_with($phone, '0')) {
+            $phone = '6' . $phone; // Default to Malaysia country code if starting with 0
+        }
+
         try {
             $payload = [
                 'user_id' => auth()->id(),
                 'phone_number' => $whatsappNumber->id,
-                'to' => $request->phone,
+                'to' => $phone,
                 'message' => $request->message ?? '',
             ];
 

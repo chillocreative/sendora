@@ -115,6 +115,9 @@ class ProcessCampaignJob implements ShouldQueue
                     'sent_at' => now(),
                 ]);
             } else {
+                $errorCode = $response ? $response->status() : 'TIMEOUT';
+                $errorMsg = $response ? $response->body() : 'No response from WhatsApp server';
+                Log::warning("Campaign {$campaign->id} message to {$message->contact->phone_number} failed: [{$errorCode}] {$errorMsg}");
                 $message->update(['status' => 'failed']);
             }
 
