@@ -35,7 +35,7 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: 🚀 Deploy via Git Pull
+      - name: 🚀 Deploy & Configure via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.REMOTE_HOST }}
@@ -44,38 +44,20 @@ jobs:
           port: 22
           script: |
             cd ${{ secrets.REMOTE_TARGET }}
+            
+            # 1. Pull latest code
             git fetch origin main
             git reset --hard origin/main
-            php artisan optimize:clear
-            touch whatsapp-server-temp/tmp/restart.txt
-
-      - name: 🚀 Upload Test File
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          source: "public/find_me.php"
-          target: "${{ secrets.REMOTE_TARGET }}/public"
-          strip_components: 1
-          overwrite: true
-
-      - name: ⚙️ Run Remote Commands via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            cd ${{ secrets.REMOTE_TARGET }}
+            
+            # 2. Build & Migrate
+            # (Assets are already built in Github Actions if we committed the build artifacts, 
+            # but usually we just deploy source. Assuming we deploy source for now.)
+            
             php artisan optimize:clear
             php artisan migrate --force
-            # Cleanup redundant folder if exists
-            rm -rf whatsapp-engine
+            php artisan storage:link || true
             
-            # Fix Node.js Environment & Restart
+            # 3. Configure Node Environment
             if [ ! -f "whatsapp-server-temp/.env" ]; then
               echo "WA_SERVER_PORT=3000" > whatsapp-server-temp/.env
               echo "API_BASE_URL=https://sendora.cc" >> whatsapp-server-temp/.env
@@ -83,11 +65,11 @@ jobs:
               sed -i 's|API_BASE_URL=.*|API_BASE_URL=https://sendora.cc|' whatsapp-server-temp/.env
             fi
 
-            # Auto-update Laravel Settings via Tinker
-            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'https://sendora.cc/whatsapp-server-temp'])"
+            # 4. Update Database Settings (CRITICAL: Use Local Loopback for Stability)
+            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3000'])"
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
 
-            # Trigger Restart for Passenger
+            # 5. Restart Node Engine (Passenger)
             mkdir -p whatsapp-server-temp/tmp
             touch whatsapp-server-temp/tmp/restart.txt
 
