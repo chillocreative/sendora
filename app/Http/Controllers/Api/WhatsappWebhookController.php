@@ -104,13 +104,21 @@ class WhatsappWebhookController extends Controller
                 ->where('is_active', true)
                 ->get()
                 ->first(function ($reply) use ($message) {
-                    $keyword = strtolower($reply->keyword);
+                    try {
+                        $keyword = strtolower($reply->keyword);
+                        $matchType = $reply->match_type ?? 'contains'; // Default to 'contains' if null or column doesn't exist
 
-                    if ($reply->match_type === 'exact') {
-                        // Exact match
-                        return $message === $keyword;
-                    } else {
-                        // Contains match (default)
+                        if ($matchType === 'exact') {
+                            // Exact match
+                            return $message === $keyword;
+                        } else {
+                            // Contains match (default)
+                            return str_contains($message, $keyword);
+                        }
+                    } catch (\Exception $e) {
+                        // Fallback to contains logic if match_type column doesn't exist yet
+                        Log::warning('Auto-reply match_type access error, using contains: ' . $e->getMessage());
+                        $keyword = strtolower($reply->keyword);
                         return str_contains($message, $keyword);
                     }
                 });
