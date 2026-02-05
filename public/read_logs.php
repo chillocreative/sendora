@@ -63,6 +63,16 @@ foreach($npmPaths as $p) {
     if (file_exists($p)) echo "✅ Found NPM: $p\n";
 }
 
+echo "\n--- Broad System Search ---\n";
+echo "Searching for 'node' binary (this may take a few seconds)....\n";
+echo shell_exec("find /usr /opt -name node -type f 2>/dev/null | grep bin/node") . "\n";
+
+echo "Checking for any running node processes:\n";
+echo shell_exec("ps aux | grep node | grep -v grep") . "\n";
+
+echo "Checking current directory structure (Recursive 2 levels):\n";
+echo shell_exec("ls -R . | grep \":$\" -A 5 | head -n 50") . "\n";
+
 echo "\nListing /usr/local/bin (looking for anything node-related):\n";
 echo shell_exec("ls -F /usr/local/bin | grep node");
 echo shell_exec("ls -F /usr/local/bin | grep npm");
