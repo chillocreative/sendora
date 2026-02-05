@@ -18,6 +18,7 @@ const editingId = ref(null);
 
 const form = useForm({
     keyword: '',
+    match_type: 'contains',
     reply_message: '',
     is_active: true,
 });
@@ -31,6 +32,7 @@ const openCreateModal = () => {
 const openEditModal = (reply) => {
     editingId.value = reply.id;
     form.keyword = reply.keyword;
+    form.match_type = reply.match_type || 'contains';
     form.reply_message = reply.reply_message;
     form.is_active = !!reply.is_active; // Ensure boolean
     showModal.value = true;
@@ -63,6 +65,7 @@ const deleteReply = (id) => {
 const toggleActive = (reply) => {
     router.put(route('auto-replies.update', reply.id), {
         keyword: reply.keyword,
+        match_type: reply.match_type || 'contains',
         reply_message: reply.reply_message,
         is_active: !reply.is_active,
     }, {
@@ -102,6 +105,7 @@ const toggleActive = (reply) => {
                             <thead class="bg-slate-50/50">
                                 <tr class="text-[10px] text-slate-400 uppercase tracking-[0.2em]">
                                     <th class="px-8 py-5 font-black">Keyword Identifier</th>
+                                    <th class="px-8 py-5 font-black">Match Type</th>
                                     <th class="px-8 py-5 font-black">Transmission Payload</th>
                                     <th class="px-8 py-5 font-black text-center">Protocol State</th>
                                     <th class="px-8 py-5 font-black text-right">Operations</th>
@@ -111,6 +115,12 @@ const toggleActive = (reply) => {
                                 <tr v-for="reply in autoReplies.data" :key="reply.id" class="hover:bg-slate-50/50 transition-all group">
                                     <td class="px-8 py-6">
                                         <span class="inline-block px-3 py-1 bg-red-50 rounded-lg text-xs font-black text-[#780116] border border-red-100 uppercase tracking-wider">{{ reply.keyword }}</span>
+                                    </td>
+                                    <td class="px-8 py-6">
+                                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                                            :class="reply.match_type === 'exact' ? 'bg-purple-50 text-purple-600 border border-purple-200' : 'bg-blue-50 text-blue-600 border border-blue-200'">
+                                            {{ reply.match_type === 'exact' ? '= Exact' : '⊃ Contains' }}
+                                        </span>
                                     </td>
                                     <td class="px-8 py-6 text-slate-600 font-bold max-w-xs truncate" :title="reply.reply_message">{{ reply.reply_message }}</td>
                                     <td class="px-8 py-6 text-center">
@@ -163,7 +173,23 @@ const toggleActive = (reply) => {
                             autofocus
                         />
                         <InputError :message="form.errors.keyword" class="mt-2" />
-                        <p class="text-xs text-slate-400 mt-1">When a user sends this exact word...</p>
+                    </div>
+
+                    <div>
+                        <InputLabel for="match_type" value="Match Type" />
+                        <select
+                            id="match_type"
+                            v-model="form.match_type"
+                            class="mt-1 block w-full border-slate-200 focus:border-[#780116] focus:ring-[#780116] rounded-lg shadow-sm"
+                        >
+                            <option value="contains">Contains keyword (e.g., "hello" matches "hello there")</option>
+                            <option value="exact">Exact match only (e.g., "hello" matches only "hello")</option>
+                        </select>
+                        <InputError :message="form.errors.match_type" class="mt-2" />
+                        <p class="text-xs text-slate-400 mt-1">
+                            <span v-if="form.match_type === 'exact'">Triggers only when the message is exactly "{{ form.keyword }}"</span>
+                            <span v-else>Triggers when message contains "{{ form.keyword }}" anywhere</span>
+                        </p>
                     </div>
                     <div>
                         <InputLabel for="reply_message" class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-2" value="Response Signature" />

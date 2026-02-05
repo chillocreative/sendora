@@ -97,11 +97,23 @@ class WhatsappWebhookController extends Controller
         ]);
 
         try {
-            // Check for auto-replies (case-insensitive)
+            // Check for auto-replies with match type logic
+            $message = strtolower(trim($request->message));
+
             $autoReply = AutoReply::where('user_id', $request->user_id)
-                ->whereRaw('LOWER(keyword) = ?', [strtolower(trim($request->message))])
                 ->where('is_active', true)
-                ->first();
+                ->get()
+                ->first(function ($reply) use ($message) {
+                    $keyword = strtolower($reply->keyword);
+
+                    if ($reply->match_type === 'exact') {
+                        // Exact match
+                        return $message === $keyword;
+                    } else {
+                        // Contains match (default)
+                        return str_contains($message, $keyword);
+                    }
+                });
 
             if ($autoReply) {
                 Log::info('Auto-reply match found!', ['reply' => $autoReply->reply_message]);

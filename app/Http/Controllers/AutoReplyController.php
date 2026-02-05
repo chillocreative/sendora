@@ -24,19 +24,21 @@ class AutoReplyController extends Controller
         
         $request->validate([
             'keyword' => [
-                'required', 
-                'string', 
+                'required',
+                'string',
                 'max:255',
                 Rule::unique('auto_replies')->where(function ($query) use ($user) {
                     return $query->where('user_id', $user->id);
                 })
             ],
+            'match_type' => 'required|in:exact,contains',
             'reply_message' => 'required|string',
         ]);
 
         AutoReply::create([
             'user_id' => $user->id,
             'keyword' => $request->keyword,
+            'match_type' => $request->match_type ?? 'contains',
             'reply_message' => $request->reply_message,
             'is_active' => true,
         ]);
@@ -51,18 +53,19 @@ class AutoReplyController extends Controller
 
         $request->validate([
             'keyword' => [
-                'required', 
-                'string', 
+                'required',
+                'string',
                 'max:255',
                 Rule::unique('auto_replies')->where(function ($query) use ($user) {
                     return $query->where('user_id', $user->id);
                 })->ignore($autoReply->id)
             ],
+            'match_type' => 'required|in:exact,contains',
             'reply_message' => 'required|string',
             'is_active' => 'boolean',
         ]);
 
-        $autoReply->update($request->only('keyword', 'reply_message', 'is_active'));
+        $autoReply->update($request->only('keyword', 'match_type', 'reply_message', 'is_active'));
 
         return back()->with('success', 'Auto-reply updated successfully.');
     }
