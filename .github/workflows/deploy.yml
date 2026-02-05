@@ -80,16 +80,22 @@ jobs:
 
             # 5. Configure & Restart WhatsApp Server
             cd whatsapp-server-temp
+            
+            # CRITICAL: Set Node.js path (discovered from server diagnostics)
+            export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
+            
+            # Kill ALL ghost node processes
+            echo "Killing ghost WhatsApp processes..."
+            pkill -f "server.js" || true
+            pkill -f "lsnode.*whatsapp-server" || true
+            sleep 2
+            
             mkdir -p sessions
             chmod -R 777 sessions
             
-            # Kill any existing node processes on port 3000 or 3005 if possible
-            fuser -k 3000/tcp || true
-            fuser -k 3005/tcp || true
-            
-            # Use full path to npm if possible or just try to install
-            echo "Installing Node dependencies..."
-            npm install --no-audit --no-fund
+            # Install dependencies using the correct npm binary
+            echo "Installing Node dependencies with correct npm..."
+            /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund
             
             # Ensure .env is correct for Node (USING PORT 3005)
             echo "WA_SERVER_PORT=3005" > .env
@@ -98,7 +104,7 @@ jobs:
             # Clear old log to keep it fresh
             > server.log
             
-            # Restart Passenger (Node Server)
+            # Restart Passenger (Node Server) - LiteSpeed will auto-start server.js
             mkdir -p tmp
             touch tmp/restart.txt
             
@@ -107,4 +113,4 @@ jobs:
             mkdir -p whatsapp-server-temp/tmp
             touch whatsapp-server-temp/tmp/restart.txt
             
-            echo "Deployment SUCCESS!"
+            echo "✅ Deployment SUCCESS! WhatsApp server should start in 5-10 seconds."
