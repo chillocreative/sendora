@@ -1,7 +1,9 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, reactive } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
+
+const page = usePage();
 
 const props = defineProps({
     tokens: Array,
@@ -42,13 +44,16 @@ const createToken = () => {
         abilities: createForm.abilities,
     }, {
         preserveScroll: true,
-        onSuccess: (page) => {
+        onSuccess: () => {
             showCreateModal.value = false;
             // The new token is passed via flash
-            if (page.props.flash?.token) {
-                newToken.value = page.props.flash.token;
-                showTokenModal.value = true;
-            }
+            setTimeout(() => {
+                const token = page.props.flash?.token;
+                if (token) {
+                    newToken.value = token;
+                    showTokenModal.value = true;
+                }
+            }, 100);
         },
         onFinish: () => {
             createForm.processing = false;
