@@ -115,7 +115,7 @@ Route::middleware([
     });
 
     Route::post('/subscription/cancel-plan', [\App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('subscription.cancel');
-    // Fallback for potentially cached frontends
+    // Fallback for potentially cached frontends - no name to avoid conflict
     Route::post('/subscription/cancel', [\App\Http\Controllers\SubscriptionController::class, 'cancel']); 
     Route::get('/subscription', [\App\Http\Controllers\SubscriptionController::class, 'show'])->name('subscription.show');
 
