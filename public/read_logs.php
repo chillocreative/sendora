@@ -63,6 +63,16 @@ foreach($npmPaths as $p) {
     if (file_exists($p)) echo "✅ Found NPM: $p\n";
 }
 
+echo "\nSearching for Composer:\n";
+$compPaths = [
+    '/usr/local/bin/composer',
+    '/usr/bin/composer',
+    '/opt/cpanel/composer/bin/composer',
+];
+foreach($compPaths as $p) {
+    if (file_exists($p)) echo "✅ Found COMPOSER: $p\n";
+}
+
 echo "\n--- Broad System Search ---\n";
 echo "Searching for 'node' binary (this may take a few seconds)....\n";
 echo shell_exec("find /usr /opt -name node -type f 2>/dev/null | grep bin/node") . "\n";

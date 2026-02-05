@@ -35,14 +35,18 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: 📂 Upload Build Artifacts & Key Files (SCP)
+      - name: � Archive Build Artifacts
+        run: |
+          zip -r deploy.zip app bootstrap config database public resources routes whatsapp-server-temp vendor composer.json composer.lock package.json artisan package-lock.json vite.config.js postcss.config.js tailwind.config.js -x "*.git*" "storage/*" "node_modules/*"
+
+      - name: 📂 Upload Archive (SCP)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "app,bootstrap,config,database,public,resources,routes,whatsapp-server-temp,vendor,composer.json,composer.lock,package.json,artisan,package-lock.json,vite.config.js,postcss.config.js,tailwind.config.js"
+          source: "deploy.zip"
           target: ${{ secrets.REMOTE_TARGET }}
 
       - name: 🚀 Deploy & Configure via SSH
@@ -55,33 +59,38 @@ jobs:
           script: |
             cd ${{ secrets.REMOTE_TARGET }}
             
-            # 1. Update Permissions
+            # 1. Extract Archive
+            if [ -f "deploy.zip" ]; then
+              echo "Extracting deployment archive..."
+              unzip -o deploy.zip
+              rm deploy.zip
+            fi
+
+            # 2. Update Permissions
             chmod -R 755 storage bootstrap/cache
             
-            # 2. Sync to public_html if it exists and is not a symlink to public
+            # 3. Sync to public_html if it exists and is not a symlink to public
             if [ -d "public_html" ] && [ ! -L "public_html" ]; then
               echo "Syncing public to public_html directory..."
               rsync -avz --delete public/ public_html/
             fi
             
-            # 3. Migrate & Clear Cache (EXPLICIT)
+            # 4. Migrate & Clear Cache (EXPLICIT)
             rm -f bootstrap/cache/config.php
             rm -f bootstrap/cache/routes-v7.php
             php artisan optimize:clear
             php artisan migrate --force
             php artisan storage:link --force || true
             
-            # 4. Update Database Settings (CRITICAL: Use Port 3005 to avoid Conflict)
+            # 5. Update Database Settings
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
 
-            # 5. Configure & Restart WhatsApp Server
+            # 6. Configure & Restart WhatsApp Server
             cd whatsapp-server-temp
             
-            # CRITICAL: Set Node.js path (discovered from server diagnostics)
             export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
             
-            # Kill ALL ghost node processes
             echo "Killing ghost WhatsApp processes..."
             pkill -f "server.js" || true
             pkill -f "lsnode.*whatsapp-server" || true
@@ -90,24 +99,19 @@ jobs:
             mkdir -p sessions
             chmod -R 777 sessions
             
-            # Install dependencies using the correct npm binary
-            echo "Installing Node dependencies with correct npm..."
+            # Install Node dependencies
+            echo "Installing Node dependencies..."
             /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund
             
-            # Ensure .env is correct for Node (USING PORT 3005)
             echo "WA_SERVER_PORT=3005" > .env
             echo "API_BASE_URL=http://127.0.0.1" >> .env
-            
-            # Clear old log to keep it fresh
             > server.log
             
-            # Restart Passenger (Node Server) - LiteSpeed will auto-start server.js
             mkdir -p tmp
             touch tmp/restart.txt
             
-            # Also trigger restart from root just in case
             cd ..
             mkdir -p whatsapp-server-temp/tmp
             touch whatsapp-server-temp/tmp/restart.txt
             
-            echo "✅ Deployment SUCCESS! WhatsApp server should start in 5-10 seconds."
+            echo "✅ Deployment SUCCESS!"
