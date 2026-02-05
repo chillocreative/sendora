@@ -4,8 +4,10 @@ namespace App\Actions\Fortify;
 
 use App\Models\Team;
 use App\Models\User;
+use App\Services\AdminNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
@@ -36,12 +38,15 @@ class CreateNewUser implements CreatesNewUsers
             ]), function (User $user) use ($input) {
                 $this->createTeam($user);
 
+                $planName = 'Free';
+
                 if (!empty($input['plan_id'])) {
                     $plan = \App\Models\SubscriptionPlan::find($input['plan_id']);
                     if ($plan) {
+                        $planName = $plan->name;
                         $isFree = $plan->monthly_price <= 0;
                         $cycle = $input['billing_cycle'] ?? 'monthly';
-                        
+
                         \App\Models\UserSubscription::create([
                             'user_id' => $user->id,
                             'subscription_plan_id' => $plan->id,
@@ -53,6 +58,19 @@ class CreateNewUser implements CreatesNewUsers
                             session(['registration_billing_cycle' => $cycle]);
                         }
                     }
+                }
+
+                // Notify admin of new user registration
+                try {
+                    $notificationService = new AdminNotificationService();
+                    $notificationService->sendNotification('registration', $user->id, [
+                        'plan_name' => $planName,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to queue registration notification', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                    ]);
                 }
             });
         });

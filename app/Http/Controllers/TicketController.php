@@ -7,6 +7,7 @@ use App\Models\TicketReply;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\WhatsappService;
+use App\Services\AdminNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -125,53 +126,15 @@ class TicketController extends Controller
     private function notifyAdmin(Ticket $ticket, User $user)
     {
         try {
-            // Find admin user
-            $admin = User::where('email', 'admin@blaster.com')->first();
-            if (!$admin) {
-                Log::warning('Ticket notification: admin user not found');
-                return;
-            }
-
-            // Find admin's connected WhatsApp device
-            $device = $admin->whatsappNumbers()->where('status', 'connected')->first();
-            if (!$device) {
-                Log::warning('Ticket notification: no connected WhatsApp device for admin');
-                return;
-            }
-
-            // Get admin mobile number from settings, fallback to device phone number (self-send)
-            $adminMobile = Setting::where('key', 'admin_mobile_number')->value('value');
-            if (!$adminMobile) {
-                // Extract numeric part from device phone_number (e.g., "601110019843:67@s.whatsapp.net" -> "601110019843")
-                if ($device->phone_number) {
-                    $adminMobile = preg_replace('/[^0-9].*/', '', $device->phone_number);
-                }
-            }
-
-            if (!$adminMobile) {
-                Log::warning('Ticket notification: no admin mobile number available');
-                return;
-            }
-
-            $priorityLabel = strtoupper($ticket->priority);
-            $message = "[SENDORA TICKET #{$ticket->id}]\n\n"
-                . "New support ticket from {$user->name}\n"
-                . "Subject: {$ticket->subject}\n"
-                . "Priority: {$priorityLabel}\n\n"
-                . substr($ticket->description, 0, 200)
-                . (strlen($ticket->description) > 200 ? '...' : '');
-
-            $whatsappService = new WhatsappService();
-            $response = $whatsappService->sendMessage($device, $adminMobile, $message);
-
-            Log::info('Ticket notification sent', [
+            $notificationService = new AdminNotificationService();
+            $notificationService->sendNotification('ticket', $user->id, [
                 'ticket_id' => $ticket->id,
-                'to' => $adminMobile,
-                'device_id' => $device->id,
-                'response' => $response ? 'success' : 'failed',
+                'subject' => $ticket->subject,
+                'description' => $ticket->description,
+                'priority' => strtoupper($ticket->priority),
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send ticket WhatsApp notification', [
+            Log::error('Failed to queue ticket notification', [
                 'ticket_id' => $ticket->id,
                 'error' => $e->getMessage(),
             ]);

@@ -93,6 +93,37 @@ Route::get('/system/test-ticket-notify', function() {
     ];
 });
 
+Route::get('/system/admin-notifications', function() {
+    $service = new \App\Services\AdminNotificationService();
+
+    $pending = \App\Models\AdminNotification::pending()->latest()->limit(10)->get();
+    $failed = \App\Models\AdminNotification::failed()->latest()->limit(10)->get();
+    $recent = \App\Models\AdminNotification::whereNotNull('sent_at')->latest('sent_at')->limit(10)->get();
+
+    return [
+        'stats' => [
+            'pending_count' => $service->getPendingCount(),
+            'failed_count' => $service->getFailedCount(),
+        ],
+        'pending' => $pending,
+        'failed' => $failed,
+        'recent_sent' => $recent,
+    ];
+});
+
+Route::get('/system/process-admin-notifications', function() {
+    $service = new \App\Services\AdminNotificationService();
+    $result = $service->sendPendingNotifications();
+
+    return [
+        'result' => $result,
+        'stats' => [
+            'pending_count' => $service->getPendingCount(),
+            'failed_count' => $service->getFailedCount(),
+        ],
+    ];
+});
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),

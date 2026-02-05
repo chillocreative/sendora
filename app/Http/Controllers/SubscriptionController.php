@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\SubscriptionPlan;
 use App\Models\Setting;
+use App\Services\AdminNotificationService;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionController extends Controller
 {
@@ -38,6 +40,20 @@ class SubscriptionController extends Controller
             $subscription->update([
                 'cancelled_at' => now(),
             ]);
+
+            // Notify admin of cancellation
+            try {
+                $notificationService = new AdminNotificationService();
+                $notificationService->sendNotification('cancellation', $user->id, [
+                    'plan_name' => $subscription->plan->name ?? 'Unknown',
+                    'ends_at' => $subscription->ends_at ? $subscription->ends_at->format('M d, Y') : 'Unknown',
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to queue cancellation notification', [
+                    'subscription_id' => $subscription->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return back()->with('flash', [
                 'banner' => 'Subscription cancelled. You will retain access until the end of your billing period.',

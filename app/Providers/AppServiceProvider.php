@@ -23,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Auth\Events\Registered::class,
             \App\Listeners\SendWelcomeEmail::class,
         );
+
+        // Register WhatsApp Number observer for admin notifications
+        \App\Models\WhatsappNumber::observe(\App\Observers\WhatsappNumberObserver::class);
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
                 $settings = \App\Models\Setting::all()->pluck('value', 'key');

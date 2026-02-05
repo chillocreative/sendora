@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\AdminNotificationService;
 
 class PaymentController extends Controller
 {
@@ -188,6 +189,23 @@ class PaymentController extends Controller
                     'ends_at' => $endsAt,
                     'cancelled_at' => null, // Reset cancellation if re-subscribing
                 ]);
+
+                // Notify admin of successful payment
+                try {
+                    $notificationService = new AdminNotificationService();
+                    $notificationService->sendNotification('payment', $transaction->user_id, [
+                        'transaction_id' => $transaction->id,
+                        'plan_name' => $plan->name ?? 'Unknown',
+                        'amount' => number_format($transaction->amount, 2),
+                        'currency' => $transaction->currency,
+                        'billing_cycle' => $isYearly ? 'Yearly' : 'Monthly',
+                    ]);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to queue payment notification', [
+                        'transaction_id' => $transaction->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
         }
 
