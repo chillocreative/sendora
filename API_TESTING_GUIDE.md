@@ -144,8 +144,7 @@ curl -X POST https://sendora.cc/api/v1/contacts \
   -d '{
     "name": "Jane Smith",
     "phone": "60123456789",
-    "email": "jane@example.com",
-    "tags": ["customer", "vip"]
+    "country_code": "60"
   }'
 ```
 
@@ -156,8 +155,8 @@ curl -X POST https://sendora.cc/api/v1/contacts \
   "data": {
     "id": 2,
     "name": "Jane Smith",
-    "phone": "60123456789",
-    "email": "jane@example.com"
+    "phone_number": "60123456789",
+    "country_code": "60"
   },
   "message": "Contact created successfully."
 }

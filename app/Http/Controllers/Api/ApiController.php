@@ -61,8 +61,7 @@ class ApiController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'tags' => 'nullable|array',
+            'country_code' => 'nullable|string|max:5',
         ]);
 
         if ($validator->fails()) {
@@ -84,7 +83,12 @@ class ApiController extends Controller
             ], 403);
         }
 
-        $contact = $user->contacts()->create($request->all());
+        // Create contact with proper field mapping
+        $contact = $user->contacts()->create([
+            'name' => $request->name,
+            'phone_number' => $request->phone,
+            'country_code' => $request->country_code ?? '60',
+        ]);
 
         return response()->json([
             'success' => true,
