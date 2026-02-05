@@ -59,52 +59,49 @@ jobs:
           envs: G_TOKEN
           script: |
             cd ${{ secrets.REMOTE_TARGET }}
-            
-            set -e # Stop on any error
-            
-            # 1. Pull latest code (using temporary token for auth)
-            git config --local credential.helper ""
-            git remote set-url origin "https://x-access-token:$G_TOKEN@github.com/${{ github.repository }}.git"
-            git fetch --depth=1 origin main
-            git reset --hard origin/main
+            set -e
 
+            if [ -z "$G_TOKEN" ]; then
+                echo "❌ Error: G_TOKEN is missing. Check 'envs' configuration."
+                exit 1
+            fi
+
+            # 1. Pull latest code (Direct fetch avoids remote URL issues)
+            echo "Pulling latest code..."
+            git fetch --depth=1 "https://x-access-token:$G_TOKEN@github.com/${{ github.repository }}.git" main
+            git reset --hard FETCH_HEAD
             
             # 2. Migrate & optimize
             php artisan optimize:clear
             php artisan migrate --force
             
-            # Create storage link only if it doesn't exist
             if [ ! -L public/storage ]; then
                 php artisan storage:link || true
             fi
             
-            # 3. Configure Node Environment (CRITICAL: Port 3005)
+            # 3. Configure Node Environment
             echo "WA_SERVER_PORT=3005" > whatsapp-server-temp/.env
             echo "API_BASE_URL=http://127.0.0.1" >> whatsapp-server-temp/.env
 
-            # 4. Update Database Settings (CRITICAL: Port 3005)
+            # 4. Update Database Settings
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
 
             # 5. Management of Node Server
-            echo "Cleaning up old processes..."
-            # Use a regex trick s[e]rver.js so pgrep doesn't find this script itself
+            echo "Cleaning up WhatsApp processes..."
+            # Regex [e] trick prevents pgrep from finding the script itself
             PID=$(pgrep -f "node.*s[e]rver.js" || true)
             if [ ! -z "$PID" ]; then
-                echo "Killing PIDs: $PID"
                 kill -9 $PID || true
             fi
 
             cd whatsapp-server-temp
             export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
-            
-            echo "Installing dependencies..."
             /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund --quiet || echo "⚠️ NPM issues"
             
-            # Restart Engine
             mkdir -p tmp
             touch tmp/restart.txt
             
-            cd ..
-            echo "✅ Deployment complete on Port 3005!"
+            echo "✅ Deployment successful!"
+
 
