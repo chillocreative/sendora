@@ -153,9 +153,13 @@ class ApiController extends Controller
 
         // Send via WhatsApp server
         try {
-            $response = Http::post(config('app.url') . ':3000/send-message', [
-                'userId' => $user->id,
-                'numberId' => $device->id,
+            $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value')
+                           ?? env('WA_SERVER_URL', 'http://localhost:3000');
+            $waServerUrl = rtrim($waServerUrl, '/');
+
+            $response = Http::withoutVerifying()->timeout(30)->post("{$waServerUrl}/send-message", [
+                'user_id' => $user->id,
+                'phone_number' => $device->id,
                 'to' => $request->phone,
                 'message' => $request->message,
             ]);
