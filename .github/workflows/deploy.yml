@@ -58,7 +58,13 @@ jobs:
             # 1. Update Permissions
             chmod -R 755 storage bootstrap/cache
             
-            # 2. Dependencies
+            # 2. Sync to public_html if it exists and is not a symlink to public
+            if [ -d "public_html" ] && [ ! -L "public_html" ]; then
+              echo "Syncing public to public_html directory..."
+              rsync -avz --delete public/ public_html/
+            fi
+            
+            # 3. Dependencies
             composer install --no-dev --optimize-autoloader --no-interaction
             
             # 3. Migrate & Clear Cache (EXPLICIT)
