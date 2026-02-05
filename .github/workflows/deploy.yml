@@ -63,8 +63,8 @@ jobs:
 
             # 1. Pull latest code
             echo "Pulling latest code using token..."
-            # Using the token directly in the URL is the most compatible way for cPanel git versions
-            git fetch --depth=1 "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" main
+            # Using the 'x-access-token' username is the official way to use GITHUB_TOKEN over HTTPS
+            git fetch --depth=1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" main
             git reset --hard FETCH_HEAD
             
             # 2. Migrate & optimize
@@ -85,7 +85,6 @@ jobs:
 
             # 5. Management of Node Server
             echo "Cleaning up WhatsApp processes..."
-            # Kill specifically the node processes running server.js
             pgrep -f "node.*server.js" | xargs kill -9 || true
 
             cd whatsapp-server-temp
@@ -96,6 +95,7 @@ jobs:
             touch tmp/restart.txt
             
             echo "✅ Deployment successful!"
+
 
 
 
