@@ -35,14 +35,14 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: 📂 Upload Build Artifacts (SCP)
+      - name: 📂 Upload App Code & Assets (SCP)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "public/build"
+          source: "app,bootstrap,config,database,public,resources,routes,composer.json,composer.lock"
           target: ${{ secrets.REMOTE_TARGET }}
 
       - name: 🚀 Deploy & Configure via SSH
@@ -55,9 +55,8 @@ jobs:
           script: |
             cd ${{ secrets.REMOTE_TARGET }}
             
-            # 1. Pull latest code
-            git fetch origin main
-            git reset --hard origin/main
+            # Note: Code uploaded via SCP, so no git pull needed.
+            # This avoids issues where the server's git state is stale or broken.
             
             # 2. Migrate & optimize
             # Note: We uploaded public/build via SCP, so no need to build on server.
