@@ -42,7 +42,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "app,bootstrap,config,database,public,resources,routes,whatsapp-server-temp,composer.json,composer.lock,package.json,artisan,package-lock.json,vite.config.js,postcss.config.js,tailwind.config.js"
+          source: "app,bootstrap,config,database,public,resources,routes,whatsapp-server-temp,vendor,composer.json,composer.lock,package.json,artisan,package-lock.json,vite.config.js,postcss.config.js,tailwind.config.js"
           target: ${{ secrets.REMOTE_TARGET }}
 
       - name: 🚀 Deploy & Configure via SSH
@@ -63,9 +63,6 @@ jobs:
               echo "Syncing public to public_html directory..."
               rsync -avz --delete public/ public_html/
             fi
-            
-            # 3. Dependencies
-            composer install --no-dev --optimize-autoloader --no-interaction
             
             # 3. Migrate & Clear Cache (EXPLICIT)
             rm -f bootstrap/cache/config.php
