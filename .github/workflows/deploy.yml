@@ -7,12 +7,15 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
 
 jobs:
   web-deploy:
     name: 🎉 Deploy via SSH
     runs-on: ubuntu-latest
     steps:
+
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
 
@@ -49,26 +52,19 @@ jobs:
 
       - name: 🚀 Deploy & Configure via SSH
         uses: appleboy/ssh-action@v1.0.3
-        env:
-          G_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          envs: G_TOKEN
           script: |
             cd ${{ secrets.REMOTE_TARGET }}
             set -e
 
-            if [ -z "$G_TOKEN" ]; then
-                echo "❌ Error: G_TOKEN is missing. Check 'envs' configuration."
-                exit 1
-            fi
-
-            # 1. Pull latest code (Direct fetch avoids remote URL issues)
-            echo "Pulling latest code..."
-            git fetch --depth=1 "https://x-access-token:$G_TOKEN@github.com/${{ github.repository }}.git" main
+            # 1. Pull latest code
+            echo "Pulling latest code using token..."
+            # Using the token directly in the URL is the most compatible way for cPanel git versions
+            git fetch --depth=1 "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" main
             git reset --hard FETCH_HEAD
             
             # 2. Migrate & optimize
@@ -89,11 +85,8 @@ jobs:
 
             # 5. Management of Node Server
             echo "Cleaning up WhatsApp processes..."
-            # Regex [e] trick prevents pgrep from finding the script itself
-            PID=$(pgrep -f "node.*s[e]rver.js" || true)
-            if [ ! -z "$PID" ]; then
-                kill -9 $PID || true
-            fi
+            # Kill specifically the node processes running server.js
+            pgrep -f "node.*server.js" | xargs kill -9 || true
 
             cd whatsapp-server-temp
             export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
@@ -103,5 +96,6 @@ jobs:
             touch tmp/restart.txt
             
             echo "✅ Deployment successful!"
+
 
 
