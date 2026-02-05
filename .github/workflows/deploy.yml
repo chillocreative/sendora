@@ -57,16 +57,19 @@ jobs:
           script: |
             cd ${{ secrets.REMOTE_TARGET }}
             
-            # 1. Pull latest code
+            # 1. Pull latest code (using temporary token for auth)
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git fetch origin main
             git reset --hard origin/main
             
             # 2. Migrate & optimize
-            # Note: We uploaded public/build via SCP, so no need to build on server.
-            
             php artisan optimize:clear
             php artisan migrate --force
-            php artisan storage:link || true
+            
+            # Create storage link only if it doesn't exist
+            if [ ! -L public/storage ]; then
+                php artisan storage:link
+            fi
             
             # 3. Configure Node Environment (CRITICAL: Port 3005)
             echo "WA_SERVER_PORT=3005" > whatsapp-server-temp/.env
@@ -77,9 +80,10 @@ jobs:
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
 
             # 5. Management of Node Server
-            echo "Killing ghost processes..."
-            pkill -9 -f "server.js" || true
-            pkill -9 -u $(whoami) lsnode || true
+            echo "Cleaning up old processes..."
+            # Kill only the specific server.js process, not the entire user session
+            pgrep -f "server.js" | xargs kill -9 || true
+
 
             cd whatsapp-server-temp
             export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
