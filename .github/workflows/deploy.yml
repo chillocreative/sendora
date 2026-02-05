@@ -35,9 +35,10 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: � Archive Build Artifacts
+      - name: 📦 Archive Build Artifacts
         run: |
-          zip -r deploy.zip app bootstrap config database public resources routes whatsapp-server-temp vendor composer.json composer.lock package.json artisan package-lock.json vite.config.js postcss.config.js tailwind.config.js -x "*.git*" "storage/*" "node_modules/*"
+          if [ ! -d "vendor" ]; then echo "Error: vendor directory missing!"; exit 1; fi
+          tar -czf deploy.tar.gz app bootstrap config database public resources routes whatsapp-server-temp vendor composer.json composer.lock package.json artisan package-lock.json vite.config.js postcss.config.js tailwind.config.js
 
       - name: 📂 Upload Archive (SCP)
         uses: appleboy/scp-action@v0.1.7
@@ -46,7 +47,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "deploy.zip"
+          source: "deploy.tar.gz"
           target: ${{ secrets.REMOTE_TARGET }}
 
       - name: 🚀 Deploy & Configure via SSH
@@ -57,61 +58,59 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            set -e
             cd ${{ secrets.REMOTE_TARGET }}
+            echo "Working in: $(pwd)"
             
             # 1. Extract Archive
-            if [ -f "deploy.zip" ]; then
-              echo "Extracting deployment archive..."
-              unzip -o deploy.zip
-              rm deploy.zip
+            if [ -f "deploy.tar.gz" ]; then
+              echo "Extracting tarball..."
+              tar -xzf deploy.tar.gz
+              rm deploy.tar.gz
+            else
+              echo "❌ Error: deploy.tar.gz NOT FOUND on server!"
+              exit 1
             fi
 
-            # 2. Update Permissions
+            # 2. Permissions
             chmod -R 755 storage bootstrap/cache
             
-            # 3. Sync to public_html if it exists and is not a symlink to public
+            # 3. Sync Public
             if [ -d "public_html" ] && [ ! -L "public_html" ]; then
-              echo "Syncing public to public_html directory..."
-              rsync -avz --delete public/ public_html/
+              echo "Syncing to public_html..."
+              rsync -avz --quiet public/ public_html/
             fi
             
-            # 4. Migrate & Clear Cache (EXPLICIT)
-            rm -f bootstrap/cache/config.php
-            rm -f bootstrap/cache/routes-v7.php
+            # 4. Laravel Maintenance
             php artisan optimize:clear
             php artisan migrate --force
             php artisan storage:link --force || true
             
-            # 5. Update Database Settings
+            # 5. WhatsApp Connection Settings
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
 
-            # 6. Configure & Restart WhatsApp Server
+            # 6. Node Server Management
             cd whatsapp-server-temp
-            
             export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
             
-            echo "Killing ghost WhatsApp processes..."
+            echo "Resetting WhatsApp process..."
             pkill -f "server.js" || true
-            pkill -f "lsnode.*whatsapp-server" || true
-            sleep 2
+            pkill -u $(whoami) lsnode || true
             
             mkdir -p sessions
             chmod -R 777 sessions
             
-            # Install Node dependencies
-            echo "Installing Node dependencies..."
-            /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund
+            # Install Node deps (quietly)
+            /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund --quiet
             
+            # Refresh Config
             echo "WA_SERVER_PORT=3005" > .env
             echo "API_BASE_URL=http://127.0.0.1" >> .env
             > server.log
             
+            # Passenger Restart
             mkdir -p tmp
             touch tmp/restart.txt
             
-            cd ..
-            mkdir -p whatsapp-server-temp/tmp
-            touch whatsapp-server-temp/tmp/restart.txt
-            
-            echo "✅ Deployment SUCCESS!"
+            echo "✅ DEPLOYMENT COMPLETE"
