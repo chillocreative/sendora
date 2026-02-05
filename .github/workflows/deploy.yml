@@ -72,7 +72,7 @@ jobs:
             rm -f bootstrap/cache/routes-v7.php
             php artisan optimize:clear
             php artisan migrate --force
-            php artisan storage:link || true
+            php artisan storage:link --force || true
             
             # 4. Update Database Settings (CRITICAL: Use Local Loopback for Stability)
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3000'])"
@@ -80,6 +80,8 @@ jobs:
 
             # 5. Configure & Restart WhatsApp Server
             cd whatsapp-server-temp
+            mkdir -p sessions
+            chmod -R 777 sessions
             npm install --production
             
             # Ensure .env is correct for Node
