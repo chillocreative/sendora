@@ -125,8 +125,8 @@ jobs:
             echo "📱 Step 8: Configuring WhatsApp server..."
             mkdir -p whatsapp-server-temp
             cat > whatsapp-server-temp/.env << 'ENVEOF'
-            WA_SERVER_PORT=3005
-            API_BASE_URL=http://127.0.0.1
+            PORT=3005
+            API_BASE_URL=https://sendora.cc
             ENVEOF
             echo "✅ WhatsApp .env configured"
             echo ""
@@ -137,7 +137,7 @@ jobs:
             require __DIR__.'/vendor/autoload.php';
             \$app = require_once __DIR__.'/bootstrap/app.php';
             \$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
-            \App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005']);
+            \App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'https://sendora.cc/whatsapp-server-temp']);
             \App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc']);
             echo 'Settings updated';
             " || echo "⚠️ Settings update failed"
