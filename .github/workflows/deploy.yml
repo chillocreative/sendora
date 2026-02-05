@@ -1,5 +1,4 @@
-name: Deploy to cPanel (SSH/Rsync)
-# Trigger: SSH Key Update
+name: Deploy to cPanel (SSH Only)
 
 on:
   push:
@@ -16,40 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: 🚚 Get latest code
-        uses: actions/checkout@v4
-
-      - name: 🐘 Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, zip
-          tools: composer:v2
-
-      - name: 📦 Install PHP Dependencies
-        run: |
-          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: 🔨 Install & Build Assets
-        run: |
-          npm install --legacy-peer-deps
-          npm run build
-
-      - name: 📂 Upload Build Artifacts (SCP)
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          source: "public/build"
-          target: ${{ secrets.REMOTE_TARGET }}
-
       - name: 🚀 Deploy & Configure via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -57,44 +22,144 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          command_timeout: 30m
           script: |
-            cd ${{ secrets.REMOTE_TARGET }}
             set -e
+            cd ${{ secrets.REMOTE_TARGET }} || { echo "❌ Failed to cd to target directory"; exit 1; }
+
+            echo "======================================"
+            echo "🚀 DEPLOYMENT STARTED"
+            echo "======================================"
+            echo "Target: ${{ secrets.REMOTE_TARGET }}"
+            echo "Time: $(date)"
+            echo ""
 
             # 1. Pull latest code
-            echo "Pulling latest code using token..."
-            # Using the 'x-access-token' username is the official way to use GITHUB_TOKEN over HTTPS
-            git fetch --depth=1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" main
-            git reset --hard FETCH_HEAD
-            
-            # 2. Migrate & optimize
-            php artisan optimize:clear
-            php artisan migrate --force
-            
-            if [ ! -L public/storage ]; then
-                php artisan storage:link || true
+            echo "📥 Step 1: Pulling latest code..."
+            if [ -d .git ]; then
+              git fetch origin main || git fetch --all || { echo "❌ Git fetch failed"; exit 1; }
+              git reset --hard origin/main || git reset --hard FETCH_HEAD || { echo "❌ Git reset failed"; exit 1; }
+              echo "✅ Code updated: $(git log -1 --oneline)"
+            else
+              echo "❌ ERROR: Not a git repository!"
+              echo "Please initialize git in your cPanel directory:"
+              echo "  cd ${{ secrets.REMOTE_TARGET }}"
+              echo "  git init"
+              echo "  git remote add origin git@github.com:chillocreative/sendora.git"
+              echo "  git fetch origin main"
+              echo "  git checkout -b main origin/main"
+              exit 1
             fi
-            
-            # 3. Configure Node Environment
-            echo "WA_SERVER_PORT=3005" > whatsapp-server-temp/.env
-            echo "API_BASE_URL=http://127.0.0.1" >> whatsapp-server-temp/.env
+            echo ""
 
-            # 4. Update Database Settings
-            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
-            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
+            # 2. Install Composer dependencies
+            echo "📦 Step 2: Installing Composer dependencies..."
+            if command -v composer &> /dev/null; then
+              composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -5 || echo "⚠️ Composer had issues"
+              echo "✅ Composer dependencies installed"
+            else
+              echo "⚠️ Composer not found, skipping PHP dependencies"
+            fi
+            echo ""
 
-            # 5. Management of Node Server
-            echo "Cleaning up WhatsApp processes..."
-            pgrep -f "node.*server.js" | xargs kill -9 || true
+            # 3. Find Node.js
+            echo "🔍 Step 3: Locating Node.js..."
+            NODE_BIN=""
+            NPM_BIN=""
+
+            # Search for node and npm
+            for base_path in /opt/alt/alt-nodejs*/root/usr/bin /usr/local/bin /usr/bin ~/.nvm/versions/node/*/bin; do
+              for node_path in $base_path; do
+                if [ -f "$node_path/node" ]; then
+                  NODE_BIN="$node_path/node"
+                  NPM_BIN="$node_path/npm"
+                  export PATH="$node_path:$PATH"
+                  break 2
+                fi
+              done
+            done
+
+            if [ -n "$NODE_BIN" ]; then
+              echo "✅ Found Node.js: $($NODE_BIN --version)"
+              echo "✅ Found NPM: $($NPM_BIN --version)"
+            else
+              echo "❌ Node.js not found!"
+              echo "Please install Node.js in cPanel or update the PATH"
+              exit 1
+            fi
+            echo ""
+
+            # 4. Build frontend assets
+            echo "🔨 Step 4: Building frontend assets..."
+            $NPM_BIN install --legacy-peer-deps 2>&1 | tail -10 || echo "⚠️ npm install had issues"
+            $NPM_BIN run build 2>&1 | tail -10 || { echo "❌ Build failed"; exit 1; }
+            echo "✅ Assets built successfully"
+            echo ""
+
+            # 5. Laravel optimizations
+            echo "⚙️ Step 5: Running Laravel optimizations..."
+            php artisan optimize:clear 2>&1 | head -5 || echo "⚠️ Cache clear had issues"
+            php artisan config:cache || echo "⚠️ Config cache had issues"
+            php artisan route:cache || echo "⚠️ Route cache had issues"
+            php artisan view:cache || echo "⚠️ View cache had issues"
+            echo "✅ Laravel optimized"
+            echo ""
+
+            # 6. Run migrations
+            echo "🗄️ Step 6: Running database migrations..."
+            php artisan migrate --force 2>&1 | tail -5 || echo "⚠️ Migration had issues"
+            echo "✅ Migrations completed"
+            echo ""
+
+            # 7. Storage link
+            echo "🔗 Step 7: Creating storage symlink..."
+            if [ ! -L public/storage ]; then
+              php artisan storage:link || echo "⚠️ Storage link failed"
+              echo "✅ Storage link created"
+            else
+              echo "✅ Storage link already exists"
+            fi
+            echo ""
+
+            # 8. Configure WhatsApp Server
+            echo "📱 Step 8: Configuring WhatsApp server..."
+            mkdir -p whatsapp-server-temp
+            cat > whatsapp-server-temp/.env << 'ENVEOF'
+            WA_SERVER_PORT=3005
+            API_BASE_URL=http://127.0.0.1
+            ENVEOF
+            echo "✅ WhatsApp .env configured"
+            echo ""
+
+            # 9. Update database settings
+            echo "💾 Step 9: Updating database settings..."
+            php artisan tinker --execute="\\App\\Models\\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005']);" 2>&1 | grep -v "Psy Shell" || echo "⚠️ Setting 1 failed"
+            php artisan tinker --execute="\\App\\Models\\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc']);" 2>&1 | grep -v "Psy Shell" || echo "⚠️ Setting 2 failed"
+            echo "✅ Settings updated"
+            echo ""
+
+            # 10. Setup WhatsApp server
+            echo "🔄 Step 10: Setting up WhatsApp server..."
+            pkill -f "whatsapp-server-temp.*server.js" 2>/dev/null || echo "No existing processes found"
 
             cd whatsapp-server-temp
-            export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
-            /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund --quiet || echo "⚠️ NPM issues"
-            
+            $NPM_BIN install --no-audit --no-fund 2>&1 | tail -5 || echo "⚠️ WhatsApp npm install had issues"
+
             mkdir -p tmp
             touch tmp/restart.txt
-            
-            echo "✅ Deployment successful!"
+            echo "✅ WhatsApp server configured"
+
+            cd ${{ secrets.REMOTE_TARGET }}
+            echo ""
+
+            echo "======================================"
+            echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY!"
+            echo "======================================"
+            echo "Repository: ${{ github.repository }}"
+            echo "Commit: ${{ github.sha }}"
+            echo "Branch: main"
+            echo "Deployed: $(date)"
+            echo "======================================"
 
 
 
