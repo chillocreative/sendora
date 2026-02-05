@@ -20,8 +20,8 @@ const endpoints = [
         response: `{
   "success": true,
   "data": {
-    "id": 1,
-    "name": "LECRA",
+    "id": 7,
+    "name": "Your Name",
     "email": "user@example.com",
     "subscription": {
       "plan": "Business",
@@ -29,9 +29,22 @@ const endpoints = [
       "limits": {
         "whatsapp_nos": 5,
         "contacts": 10000,
-        "messages": 20000
+        "messages": 20000,
+        "features": {
+          "api_access": true,
+          "auto_reply": true,
+          "webhooks": true,
+          "scheduling": true,
+          "multi_user": true,
+          "pdf_support": true,
+          "file_support": true,
+          "image_support": true,
+          "text_support": true,
+          "link_preview": true,
+          "message_preview": true
+        }
       },
-      "messages_used": 150
+      "messages_used": 0
     }
   }
 }`
@@ -46,13 +59,21 @@ const endpoints = [
         response: `{
   "success": true,
   "data": {
-    "devices": { "used": 2, "limit": 5 },
-    "contacts": { "used": 1500, "limit": 10000 },
-    "messages": { "used": 3200, "limit": 20000 },
+    "devices": { "used": 1, "limit": 5 },
+    "contacts": { "used": 1, "limit": 10000 },
+    "messages": { "used": 0, "limit": 20000 },
     "features": {
       "api_access": true,
       "webhooks": true,
-      "auto_reply": true
+      "auto_reply": true,
+      "multi_user": true,
+      "scheduling": true,
+      "pdf_support": true,
+      "file_support": true,
+      "image_support": true,
+      "text_support": true,
+      "link_preview": true,
+      "message_preview": true
     }
   }
 }`
@@ -74,14 +95,17 @@ const endpoints = [
     "current_page": 1,
     "data": [
       {
-        "id": 1,
+        "id": 9,
+        "user_id": 7,
+        "whatsapp_number_id": null,
         "name": "John Doe",
-        "phone": "60123456789",
-        "email": "john@example.com",
-        "tags": ["customer", "vip"]
+        "phone_number": "60123456789",
+        "country_code": "60",
+        "created_at": "2026-02-04T17:49:55.000000Z",
+        "updated_at": "2026-02-04T17:49:55.000000Z"
       }
     ],
-    "total": 150,
+    "total": 1,
     "per_page": 50
   }
 }`
@@ -91,21 +115,22 @@ const endpoints = [
         name: 'Create Contact',
         method: 'POST',
         path: '/api/v1/contacts',
-        description: 'Create a new contact.',
+        description: 'Create a new contact in your database.',
         params: [
             { name: 'name', type: 'string', required: true, description: 'Contact name' },
-            { name: 'phone', type: 'string', required: true, description: 'Phone number with country code' },
-            { name: 'email', type: 'string', required: false, description: 'Email address' },
-            { name: 'tags', type: 'array', required: false, description: 'Array of tags' },
+            { name: 'phone', type: 'string', required: true, description: 'Phone number with country code (e.g., 60123456789)' },
+            { name: 'country_code', type: 'string', required: false, description: 'Country code (default: 60 for Malaysia)' },
         ],
         response: `{
   "success": true,
   "data": {
-    "id": 151,
+    "id": 10,
+    "user_id": 7,
     "name": "Jane Smith",
-    "phone": "60198765432",
-    "email": "jane@example.com",
-    "tags": ["lead"]
+    "phone_number": "60198765432",
+    "country_code": "60",
+    "created_at": "2026-02-06T02:55:00.000000Z",
+    "updated_at": "2026-02-06T02:55:00.000000Z"
   },
   "message": "Contact created successfully."
 }`
@@ -115,16 +140,23 @@ const endpoints = [
         name: 'List Devices',
         method: 'GET',
         path: '/api/v1/devices',
-        description: 'Get all connected WhatsApp devices.',
+        description: 'Get all your connected WhatsApp devices and their status.',
         params: [],
         response: `{
   "success": true,
   "data": [
     {
-      "id": 1,
-      "phone_number": "60123456789@s.whatsapp.net",
+      "id": 30,
+      "user_id": 7,
+      "phone_number": "60148885659:42@s.whatsapp.net",
       "status": "connected",
-      "created_at": "2026-02-01T10:00:00Z"
+      "phone_info": {
+        "id": "60148885659:42@s.whatsapp.net",
+        "lid": "164940266635464:42@lid",
+        "name": "Your Business Name"
+      },
+      "created_at": "2026-02-05T17:20:08.000000Z",
+      "updated_at": "2026-02-05T18:08:40.000000Z"
     }
   ]
 }`
@@ -154,9 +186,10 @@ const endpoints = [
         name: 'List Campaigns',
         method: 'GET',
         path: '/api/v1/campaigns',
-        description: 'Get all your campaigns.',
+        description: 'Get all your campaigns with pagination.',
         params: [
             { name: 'per_page', type: 'integer', required: false, description: 'Items per page (default: 20)' },
+            { name: 'page', type: 'integer', required: false, description: 'Page number' },
         ],
         response: `{
   "success": true,
@@ -164,15 +197,31 @@ const endpoints = [
     "current_page": 1,
     "data": [
       {
-        "id": 1,
-        "name": "Welcome Campaign",
+        "id": 44,
+        "name": "January Promotion",
+        "user_id": 7,
+        "whatsapp_number_id": 30,
+        "message_type": "text",
+        "body": "Your campaign message",
+        "media_path": null,
+        "scheduled_at": "2026-02-05T17:23:00.000000Z",
         "status": "completed",
-        "total_recipients": 500,
-        "sent_count": 498,
-        "failed_count": 2
+        "is_drip": false,
+        "drip_delay_minutes": null,
+        "created_at": "2026-02-05T17:22:40.000000Z",
+        "updated_at": "2026-02-05T17:23:07.000000Z",
+        "whatsapp_number": {
+          "id": 30,
+          "phone_number": "60148885659:42@s.whatsapp.net",
+          "status": "connected",
+          "phone_info": {
+            "name": "Your Business"
+          }
+        }
       }
     ],
-    "total": 10
+    "total": 2,
+    "per_page": 5
   }
 }`
     },
