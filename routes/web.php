@@ -26,6 +26,30 @@ Route::get('/system/force-clear', function() {
     return 'System Cache Cleared via Web Route';
 });
 
+Route::get('/system/wa-debug', function() {
+    $target = "127.0.0.1";
+    $port = 3000;
+    
+    echo "<h1>Built-in WhatsApp Debugger</h1><pre>";
+    echo "Checking 127.0.0.1:3000...\n";
+    $fp = @fsockopen($target, $port, $errno, $errstr, 2);
+    if ($fp) {
+        echo "✅ Port is OPEN\n";
+        fclose($fp);
+    } else {
+        echo "❌ Port is CLOSED ($errstr)\n";
+    }
+    
+    echo "\nTrying health check...\n";
+    try {
+        $res = \Illuminate\Support\Facades\Http::timeout(2)->get("http://127.0.0.1:3000/health");
+        echo "Response: " . ($res->successful() ? "✅ " . $res->body() : "❌ Error " . $res->status());
+    } catch (\Exception $e) {
+        echo "❌ Health check failed: " . $e->getMessage();
+    }
+    echo "</pre>";
+});
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
