@@ -111,27 +111,39 @@ class WhatsappNumberController extends Controller
         $number = auth()->user()->whatsappNumbers()->findOrFail($id);
         
         try {
-            $response = Http::timeout(5)->get("{$this->waServerUrl}/status/" . auth()->id() . "/{$number->id}");
+            Log::info("Manual QR refresh requested for device {$number->id}");
             
-            if ($response->successful()) {
-                $data = $response->json();
-                
-                $updateData = [
-                    'status' => $data['status'] ?? 'disconnected',
-                ];
-                
-                if (!empty($data['qr'])) {
-                    $updateData['qr_code'] = $data['qr'];
+            // First check status
+            $response = Http::withoutVerifying()->timeout(5)->get("{$this->waServerUrl}/status/" . auth()->id() . "/{$number->id}");
+            $data = $response->successful() ? $response->json() : ['status' => 'disconnected', 'connected' => false];
+            
+            // If disconnected, force a connect call
+            if ($data['status'] === 'disconnected' || !$data['connected']) {
+                Log::info("Node server reports disconnected. Triggering /connect...");
+                $response = Http::withoutVerifying()->timeout(15)->post("{$this->waServerUrl}/connect", [
+                    'user_id' => auth()->id(),
+                    'phone_number' => $number->id,
+                ]);
+                if ($response->successful()) {
+                    $data = $response->json();
                 }
-                
-                if ($data['connected'] && !empty($data['phone_info'])) {
-                    $updateData['phone_info'] = $data['phone_info'];
-                    $updateData['phone_number'] = $data['phone_info']['id'] ?? null;
-                    $updateData['qr_code'] = null;
-                }
-                
-                $number->update($updateData);
             }
+            
+            $updateData = [
+                'status' => $data['status'] ?? 'disconnected',
+            ];
+            
+            if (!empty($data['qr'])) {
+                $updateData['qr_code'] = $data['qr'];
+            }
+            
+            if ($data['connected'] && !empty($data['phone_info'])) {
+                $updateData['phone_info'] = $data['phone_info'];
+                $updateData['phone_number'] = $data['phone_info']['id'] ?? null;
+                $updateData['qr_code'] = null;
+            }
+            
+            $number->update($updateData);
         } catch (\Exception $e) {
             Log::error('QR refresh error: ' . $e->getMessage());
         }

@@ -95,7 +95,14 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
         }
 
         safeLog(`[${key}] Fetching latest Baileys version...`);
-        const { version } = await fetchLatestBaileysVersion();
+        let version;
+        try {
+            const v = await fetchLatestBaileysVersion().catch(() => ({ version: [2, 2413, 1] }));
+            version = v.version;
+        } catch (vErr) {
+            version = [2, 2413, 1]; // Fallback to a known stable version
+        }
+
         safeLog(`[${key}] Using Baileys version: ${version.join('.')}`);
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 

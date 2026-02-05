@@ -84,7 +84,7 @@ jobs:
             
             # Ensure .env is correct for Node
             echo "WA_SERVER_PORT=3000" > .env
-            echo "API_BASE_URL=https://sendora.cc" >> .env
+            echo "API_BASE_URL=http://127.0.0.1" >> .env
             
             # Clear old log to keep it fresh
             > server.log

@@ -2,6 +2,7 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted } from 'vue';
+import axios from 'axios';
 
 const props = defineProps({
     number: Object,
@@ -10,7 +11,9 @@ const props = defineProps({
 const refreshInterval = ref(null);
 
 const refreshQr = () => {
-    router.reload({ only: ['number'] });
+    axios.get(route('whatsapp.refresh-qr', props.number.id)).then(() => {
+        router.reload({ only: ['number'] });
+    });
 };
 
 onMounted(() => {
