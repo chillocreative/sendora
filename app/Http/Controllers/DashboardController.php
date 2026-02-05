@@ -91,6 +91,14 @@ class DashboardController extends Controller
             'click_rate' => $openedMessages > 0 ? round(($clickedMessages / $openedMessages) * 100, 1) : 0,
         ];
 
+        // Messages sent this month (current calendar month)
+        $messagesThisMonth = CampaignMessage::join('campaigns', 'campaign_messages.campaign_id', '=', 'campaigns.id')
+            ->where('campaigns.user_id', $user->id)
+            ->whereYear('campaign_messages.created_at', Carbon::now()->year)
+            ->whereMonth('campaign_messages.created_at', Carbon::now()->month)
+            ->whereIn('campaign_messages.status', ['sent', 'delivered', 'read'])
+            ->count();
+
         // Recent campaigns with stats
         $recentCampaigns = Campaign::where('user_id', $user->id)
             ->withCount([
@@ -113,6 +121,7 @@ class DashboardController extends Controller
             'subscription' => $subscription,
             'whatsappCount' => $user->whatsappNumbers()->count(),
             'contactCount' => $user->contacts()->count(),
+            'messagesThisMonth' => $messagesThisMonth,
             'chartData' => $chartData,
             'overallStats' => $overallStats,
             'recentCampaigns' => $recentCampaigns,

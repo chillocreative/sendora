@@ -7,6 +7,7 @@ const props = defineProps({
     subscription: Object,
     whatsappCount: Number,
     contactCount: Number,
+    messagesThisMonth: Number,
     chartData: Array,
     overallStats: Object,
     recentCampaigns: Array,
@@ -17,7 +18,7 @@ let pollInterval;
 onMounted(() => {
     pollInterval = setInterval(() => {
         router.reload({
-            only: ['whatsappCount', 'contactCount', 'chartData', 'overallStats', 'recentCampaigns'],
+            only: ['whatsappCount', 'contactCount', 'messagesThisMonth', 'chartData', 'overallStats', 'recentCampaigns'],
             preserveScroll: true,
             preserveState: true,
         });
@@ -209,7 +210,7 @@ const hideTooltip = () => {
                 </div>
 
                 <!-- Stats Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <!-- WhatsApp Numbers -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start mb-4">
@@ -254,7 +255,7 @@ const hideTooltip = () => {
                         </div>
                     </div>
 
-                    <!-- Total Messages -->
+                    <!-- Total Campaigns -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start mb-4">
                             <div>
@@ -272,6 +273,28 @@ const hideTooltip = () => {
                              </div>
                              <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                                 <div class="bg-[#d8572a] h-2 rounded-full transition-all duration-1000" :style="{ width: Math.min(100, (overallStats?.sent || 0) / (overallStats?.total_messages || 1) * 100) + '%' }"></div>
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages This Month -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-slate-500 text-sm font-bold uppercase tracking-wider">Messages This Month</p>
+                                <h3 class="text-3xl font-black text-slate-800 mt-1">{{ messagesThisMonth?.toLocaleString() || 0 }}</h3>
+                            </div>
+                            <div class="p-3 bg-red-50 text-[#c32f27] rounded-xl">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                            </div>
+                        </div>
+                        <div>
+                             <div class="flex justify-between text-xs font-bold text-slate-400 mb-2">
+                                <span>Sent</span>
+                                <span>{{ (subscription?.plan?.limits?.messages ?? $page.props.auth.user.current_plan?.limits?.messages ?? 0).toLocaleString() }} Limit</span>
+                             </div>
+                             <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div class="bg-[#c32f27] h-2 rounded-full transition-all duration-1000" :style="{ width: Math.min(100, (messagesThisMonth || 0) / (subscription?.plan?.limits?.messages ?? $page.props.auth.user.current_plan?.limits?.messages ?? 1) * 100) + '%' }"></div>
                              </div>
                         </div>
                     </div>
