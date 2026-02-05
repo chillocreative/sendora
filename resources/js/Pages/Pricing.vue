@@ -156,10 +156,14 @@ const selectPlan = (plan) => {
                         <div class="relative z-10 flex flex-col h-full pt-2">
                             <div class="mb-12">
                                 <h4 class="text-2xl font-black mb-4 tracking-tight" :class="plan.name === 'Business' ? 'text-white' : 'text-slate-900'">{{ plan.name }}</h4>
-                                <div class="flex items-baseline mb-6">
-                                    <span class="text-2xl font-bold mr-2 lg:block hidden" :class="plan.name === 'Business' ? 'text-white/40' : 'text-slate-300'">{{ currency }}</span>
-                                    <span class="text-6xl font-black tracking-tighter" :class="plan.name === 'Business' ? 'text-white' : 'text-slate-900'">{{ billingCycle === 'monthly' ? Number(plan.monthly_price).toFixed(2) : (plan.yearly_price / 12).toFixed(2) }}</span>
-                                    <span class="ml-2 font-black text-xs uppercase tracking-widest" :class="plan.name === 'Business' ? 'text-white/40' : 'text-slate-400'">Per Month</span>
+                                <div class="mb-6">
+                                    <div class="flex items-baseline mb-1">
+                                        <span class="text-2xl font-bold mr-2 lg:block hidden" :class="plan.name === 'Business' ? 'text-white/40' : 'text-slate-300'">{{ currency }}</span>
+                                        <span class="text-6xl font-black tracking-tighter" :class="plan.name === 'Business' ? 'text-white' : 'text-slate-900'">{{ billingCycle === 'monthly' ? Number(plan.monthly_price).toFixed(2) : (plan.yearly_price / 12).toFixed(2) }}</span>
+                                    </div>
+                                    <div class="font-black text-xs uppercase tracking-widest" :class="plan.name === 'Business' ? 'text-white/40' : 'text-slate-400'">
+                                        per month
+                                    </div>
                                 </div>
                                 <div v-if="billingCycle === 'yearly' && plan.yearly_price > 0" class="inline-block px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest" :class="plan.name === 'Business' ? 'bg-white/10 text-white' : 'bg-slate-50 text-slate-400 border border-slate-100'">
                                     TOTAL {{ currency }} {{ Number(plan.yearly_price).toFixed(2) }} / YEAR
