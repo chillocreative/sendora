@@ -110,7 +110,13 @@ const formatDate = (date) => {
                             </div>
                             <div class="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 group">
                                 <p class="text-[10px] font-black text-slate-300 group-hover:text-[#db7c26] uppercase tracking-[0.2em] mb-3 transition-colors">Billing Quantum</p>
-                                <p class="text-2xl font-black text-slate-900 tracking-tight">{{ currency }} {{ Number(subscription.plan.monthly_price).toFixed(2) }} <span class="text-xs text-slate-400">/ mo</span></p>
+                                <div class="flex items-baseline gap-2">
+                                    <p class="text-2xl font-black text-slate-900 tracking-tight">{{ currency }} {{ Number(subscription.plan.monthly_price).toFixed(2) }}</p>
+                                    <div class="flex flex-col items-start justify-end pb-0.5">
+                                        <span class="text-slate-400 font-bold text-[8px] uppercase tracking-wider leading-tight">per</span>
+                                        <span class="text-slate-400 font-bold text-[8px] uppercase tracking-wider leading-tight">month</span>
+                                    </div>
+                                </div>
                             </div>
                             <div v-if="subscription.ends_at" class="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 group">
                                 <p class="text-[10px] font-black text-slate-300 group-hover:text-[#f7b538] uppercase tracking-[0.2em] mb-3 transition-colors">Synchronization Date</p>
@@ -187,9 +193,15 @@ const formatDate = (date) => {
                         
                         <div class="mb-10 lg:mb-12">
                             <h4 class="text-xl font-black text-slate-900 mb-4 tracking-tight">{{ plan.name }}</h4>
-                            <div class="flex items-baseline mb-2">
-                                <span class="text-4xl font-black text-slate-900 tracking-tighter">{{ currency }} {{ billingCycle === 'monthly' ? Number(plan.monthly_price).toFixed(2) : (Number(plan.yearly_price) / 12).toFixed(2) }}</span>
-                                <span class="ml-2 text-slate-400 font-black text-[10px] uppercase tracking-widest">/mo</span>
+                            <div class="flex items-baseline gap-2 mb-2">
+                                <div class="flex items-baseline">
+                                    <span class="text-slate-400 font-black text-xs uppercase tracking-wider mr-1">{{ currency }}</span>
+                                    <span class="text-4xl font-black text-slate-900 tracking-tighter">{{ billingCycle === 'monthly' ? Number(plan.monthly_price).toFixed(2) : (Number(plan.yearly_price) / 12).toFixed(2) }}</span>
+                                </div>
+                                <div class="flex flex-col items-start justify-end pb-1">
+                                    <span class="text-slate-400 font-black text-[9px] uppercase tracking-[0.15em] leading-tight">per</span>
+                                    <span class="text-slate-400 font-black text-[9px] uppercase tracking-[0.15em] leading-tight">month</span>
+                                </div>
                             </div>
                             <div v-if="billingCycle === 'yearly' && plan.yearly_price > 0" class="text-[9px] font-black text-[#780116] uppercase tracking-widest bg-red-50 inline-block px-2 py-0.5 rounded-lg">
                                 Billed Annually
