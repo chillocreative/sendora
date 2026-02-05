@@ -53,9 +53,21 @@ class ApiTokenController extends Controller
         $token = $user->createToken($request->name, $request->abilities);
 
         // Store encrypted token for later retrieval
-        $token->accessToken->update([
-            'encrypted_token' => Crypt::encryptString($token->plainTextToken),
-        ]);
+        try {
+            $encrypted = Crypt::encryptString($token->plainTextToken);
+            $token->accessToken->encrypted_token = $encrypted;
+            $token->accessToken->save();
+
+            \Log::info('Token created with encryption', [
+                'token_id' => $token->accessToken->id,
+                'has_encrypted' => !empty($token->accessToken->encrypted_token),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to encrypt token', [
+                'error' => $e->getMessage(),
+                'token_id' => $token->accessToken->id,
+            ]);
+        }
 
         return back()->with([
             'success' => 'API token created successfully.',
