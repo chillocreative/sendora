@@ -37,8 +37,8 @@ jobs:
 
       - name: 📦 Archive Build Artifacts
         run: |
-          if [ ! -d "vendor" ]; then echo "Error: vendor directory missing!"; exit 1; fi
-          tar -czf deploy.tar.gz app bootstrap config database public resources routes whatsapp-server-temp vendor composer.json composer.lock package.json artisan package-lock.json vite.config.js postcss.config.js tailwind.config.js
+          # We EXCLUDE vendor to keep the upload tiny and fast
+          tar -czf deploy.tar.gz app bootstrap config database public resources routes whatsapp-server-temp composer.json composer.lock package.json artisan package-lock.json vite.config.js postcss.config.js tailwind.config.js
 
       - name: 📂 Upload Archive (SCP)
         uses: appleboy/scp-action@v0.1.7
@@ -59,69 +59,57 @@ jobs:
           port: 22
           command_timeout: 30m
           script: |
-            echo "--- STARTING RESILIENT DEPLOYMENT ---"
+            echo "--- STARTING FAST DEPLOYMENT ---"
             cd ${{ secrets.REMOTE_TARGET }} || { echo "❌ Could not enter target directory"; exit 1; }
             
             echo "Step 1: Extracting Archive..."
             if [ -f "deploy.tar.gz" ]; then
-              tar -xzf deploy.tar.gz && echo "✅ Extraction successful" || echo "⚠️ Extraction had issues but continuing..."
+              tar -xzf deploy.tar.gz && echo "✅ Extraction successful"
               rm -f deploy.tar.gz
-            else
-              echo "❌ Archive not found!"
             fi
 
-            echo "Step 2: Setting Permissions..."
-            chmod -R 755 storage bootstrap/cache || true
-            
-            echo "Step 3: Discovering Environment..."
-            # Try to find the best PHP version
+            echo "Step 2: Discovering Binaries..."
+            # Discover PHP and Composer
             PHP_BIN=$(which php83 2>/dev/null || which php8.3 2>/dev/null || which php 2>/dev/null)
-            NODE_BIN="/opt/alt/alt-nodejs24/root/usr/bin/node"
-            NPM_BIN="/opt/alt/alt-nodejs24/root/usr/bin/npm"
-            echo "Using PHP: $PHP_BIN"
-            echo "Using Node: $NODE_BIN"
-
-            echo "Step 4: Syncing Public Files..."
-            if [ -d "public_html" ] && [ ! -L "public_html" ] && [ -d "public" ]; then
-              rsync -avz --quiet public/ public_html/ && echo "✅ Sync complete"
-            fi
+            # Find composer in common cPanel paths
+            COMPOSER_BIN=$(which composer 2>/dev/null || [ -f /opt/cpanel/composer/bin/composer ] && echo "/opt/cpanel/composer/bin/composer" || echo "composer")
             
-            echo "Step 5: Laravel Maintenance..."
+            echo "Using PHP: $PHP_BIN"
+            echo "Using Composer: $COMPOSER_BIN"
+
+            echo "Step 3: Installing PHP Dependencies (Server-side)..."
+            # We run this on the server to avoid uploading the huge vendor folder
+            $PHP_BIN $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction || echo "⚠️ Composer install had issues"
+
+            echo "Step 4: Laravel Maintenance..."
             $PHP_BIN artisan optimize:clear || true
             $PHP_BIN artisan migrate --force || true
             $PHP_BIN artisan storage:link --force || true
             
-            echo "Step 6: Updating WhatsApp Configuration..."
+            echo "Step 5: Updating WhatsApp Configuration..."
             $PHP_BIN artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
             $PHP_BIN artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
 
-            echo "Step 7: Managing WhatsApp Server..."
+            echo "Step 6: Starting WhatsApp Server..."
             if [ -d "whatsapp-server-temp" ]; then
               cd whatsapp-server-temp
-              
-              echo "Killing old processes safely..."
               pkill -9 -f "server.js" || true
               pkill -9 -u $(whoami) lsnode || true
               
               mkdir -p sessions
               chmod -R 777 sessions
               
-              echo "Installing Node dependencies..."
               export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
-              $NPM_BIN install --no-audit --no-fund --quiet || echo "⚠️ NPM install had issues"
+              /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund --quiet || echo "⚠️ NPM issues"
               
-              echo "Generating configs..."
               echo "WA_SERVER_PORT=3005" > .env
               echo "API_BASE_URL=http://127.0.0.1" >> .env
               > server.log
               
-              echo "Triggering Server Restart..."
+              echo "Triggering Restart..."
               mkdir -p tmp
               touch tmp/restart.txt
-              
-              echo "✅ WHATSAPP SERVER READY ON PORT 3005"
-            else
-              echo "❌ whatsapp-server-temp directory missing!"
+              echo "✅ WHATSAPP SERVER READY"
             fi
             
             echo "--- DEPLOYMENT FINISHED ---"
