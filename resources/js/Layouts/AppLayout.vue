@@ -226,8 +226,6 @@ const navigation = computed(() => {
                             <Link :href="route('privacy.policy')" class="hover:text-[#780116] transition-colors">Privacy Policy</Link>
                             <span class="text-slate-900">|</span>
                             <Link :href="route('terms.show')" class="hover:text-[#780116] transition-colors">Terms of Service</Link>
-                            <span class="text-slate-900">|</span>
-                            <Link :href="route('support.index')" class="hover:text-[#780116] transition-colors">Support Center</Link>
                         </div>
                     </div>
                 </footer>
