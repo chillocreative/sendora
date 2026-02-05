@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\SubscriptionPlan;
 use App\Models\Setting;
+use App\Models\Ticket;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -322,5 +323,62 @@ class AdminController extends Controller
         return Inertia::render('Admin/SystemWhatsapp', [
             'numbers' => $numbers,
         ]);
+    }
+
+    public function tickets(Request $request)
+    {
+        $tickets = Ticket::with('user')
+            ->withCount(['replies'])
+            ->when($request->status, fn($q, $status) => $q->where('status', $status))
+            ->when($request->priority, fn($q, $priority) => $q->where('priority', $priority))
+            ->latest()
+            ->paginate(20);
+
+        return Inertia::render('Admin/Tickets', [
+            'tickets' => $tickets,
+            'filters' => $request->only(['status', 'priority']),
+        ]);
+    }
+
+    public function ticketShow($id)
+    {
+        $ticket = Ticket::with(['user', 'replies.user'])->findOrFail($id);
+
+        return Inertia::render('Admin/TicketShow', [
+            'ticket' => $ticket,
+        ]);
+    }
+
+    public function ticketReply(Request $request, $id)
+    {
+        $request->validate([
+            'message' => 'required|string|max:5000',
+            'status' => 'nullable|in:open,in_progress,resolved,closed',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,pdf',
+        ]);
+
+        $ticket = Ticket::findOrFail($id);
+
+        $attachments = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('tickets/' . $ticket->id, 'public');
+                $attachments[] = $path;
+            }
+        }
+
+        $ticket->replies()->create([
+            'user_id' => auth()->id(),
+            'message' => $request->message,
+            'attachments' => !empty($attachments) ? $attachments : null,
+            'is_admin' => true,
+        ]);
+
+        if ($request->status) {
+            $ticket->update(['status' => $request->status]);
+        }
+
+        return back()->with('success', 'Reply sent successfully.');
     }
 }

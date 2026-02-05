@@ -194,6 +194,13 @@ Route::middleware([
     Route::post('/warmer/toggle', [\App\Http\Controllers\WarmerController::class, 'toggle'])->name('warmer.toggle');
     Route::post('/warmer/pool/{id}', [\App\Http\Controllers\WarmerController::class, 'togglePool'])->name('warmer.pool.toggle');
 
+    // Tickets
+    Route::get('/tickets', [\App\Http\Controllers\TicketController::class, 'index'])->name('tickets.index');
+    Route::get('/tickets/create', [\App\Http\Controllers\TicketController::class, 'create'])->name('tickets.create');
+    Route::post('/tickets', [\App\Http\Controllers\TicketController::class, 'store'])->name('tickets.store');
+    Route::get('/tickets/{id}', [\App\Http\Controllers\TicketController::class, 'show'])->name('tickets.show');
+    Route::post('/tickets/{id}/reply', [\App\Http\Controllers\TicketController::class, 'reply'])->name('tickets.reply');
+
     // Admin Routes
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/financials', [\App\Http\Controllers\AdminController::class, 'financials'])->name('financials');
@@ -214,6 +221,9 @@ Route::middleware([
         Route::get('/settings', [\App\Http\Controllers\AdminController::class, 'settings'])->name('settings');
         Route::post('/settings', [\App\Http\Controllers\AdminController::class, 'saveSettings'])->name('settings.save');
         Route::get('/system-whatsapp', [\App\Http\Controllers\AdminController::class, 'systemWhatsapp'])->name('whatsapp');
+        Route::get('/tickets', [\App\Http\Controllers\AdminController::class, 'tickets'])->name('tickets');
+        Route::get('/tickets/{id}', [\App\Http\Controllers\AdminController::class, 'ticketShow'])->name('tickets.show');
+        Route::post('/tickets/{id}/reply', [\App\Http\Controllers\AdminController::class, 'ticketReply'])->name('tickets.reply');
     });
 });
 

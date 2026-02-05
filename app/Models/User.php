@@ -110,6 +110,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(AutoReply::class);
     }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
     /**
      * Send the password reset notification.
      *

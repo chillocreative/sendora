@@ -35,7 +35,8 @@ const adminNavigation = [
     { name: 'Subscription Plans', route: 'admin.plans', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 011.414.586l4 4a1 1 0 01.586 1.414V19a2 2 0 01-2 2z' }, 
     { name: 'Server Health', route: 'admin.server', icon: 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01' }, 
     { name: 'Global Settings', route: 'admin.settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' }, 
-    { name: 'System WhatsApp', route: 'admin.whatsapp', icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' }, 
+    { name: 'System WhatsApp', route: 'admin.whatsapp', icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' },
+    { name: 'Support Tickets', route: 'admin.tickets', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
 ];
 
 const userNavigation = [
@@ -46,6 +47,7 @@ const userNavigation = [
     { name: 'Campaigns', route: 'campaigns.index', icon: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z' },
     { name: 'Send Test Message', route: 'test-message.index', icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8' },
     { name: 'Auto-Replies', route: 'auto-replies.index', icon: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z', feature: 'auto_reply' },
+    { name: 'Tickets', route: 'tickets.index', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', badgeKey: 'unread_tickets' },
     { name: 'Subscription', route: 'subscription.show', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
     { name: 'API Tokens', route: 'api-tokens.index', icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z', feature: 'api_access' },
     { name: 'API Documentation', route: 'api-docs', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', feature: 'api_access' },
@@ -88,11 +90,11 @@ const navigation = computed(() => {
                 <!-- Navigation -->
                 <nav class="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
                     <template v-for="item in navigation" :key="item.name">
-                        <Link 
-                            :href="item.route ? route(item.route) : '#'" 
+                        <Link
+                            :href="item.route ? route(item.route) : '#'"
                             :class="[
-                                (item.route && route().current(item.route)) 
-                                ? 'bg-[#780116] text-white shadow-lg shadow-black/20' 
+                                (item.route && route().current(item.route))
+                                ? 'bg-[#780116] text-white shadow-lg shadow-black/20'
                                 : 'text-slate-400 hover:bg-white/5 hover:text-white',
                                 'group flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all duration-200'
                             ]"
@@ -101,6 +103,9 @@ const navigation = computed(() => {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
                             </svg>
                             {{ item.name }}
+                            <span v-if="item.badgeKey && $page.props.auth.user[item.badgeKey] > 0" class="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-black text-white bg-[#c32f27] rounded-full">
+                                {{ $page.props.auth.user[item.badgeKey] }}
+                            </span>
                         </Link>
                     </template>
                 </nav>
@@ -126,14 +131,17 @@ const navigation = computed(() => {
                 </div>
                 <nav class="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
                      <template v-for="item in navigation" :key="item.name">
-                        <Link 
-                            :href="item.route ? route(item.route) : '#'" 
+                        <Link
+                            :href="item.route ? route(item.route) : '#'"
                             class="group flex items-center px-4 py-4 text-sm font-bold rounded-xl transition-all duration-200"
                             :class="(item.route && route().current(item.route)) ? 'bg-[#780116] text-white shadow-lg shadow-black/40' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
                             @click="showMobileMenu = false"
                         >
                             <svg class="mr-4 h-5 w-5" :class="(item.route && route().current(item.route)) ? 'text-white' : 'text-slate-500 group-hover:text-[#f7b538]'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" /></svg>
                             {{ item.name }}
+                            <span v-if="item.badgeKey && $page.props.auth.user[item.badgeKey] > 0" class="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-black text-white bg-[#c32f27] rounded-full">
+                                {{ $page.props.auth.user[item.badgeKey] }}
+                            </span>
                         </Link>
                     </template>
                 </nav>

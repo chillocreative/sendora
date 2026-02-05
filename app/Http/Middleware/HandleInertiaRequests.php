@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\TicketReply;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -49,6 +50,9 @@ class HandleInertiaRequests extends Middleware
                         ->with('plan')
                         ->first(),
                     'current_plan' => $request->user()->current_plan, // Fallback to Starter
+                    'unread_tickets' => TicketReply::whereHas('ticket', function ($q) use ($request) {
+                        $q->where('user_id', $request->user()->id);
+                    })->where('is_admin', true)->whereNull('read_at')->count(),
                 ] : null,
             ],
         ];
