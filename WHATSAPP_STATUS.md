@@ -1,4 +1,4 @@
-# WhatsApp Integration - Current Status & Recommendation
+# WhatsApp Integration - Status & Deployment Tracking
 
 ## 🔴 Current Issue:
 The "Couldn't link device" error with Baileys is a common problem that occurs when:
