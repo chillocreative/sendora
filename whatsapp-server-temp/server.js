@@ -366,7 +366,7 @@ app.post('/disconnect', async (req, res) => {
 });
 
 // Emergency cleanup of all connections
-app.post('/cleanup-all', (req, res) => {
+app.all('/cleanup-all', (req, res) => {
     console.log('[WA] EMERGENCY CLEANUP ALL');
     for (const [key, conn] of connections.entries()) {
         try {

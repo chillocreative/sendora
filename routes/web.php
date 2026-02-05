@@ -58,12 +58,21 @@ Route::get('/system/wa-purge', function() {
     echo "<h1>Emergency WhatsApp Purge</h1><pre>";
     echo "Calling Node server /cleanup-all...\n";
     try {
-        $res = \Illuminate\Support\Facades\Http::post("{$waServerUrl}/cleanup-all");
+        $res = \Illuminate\Support\Facades\Http::get("{$waServerUrl}/cleanup-all");
         echo "Response: " . ($res->successful() ? "✅ " . $res->body() : "❌ Error " . $res->status());
     } catch (\Exception $e) {
         echo "❌ Failed to reach Node server: " . $e->getMessage();
     }
     echo "</pre>";
+});
+
+Route::get('/system/wa-reset/{id}', function($id) {
+    $number = \App\Models\WhatsappNumber::findOrFail($id);
+    $number->update([
+        'status' => 'disconnected',
+        'qr_code' => null,
+    ]);
+    return "Device {$id} has been reset to disconnected status.";
 });
 
 Route::middleware([
