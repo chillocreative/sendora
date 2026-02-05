@@ -52,23 +52,25 @@ class WhatsappNumberController extends Controller
         
         // If disconnected, initiate connection
         if ($number->status === 'disconnected') {
+            // LOCK: Set status to connecting immediately to prevent refresh-spamming the Node server
+            $number->update(['status' => 'connecting']);
+            
             try {
                 $url = "{$this->waServerUrl}/connect";
-                Log::info("WhatsApp calling connect URL: $url");
+                Log::info("WhatsApp calling connect URL: $url for device {$number->id}");
+                
                 $response = Http::withoutVerifying()->timeout(15)->post($url, [
                     'user_id' => auth()->id(),
                     'phone_number' => $number->id,
                 ]);
                 
-                if ($response->successful()) {
-                    $data = $response->json();
-                    $number->update([
-                        'status' => $data['status'] ?? 'connecting',
-                        'qr_code' => $data['qr'] ?? null,
-                    ]);
+                if (!$response->successful()) {
+                    Log::error("WhatsApp Node server returned error: " . $response->body());
+                    $number->update(['status' => 'disconnected']); // Revert lock on failure
                 }
             } catch (\Exception $e) {
                 Log::error('WhatsApp connection error: ' . $e->getMessage());
+                $number->update(['status' => 'disconnected']); // Revert lock on error
             }
         } else {
             // Fetch current status for this specific user's connection

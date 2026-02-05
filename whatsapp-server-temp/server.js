@@ -136,78 +136,83 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
         sock.ev.on('creds.update', saveCreds);
 
         sock.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect, qr } = update;
+            try {
+                const { connection, lastDisconnect, qr } = update;
+                safeLog(`[${key}] Connection Update: ${connection || 'status'}`);
 
-            if (qr) {
-                connectionData.qr = await qrcode.toDataURL(qr);
-                connectionData.status = 'awaiting_scan';
-                connectionData.lastActivity = new Date();
-                console.log(`[${key}] QR Generated`);
+                if (qr) {
+                    connectionData.qr = await qrcode.toDataURL(qr);
+                    connectionData.status = 'awaiting_scan';
+                    connectionData.lastActivity = new Date();
+                    console.log(`[${key}] QR Generated`);
 
-                // Notify Laravel backend
-                try {
-                    await axios.post(`${API_BASE_URL}/api/whatsapp/qr-update`, {
-                        user_id: userId,
-                        phone_number: whatsappNumberId,
-                        qr_code: connectionData.qr,
-                        status: 'qr_ready',
-                    });
-                    console.log(`[${key}] Backend notified of QR`);
-                } catch (error) {
-                    console.error(`[${key}] Backend notification failed:`, error.message);
+                    // Notify Laravel backend
+                    try {
+                        await axios.post(`${API_BASE_URL}/api/whatsapp/qr-update`, {
+                            user_id: userId,
+                            phone_number: whatsappNumberId,
+                            qr_code: connectionData.qr,
+                            status: 'qr_ready',
+                        });
+                        console.log(`[${key}] Backend notified of QR`);
+                    } catch (error) {
+                        console.error(`[${key}] Backend notification failed:`, error.message);
+                    }
                 }
-            }
 
-            if (connection === 'close') {
-                connectionData.status = 'disconnected';
-                connectionData.qr = null;
-                connectionData.phoneInfo = null;
+                if (connection === 'close') {
+                    connectionData.status = 'disconnected';
+                    connectionData.qr = null;
+                    connectionData.phoneInfo = null;
 
-                const statusCode = lastDisconnect?.error?.output?.statusCode;
-                console.log(`[${key}] Connection closed: ${statusCode}`);
+                    const statusCode = lastDisconnect?.error?.output?.statusCode;
+                    console.log(`[${key}] Connection closed: ${statusCode}`);
 
-                if (statusCode === DisconnectReason.loggedOut) {
-                    // User logged out - clean session
-                    connections.delete(key);
-                    cleanupSession(sessionPath);
+                    if (statusCode === DisconnectReason.loggedOut) {
+                        // User logged out - clean session
+                        connections.delete(key);
+                        cleanupSession(sessionPath);
+
+                        // Notify backend
+                        try {
+                            await axios.post(`${API_BASE_URL}/api/whatsapp/status-update`, {
+                                user_id: userId,
+                                phone_number: whatsappNumberId,
+                                status: 'disconnected',
+                            });
+                        } catch (error) {
+                            console.error(`[${key}] Backend notification failed`);
+                        }
+                    } else {
+                        // Temporary disconnect - try to reconnect
+                        connectionData.status = 'reconnecting';
+                        setTimeout(() => {
+                            connections.delete(key);
+                            connectToWhatsApp(userId, whatsappNumberId);
+                        }, 5000);
+                    }
+                } else if (connection === 'open') {
+                    safeLog(`[${key}] ✅ Connected!`, sock.user);
+                    connectionData.status = 'connected';
+                    connectionData.qr = null;
+                    connectionData.phoneInfo = sock.user;
+                    connectionData.lastActivity = new Date();
 
                     // Notify backend
                     try {
                         await axios.post(`${API_BASE_URL}/api/whatsapp/status-update`, {
                             user_id: userId,
                             phone_number: whatsappNumberId,
-                            status: 'disconnected',
+                            status: 'connected',
+                            phone_info: connectionData.phoneInfo,
                         });
+                        safeLog(`[${key}] Backend notified of connection`);
                     } catch (error) {
-                        console.error(`[${key}] Backend notification failed`);
+                        safeLog(`[${key}] Backend notification failed: ${error.message}`);
                     }
-                } else {
-                    // Temporary disconnect - try to reconnect
-                    connectionData.status = 'reconnecting';
-                    setTimeout(() => {
-                        connections.delete(key);
-                        connectToWhatsApp(userId, whatsappNumberId);
-                    }, 5000);
                 }
-            } else if (connection === 'open') {
-                safeLog(`[${key}] ✅ Connected!`, sock.user);
-                connectionData.status = 'connected';
-                connectionData.qr = null;
-                connectionData.phoneInfo = sock.user;
-                connectionData.lastActivity = new Date();
-
-                // Notify backend
-                try {
-                    await axios.post(`${API_BASE_URL}/api/whatsapp/status-update`, {
-                        user_id: userId,
-                        phone_number: whatsappNumberId,
-                        status: 'connected',
-                        phone_info: connectionData.phoneInfo,
-                    });
-                    safeLog(`[${key}] Backend notified of connection`);
-                } catch (error) {
-                    safeLog(`[${key}] Backend notification failed: ${error.message}`);
-                }
+            } catch (err) {
+                console.error(`[${key}] Connection update error:`, err);
             }
         });
 
@@ -336,6 +341,52 @@ app.post('/connect', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+// Disconnect a user's WhatsApp
+app.post('/disconnect', async (req, res) => {
+    const { user_id, phone_number } = req.body;
+    const key = `${user_id}_${phone_number}`;
+    const conn = connections.get(key);
+
+    console.log(`[${key}] Disconnect requested`);
+
+    if (conn) {
+        try {
+            if (conn.sock) conn.sock.logout().catch(() => { });
+            connections.delete(key);
+        } catch (e) { }
+    }
+
+    // Always try to clean the folder
+    const sessionPath = path.join(__dirname, 'sessions', key);
+    cleanupSession(sessionPath);
+
+    res.json({ success: true, message: 'Disconnected and cleaned' });
+});
+
+// Emergency cleanup of all connections
+app.post('/cleanup-all', (req, res) => {
+    console.log('[WA] EMERGENCY CLEANUP ALL');
+    for (const [key, conn] of connections.entries()) {
+        try {
+            if (conn.sock) conn.sock.logout().catch(() => { });
+        } catch (e) { }
+    }
+    connections.clear();
+
+    // Clean sessions folder
+    const sessionsDir = path.join(__dirname, 'sessions');
+    if (fs.existsSync(sessionsDir)) {
+        fs.readdirSync(sessionsDir).forEach(file => {
+            const fullPath = path.join(sessionsDir, file);
+            if (fs.lstatSync(fullPath).isDirectory()) {
+                fs.rmSync(fullPath, { recursive: true, force: true });
+            }
+        });
+    }
+
+    res.json({ success: true, message: 'All connections purged' });
 });
 
 // Get status for a specific user's connection

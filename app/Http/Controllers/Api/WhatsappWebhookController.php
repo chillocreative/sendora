@@ -31,10 +31,23 @@ class WhatsappWebhookController extends Controller
                 ]);
                 Log::info('QR Code Updated Successfully', ['number_id' => $number->id]);
             } else {
-                Log::warning('WhatsApp Number Not Found', [
+                Log::warning('WhatsApp Number Not Found - Killing Rogue Session', [
                     'user_id' => $request->user_id,
                     'phone_number' => $request->phone_number,
                 ]);
+
+                // KILL ROGUE SESSION: Tell the node server to stop this connection
+                try {
+                    $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
+                                   ?? env('WA_SERVER_URL', 'http://localhost:3000');
+                    $waServerUrl = rtrim($waServerUrl, '/');
+                    \Illuminate\Support\Facades\Http::post("{$waServerUrl}/disconnect", [
+                        'user_id' => $request->user_id,
+                        'phone_number' => $request->phone_number,
+                    ]);
+                } catch (\Exception $e) {
+                    // ignore
+                }
             }
 
             return response()->json(['success' => true]);

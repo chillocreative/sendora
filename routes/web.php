@@ -50,6 +50,22 @@ Route::get('/system/wa-debug', function() {
     echo "</pre>";
 });
 
+Route::get('/system/wa-purge', function() {
+    $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
+                   ?? env('WA_SERVER_URL', 'http://127.0.0.1:3000');
+    $waServerUrl = rtrim($waServerUrl, '/');
+    
+    echo "<h1>Emergency WhatsApp Purge</h1><pre>";
+    echo "Calling Node server /cleanup-all...\n";
+    try {
+        $res = \Illuminate\Support\Facades\Http::post("{$waServerUrl}/cleanup-all");
+        echo "Response: " . ($res->successful() ? "✅ " . $res->body() : "❌ Error " . $res->status());
+    } catch (\Exception $e) {
+        echo "❌ Failed to reach Node server: " . $e->getMessage();
+    }
+    echo "</pre>";
+});
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
