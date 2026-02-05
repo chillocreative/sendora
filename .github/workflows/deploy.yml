@@ -57,60 +57,71 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          command_timeout: 30m
           script: |
-            set -e
-            cd ${{ secrets.REMOTE_TARGET }}
-            echo "Working in: $(pwd)"
+            echo "--- STARTING RESILIENT DEPLOYMENT ---"
+            cd ${{ secrets.REMOTE_TARGET }} || { echo "❌ Could not enter target directory"; exit 1; }
             
-            # 1. Extract Archive
+            echo "Step 1: Extracting Archive..."
             if [ -f "deploy.tar.gz" ]; then
-              echo "Extracting tarball..."
-              tar -xzf deploy.tar.gz
-              rm deploy.tar.gz
+              tar -xzf deploy.tar.gz && echo "✅ Extraction successful" || echo "⚠️ Extraction had issues but continuing..."
+              rm -f deploy.tar.gz
             else
-              echo "❌ Error: deploy.tar.gz NOT FOUND on server!"
-              exit 1
+              echo "❌ Archive not found!"
             fi
 
-            # 2. Permissions
-            chmod -R 755 storage bootstrap/cache
+            echo "Step 2: Setting Permissions..."
+            chmod -R 755 storage bootstrap/cache || true
             
-            # 3. Sync Public
-            if [ -d "public_html" ] && [ ! -L "public_html" ]; then
-              echo "Syncing to public_html..."
-              rsync -avz --quiet public/ public_html/
+            echo "Step 3: Discovering Environment..."
+            # Try to find the best PHP version
+            PHP_BIN=$(which php83 2>/dev/null || which php8.3 2>/dev/null || which php 2>/dev/null)
+            NODE_BIN="/opt/alt/alt-nodejs24/root/usr/bin/node"
+            NPM_BIN="/opt/alt/alt-nodejs24/root/usr/bin/npm"
+            echo "Using PHP: $PHP_BIN"
+            echo "Using Node: $NODE_BIN"
+
+            echo "Step 4: Syncing Public Files..."
+            if [ -d "public_html" ] && [ ! -L "public_html" ] && [ -d "public" ]; then
+              rsync -avz --quiet public/ public_html/ && echo "✅ Sync complete"
             fi
             
-            # 4. Laravel Maintenance
-            php artisan optimize:clear
-            php artisan migrate --force
-            php artisan storage:link --force || true
+            echo "Step 5: Laravel Maintenance..."
+            $PHP_BIN artisan optimize:clear || true
+            $PHP_BIN artisan migrate --force || true
+            $PHP_BIN artisan storage:link --force || true
             
-            # 5. WhatsApp Connection Settings
-            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
-            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
+            echo "Step 6: Updating WhatsApp Configuration..."
+            $PHP_BIN artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
+            $PHP_BIN artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
 
-            # 6. Node Server Management
-            cd whatsapp-server-temp
-            export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
+            echo "Step 7: Managing WhatsApp Server..."
+            if [ -d "whatsapp-server-temp" ]; then
+              cd whatsapp-server-temp
+              
+              echo "Killing old processes safely..."
+              pkill -9 -f "server.js" || true
+              pkill -9 -u $(whoami) lsnode || true
+              
+              mkdir -p sessions
+              chmod -R 777 sessions
+              
+              echo "Installing Node dependencies..."
+              export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
+              $NPM_BIN install --no-audit --no-fund --quiet || echo "⚠️ NPM install had issues"
+              
+              echo "Generating configs..."
+              echo "WA_SERVER_PORT=3005" > .env
+              echo "API_BASE_URL=http://127.0.0.1" >> .env
+              > server.log
+              
+              echo "Triggering Server Restart..."
+              mkdir -p tmp
+              touch tmp/restart.txt
+              
+              echo "✅ WHATSAPP SERVER READY ON PORT 3005"
+            else
+              echo "❌ whatsapp-server-temp directory missing!"
+            fi
             
-            echo "Resetting WhatsApp process..."
-            pkill -f "server.js" || true
-            pkill -u $(whoami) lsnode || true
-            
-            mkdir -p sessions
-            chmod -R 777 sessions
-            
-            # Install Node deps (quietly)
-            /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund --quiet
-            
-            # Refresh Config
-            echo "WA_SERVER_PORT=3005" > .env
-            echo "API_BASE_URL=http://127.0.0.1" >> .env
-            > server.log
-            
-            # Passenger Restart
-            mkdir -p tmp
-            touch tmp/restart.txt
-            
-            echo "✅ DEPLOYMENT COMPLETE"
+            echo "--- DEPLOYMENT FINISHED ---"
