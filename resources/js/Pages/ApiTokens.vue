@@ -80,10 +80,26 @@ const copyToken = () => {
     navigator.clipboard.writeText(newToken.value);
 };
 
-const copyTokenId = (tokenId) => {
-    const format = `${tokenId}|••••••••••••••••••••`;
-    navigator.clipboard.writeText(format);
-    alert('Token format copied! Note: This is just the format. The actual token was shown once during creation. If lost, please regenerate.');
+const copyTokenId = async (tokenId) => {
+    try {
+        const response = await fetch(route('api-tokens.show', tokenId), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (!response.ok) {
+            alert('Failed to retrieve token. Please try again.');
+            return;
+        }
+
+        const data = await response.json();
+        await navigator.clipboard.writeText(data.token);
+        alert('✅ API token copied to clipboard!');
+    } catch (error) {
+        console.error('Error copying token:', error);
+        alert('Failed to copy token. Please try again.');
+    }
 };
 
 const formatDate = (dateString) => {

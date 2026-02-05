@@ -182,6 +182,7 @@ Route::middleware([
         // API Token Management
         Route::get('/user/api-tokens', [\App\Http\Controllers\ApiTokenController::class, 'index'])->name('api-tokens.index');
         Route::post('/user/api-tokens', [\App\Http\Controllers\ApiTokenController::class, 'store'])->name('api-tokens.store');
+        Route::get('/user/api-tokens/{tokenId}', [\App\Http\Controllers\ApiTokenController::class, 'show'])->name('api-tokens.show');
         Route::delete('/user/api-tokens/{tokenId}', [\App\Http\Controllers\ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
         
         // API Documentation

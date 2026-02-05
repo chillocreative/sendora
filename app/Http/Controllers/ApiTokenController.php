@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Http\Middleware\CheckSubscriptionLimits;
+use Illuminate\Support\Facades\Crypt;
 
 class ApiTokenController extends Controller
 {
@@ -50,6 +51,11 @@ class ApiTokenController extends Controller
 
         $token = $user->createToken($request->name, $request->abilities);
 
+        // Store encrypted token for later retrieval
+        $token->accessToken->update([
+            'encrypted_token' => Crypt::encryptString($token->plainTextToken),
+        ]);
+
         return back()->with([
             'success' => 'API token created successfully.',
             'token' => $token->plainTextToken,
@@ -64,6 +70,32 @@ class ApiTokenController extends Controller
         $request->user()->tokens()->where('id', $tokenId)->delete();
 
         return back()->with('success', 'API token revoked successfully.');
+    }
+
+    /**
+     * Get decrypted token
+     */
+    public function show(Request $request, $tokenId)
+    {
+        $user = $request->user();
+
+        // Check if user has API access
+        if (!CheckSubscriptionLimits::hasFeature($user, 'api_access')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $token = $user->tokens()->where('id', $tokenId)->first();
+
+        if (!$token || !$token->encrypted_token) {
+            return response()->json(['error' => 'Token not found or not available'], 404);
+        }
+
+        try {
+            $decryptedToken = Crypt::decryptString($token->encrypted_token);
+            return response()->json(['token' => $decryptedToken]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to decrypt token'], 500);
+        }
     }
 
     /**
