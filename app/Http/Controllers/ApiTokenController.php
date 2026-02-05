@@ -25,6 +25,7 @@ class ApiTokenController extends Controller
                     'abilities' => $token->abilities,
                     'last_used_at' => $token->last_used_at,
                     'created_at' => $token->created_at,
+                    'has_encrypted_token' => !empty($token->encrypted_token),
                 ];
             }),
             'hasApiAccess' => $hasApiAccess,
