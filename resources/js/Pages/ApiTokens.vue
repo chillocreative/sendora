@@ -80,6 +80,12 @@ const copyToken = () => {
     navigator.clipboard.writeText(newToken.value);
 };
 
+const copyTokenId = (tokenId) => {
+    const format = `${tokenId}|••••••••••••••••••••`;
+    navigator.clipboard.writeText(format);
+    alert('Token format copied! Note: This is just the format. The actual token was shown once during creation. If lost, please regenerate.');
+};
+
 const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -190,6 +196,15 @@ const formatDate = (dateString) => {
                                             <code class="text-slate-400 font-mono text-xs truncate">Token ID: {{ token.id }} | ••••••••••••••••••••</code>
                                         </div>
                                         <div class="flex items-center gap-2 flex-shrink-0">
+                                            <button
+                                                @click="copyTokenId(token.id)"
+                                                class="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all group/copy"
+                                                title="Copy token format (actual token not stored)"
+                                            >
+                                                <svg class="w-4 h-4 text-slate-400 group-hover/copy:text-[#f7b538] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                            </button>
                                             <div class="px-3 py-1 bg-red-500/10 text-red-400 rounded-lg text-[9px] font-black uppercase tracking-wider">Hidden</div>
                                         </div>
                                     </div>
