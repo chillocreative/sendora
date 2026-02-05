@@ -75,6 +75,24 @@ Route::get('/system/wa-reset/{id}', function($id) {
     return "Device {$id} has been reset to disconnected status.";
 });
 
+Route::get('/system/test-ticket-notify', function() {
+    $admin = \App\Models\User::where('email', 'admin@blaster.com')->first();
+    if (!$admin) return 'Admin not found';
+
+    $device = $admin->whatsappNumbers()->where('status', 'connected')->first();
+    if (!$device) return 'No connected device';
+
+    $adminMobile = \App\Models\Setting::where('key', 'admin_mobile_number')->value('value');
+
+    return [
+        'admin_id' => $admin->id,
+        'device_id' => $device->id,
+        'device_phone_number' => $device->phone_number,
+        'admin_mobile_setting' => $adminMobile,
+        'will_send_to' => $adminMobile ?: $device->phone_number,
+    ];
+});
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),

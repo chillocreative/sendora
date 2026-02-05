@@ -142,7 +142,10 @@ class TicketController extends Controller
             // Get admin mobile number from settings, fallback to device phone number (self-send)
             $adminMobile = Setting::where('key', 'admin_mobile_number')->value('value');
             if (!$adminMobile) {
-                $adminMobile = $device->phone_number;
+                // Extract numeric part from device phone_number (e.g., "601110019843:67@s.whatsapp.net" -> "601110019843")
+                if ($device->phone_number) {
+                    $adminMobile = preg_replace('/[^0-9].*/', '', $device->phone_number);
+                }
             }
 
             if (!$adminMobile) {
