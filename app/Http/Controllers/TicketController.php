@@ -125,19 +125,28 @@ class TicketController extends Controller
     private function notifyAdmin(Ticket $ticket, User $user)
     {
         try {
-            $adminMobile = Setting::where('key', 'admin_mobile_number')->value('value');
-            if (!$adminMobile) {
-                return;
-            }
-
-            // Find admin user's first connected WhatsApp number
+            // Find admin user
             $admin = User::where('email', 'admin@blaster.com')->first();
             if (!$admin) {
+                Log::warning('Ticket notification: admin user not found');
                 return;
             }
 
+            // Find admin's connected WhatsApp device
             $device = $admin->whatsappNumbers()->where('status', 'connected')->first();
             if (!$device) {
+                Log::warning('Ticket notification: no connected WhatsApp device for admin');
+                return;
+            }
+
+            // Get admin mobile number from settings, fallback to device phone number (self-send)
+            $adminMobile = Setting::where('key', 'admin_mobile_number')->value('value');
+            if (!$adminMobile) {
+                $adminMobile = $device->phone_number;
+            }
+
+            if (!$adminMobile) {
+                Log::warning('Ticket notification: no admin mobile number available');
                 return;
             }
 
@@ -150,7 +159,14 @@ class TicketController extends Controller
                 . (strlen($ticket->description) > 200 ? '...' : '');
 
             $whatsappService = new WhatsappService();
-            $whatsappService->sendMessage($device, $adminMobile, $message);
+            $response = $whatsappService->sendMessage($device, $adminMobile, $message);
+
+            Log::info('Ticket notification sent', [
+                'ticket_id' => $ticket->id,
+                'to' => $adminMobile,
+                'device_id' => $device->id,
+                'response' => $response ? 'success' : 'failed',
+            ]);
         } catch (\Exception $e) {
             Log::error('Failed to send ticket WhatsApp notification', [
                 'ticket_id' => $ticket->id,

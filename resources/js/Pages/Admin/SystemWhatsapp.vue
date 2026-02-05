@@ -1,12 +1,14 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { reactive, computed } from 'vue';
 import axios from 'axios';
 
-defineProps({
+const props = defineProps({
     numbers: Array,
 });
+
+const connectedDevice = computed(() => props.numbers.find(n => n.status === 'connected'));
 
 const testForm = reactive({
     phone: '',
@@ -32,9 +34,16 @@ const sendTestMessage = async () => {
     testForm.error = null;
 
     try {
+        if (!connectedDevice.value) {
+            testForm.error = 'No connected WhatsApp device. Please connect a device first.';
+            testForm.processing = false;
+            return;
+        }
+
         await axios.post(route('test-message.send'), {
             phone: testForm.phone,
-            message: testForm.message
+            message: testForm.message,
+            whatsapp_number_id: connectedDevice.value.id,
         });
 
         testForm.success = true;
