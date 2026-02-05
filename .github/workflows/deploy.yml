@@ -133,17 +133,27 @@ jobs:
 
             # 9. Update database settings
             echo "💾 Step 9: Updating database settings..."
-            php artisan tinker --execute="\\App\\Models\\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005']);" 2>&1 | grep -v "Psy Shell" || echo "⚠️ Setting 1 failed"
-            php artisan tinker --execute="\\App\\Models\\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc']);" 2>&1 | grep -v "Psy Shell" || echo "⚠️ Setting 2 failed"
-            echo "✅ Settings updated"
+            php -r "
+            require __DIR__.'/vendor/autoload.php';
+            \$app = require_once __DIR__.'/bootstrap/app.php';
+            \$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+            \App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005']);
+            \App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc']);
+            echo 'Settings updated';
+            " || echo "⚠️ Settings update failed"
+            echo "✅ Step 9 done"
             echo ""
 
             # 10. Setup WhatsApp server
             echo "🔄 Step 10: Setting up WhatsApp server..."
-            pkill -f "whatsapp-server-temp.*server.js" 2>/dev/null || echo "No existing processes found"
+            kill $(pgrep -f "node.*server\.js" 2>/dev/null) 2>/dev/null || echo "No existing node processes"
 
             cd whatsapp-server-temp
-            $NPM_BIN install --no-audit --no-fund 2>&1 | tail -5 || echo "⚠️ WhatsApp npm install had issues"
+            if [ -d node_modules ]; then
+              echo "✅ node_modules already exists, skipping npm install"
+            else
+              $NPM_BIN install --no-audit --no-fund --prefer-offline 2>&1 | tail -5 || echo "⚠️ WhatsApp npm install had issues"
+            fi
 
             mkdir -p tmp
             touch tmp/restart.txt
@@ -155,9 +165,7 @@ jobs:
             echo "======================================"
             echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY!"
             echo "======================================"
-            echo "Repository: ${{ github.repository }}"
             echo "Commit: ${{ github.sha }}"
-            echo "Branch: main"
             echo "Deployed: $(date)"
             echo "======================================"
 
