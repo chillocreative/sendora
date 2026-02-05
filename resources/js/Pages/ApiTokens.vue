@@ -171,7 +171,7 @@ const formatDate = (dateString) => {
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                                             </svg>
                                         </div>
-                                        <div>
+                                        <div class="flex-grow">
                                             <h4 class="font-black text-slate-900 text-lg tracking-tight uppercase">{{ token.name }}</h4>
                                             <div class="flex items-center gap-3 mt-1">
                                                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol Established {{ formatDate(token.created_at) }}</p>
@@ -180,17 +180,38 @@ const formatDate = (dateString) => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Token Preview -->
+                                    <div class="bg-slate-900 rounded-xl p-4 mb-4 ml-1 flex items-center justify-between gap-4">
+                                        <div class="flex items-center gap-3 flex-grow min-w-0">
+                                            <svg class="w-4 h-4 text-[#f7b538] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                            </svg>
+                                            <code class="text-slate-400 font-mono text-xs truncate">Token ID: {{ token.id }} | ••••••••••••••••••••</code>
+                                        </div>
+                                        <div class="flex items-center gap-2 flex-shrink-0">
+                                            <div class="px-3 py-1 bg-red-500/10 text-red-400 rounded-lg text-[9px] font-black uppercase tracking-wider">Hidden</div>
+                                        </div>
+                                    </div>
+
                                     <div class="flex flex-wrap gap-2 mt-4 ml-1">
-                                        <span 
-                                            v-for="ability in token.abilities" 
+                                        <span
+                                            v-for="ability in token.abilities"
                                             :key="ability"
                                             class="px-3 py-1 bg-[#780116]/5 text-[#780116] border border-[#780116]/10 rounded-lg text-[10px] font-black uppercase tracking-widest"
                                         >
                                             {{ ability === '*' ? 'Full Spectrum' : ability.replace(':', ' • ') }}
                                         </span>
                                     </div>
+
+                                    <div class="mt-4 ml-1 flex items-start gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                                        <svg class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p class="text-[9px] font-bold text-amber-700 leading-relaxed">Full token was displayed once during creation. If lost, delete and regenerate.</p>
+                                    </div>
                                 </div>
-                                <button 
+                                <button
                                     @click="confirmDelete(token.id)"
                                     class="p-3 text-slate-300 hover:text-red-700 hover:bg-red-50 rounded-2xl transition-all"
                                     title="Terminate Token"
