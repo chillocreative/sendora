@@ -74,8 +74,8 @@ jobs:
             php artisan migrate --force
             php artisan storage:link --force || true
             
-            # 4. Update Database Settings (CRITICAL: Use Local Loopback for Stability)
-            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3000'])"
+            # 4. Update Database Settings (CRITICAL: Use Port 3005 to avoid Conflict)
+            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
             php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
 
             # 5. Configure & Restart WhatsApp Server
@@ -84,8 +84,8 @@ jobs:
             chmod -R 777 sessions
             npm install --production
             
-            # Ensure .env is correct for Node
-            echo "WA_SERVER_PORT=3000" > .env
+            # Ensure .env is correct for Node (USING PORT 3005)
+            echo "WA_SERVER_PORT=3005" > .env
             echo "API_BASE_URL=http://127.0.0.1" >> .env
             
             # Clear old log to keep it fresh

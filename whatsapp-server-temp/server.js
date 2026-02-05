@@ -77,7 +77,7 @@ safeLog('Server initializing...');
 
 async function connectToWhatsApp(userId, whatsappNumberId) {
     const key = `${userId}_${whatsappNumberId}`;
-    const sessionPath = path.join(sessionsDir, `session_${userId}_${whatsappNumberId}`);
+    const sessionPath = path.join(sessionsDir, key);
 
     // If already connecting/connected, return existing
     if (connections.has(key)) {

@@ -28,10 +28,10 @@ Route::get('/system/force-clear', function() {
 
 Route::get('/system/wa-debug', function() {
     $target = "127.0.0.1";
-    $port = 3000;
+    $port = 3005;
     
-    echo "<h1>Built-in WhatsApp Debugger</h1><pre>";
-    echo "Checking 127.0.0.1:3000...\n";
+    echo "<h1>Built-in WhatsApp Debugger (Port 3005)</h1><pre>";
+    echo "Checking 127.0.0.1:3005...\n";
     $fp = @fsockopen($target, $port, $errno, $errstr, 2);
     if ($fp) {
         echo "✅ Port is OPEN\n";
@@ -42,7 +42,7 @@ Route::get('/system/wa-debug', function() {
     
     echo "\nTrying health check...\n";
     try {
-        $res = \Illuminate\Support\Facades\Http::timeout(2)->get("http://127.0.0.1:3000/health");
+        $res = \Illuminate\Support\Facades\Http::timeout(2)->get("http://127.0.0.1:3005/health");
         echo "Response: " . ($res->successful() ? "✅ " . $res->body() : "❌ Error " . $res->status());
     } catch (\Exception $e) {
         echo "❌ Health check failed: " . $e->getMessage();
@@ -52,7 +52,7 @@ Route::get('/system/wa-debug', function() {
 
 Route::get('/system/wa-purge', function() {
     $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
-                   ?? env('WA_SERVER_URL', 'http://127.0.0.1:3000');
+                   ?? env('WA_SERVER_URL', 'http://127.0.0.1:3005');
     $waServerUrl = rtrim($waServerUrl, '/');
     
     echo "<h1>Emergency WhatsApp Purge</h1><pre>";
