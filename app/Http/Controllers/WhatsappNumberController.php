@@ -53,7 +53,9 @@ class WhatsappNumberController extends Controller
         // If disconnected, initiate connection
         if ($number->status === 'disconnected') {
             try {
-                $response = Http::withoutVerifying()->timeout(15)->post("{$this->waServerUrl}/connect", [
+                $url = "{$this->waServerUrl}/connect";
+                Log::info("WhatsApp calling connect URL: $url");
+                $response = Http::withoutVerifying()->timeout(15)->post($url, [
                     'user_id' => auth()->id(),
                     'phone_number' => $number->id,
                 ]);
