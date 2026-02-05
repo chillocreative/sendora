@@ -193,14 +193,13 @@ const formatDate = (date) => {
                         
                         <div class="mb-10 lg:mb-12">
                             <h4 class="text-xl font-black text-slate-900 mb-4 tracking-tight">{{ plan.name }}</h4>
-                            <div class="flex items-baseline gap-2 mb-2">
-                                <div class="flex items-baseline">
+                            <div class="mb-2">
+                                <div class="flex items-baseline justify-start mb-1">
                                     <span class="text-slate-400 font-black text-xs uppercase tracking-wider mr-1">{{ currency }}</span>
                                     <span class="text-4xl font-black text-slate-900 tracking-tighter">{{ billingCycle === 'monthly' ? Number(plan.monthly_price).toFixed(2) : (Number(plan.yearly_price) / 12).toFixed(2) }}</span>
                                 </div>
-                                <div class="flex flex-col items-start justify-end pb-1">
-                                    <span class="text-slate-400 font-black text-[9px] uppercase tracking-[0.15em] leading-tight">per</span>
-                                    <span class="text-slate-400 font-black text-[9px] uppercase tracking-[0.15em] leading-tight">month</span>
+                                <div class="text-slate-400 font-black text-[9px] uppercase tracking-[0.15em]">
+                                    per month
                                 </div>
                             </div>
                             <div v-if="billingCycle === 'yearly' && plan.yearly_price > 0" class="text-[9px] font-black text-[#780116] uppercase tracking-widest bg-red-50 inline-block px-2 py-0.5 rounded-lg">
