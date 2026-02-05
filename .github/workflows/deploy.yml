@@ -82,7 +82,14 @@ jobs:
             cd whatsapp-server-temp
             mkdir -p sessions
             chmod -R 777 sessions
-            npm install --production
+            
+            # Kill any existing node processes on port 3000 or 3005 if possible
+            fuser -k 3000/tcp || true
+            fuser -k 3005/tcp || true
+            
+            # Use full path to npm if possible or just try to install
+            echo "Installing Node dependencies..."
+            npm install --no-audit --no-fund
             
             # Ensure .env is correct for Node (USING PORT 3005)
             echo "WA_SERVER_PORT=3005" > .env

@@ -32,6 +32,8 @@ echo "\n--- Last 50 lines of server.log ---\n";
 if (file_exists($nodeLog)) {
     echo shell_exec("tail -n 50 " . escapeshellarg($nodeLog));
 } else {
-    echo "WhatsApp Node log file not found. Ensure the server is running.";
+    echo "WhatsApp Node log file not found. Ensure the server is running.\n";
+    echo "NPM Path: " . shell_exec("which npm 2>&1") . "\n";
+    echo "Node Path: " . shell_exec("which node 2>&1") . "\n";
 }
 echo "</pre>";
