@@ -12,10 +12,26 @@ if (file_exists($logFile)) {
 echo "</pre>";
 
 echo "<h2>2. WhatsApp Node Server Logs</h2><pre style='background:#e8f4f8; padding:10px;'>";
-$nodeLog = __DIR__ . '/../whatsapp-server-temp/server.log';
+$nodeDir = __DIR__ . '/../whatsapp-server-temp';
+$nodeLog = $nodeDir . '/server.log';
+
+// Diagnostic: Check directory and node_modules
+echo "Checking directory: $nodeDir\n";
+if (is_dir($nodeDir)) {
+    echo "Files in directory:\n" . shell_exec("ls -F " . escapeshellarg($nodeDir));
+    if (is_dir("$nodeDir/node_modules")) {
+        echo "\n✅ node_modules found.\n";
+    } else {
+        echo "\n❌ node_modules MISSING! (Server cannot start)\n";
+    }
+} else {
+    echo "❌ Directory $nodeDir not found!\n";
+}
+
+echo "\n--- Last 50 lines of server.log ---\n";
 if (file_exists($nodeLog)) {
     echo shell_exec("tail -n 50 " . escapeshellarg($nodeLog));
 } else {
-    echo "WhatsApp Node log file not found. Ensure the server is running and logs are enabled.";
+    echo "WhatsApp Node log file not found. Ensure the server is running.";
 }
 echo "</pre>";
