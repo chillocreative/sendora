@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -22,6 +22,14 @@ const clearFilters = () => {
     statusFilter.value = '';
     priorityFilter.value = '';
     router.get(route('admin.tickets'));
+};
+
+const deleteTicket = (ticketId, e) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this ticket? This action cannot be undone.')) return;
+    router.delete(route('admin.tickets.destroy', ticketId), {
+        preserveScroll: true,
+    });
 };
 
 const statusColors = {
@@ -105,6 +113,7 @@ const timeAgo = (date) => {
                             <th class="text-left px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Status</th>
                             <th class="text-left px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Replies</th>
                             <th class="text-left px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Updated</th>
+                            <th class="text-right px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -136,6 +145,15 @@ const timeAgo = (date) => {
                             </td>
                             <td class="px-6 py-4">
                                 <span class="text-xs text-slate-400">{{ timeAgo(ticket.updated_at) }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button
+                                    @click="deleteTicket(ticket.id, $event)"
+                                    class="text-slate-400 hover:text-red-500 transition p-1"
+                                    title="Delete ticket"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
                             </td>
                         </tr>
                     </tbody>

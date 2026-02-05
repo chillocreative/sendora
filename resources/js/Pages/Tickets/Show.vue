@@ -145,8 +145,12 @@ const formatDate = (date) => {
                 </div>
             </div>
 
-            <!-- Reply Form -->
-            <div v-if="!['closed'].includes(ticket.status)" class="bg-white rounded-2xl border border-slate-200 p-6">
+            <!-- Reply Form (always shown) -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6">
+                <!-- Closed notice -->
+                <div v-if="['closed', 'resolved'].includes(ticket.status)" class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-center">
+                    <p class="text-sm text-amber-700 font-medium">This ticket is {{ ticket.status }}. Sending a reply will reopen it.</p>
+                </div>
                 <h3 class="text-sm font-bold text-slate-700 mb-4">Reply</h3>
                 <form @submit.prevent="submitReply">
                     <textarea
@@ -190,11 +194,6 @@ const formatDate = (date) => {
                         </div>
                     </div>
                 </form>
-            </div>
-
-            <!-- Closed notice -->
-            <div v-else class="bg-slate-50 rounded-2xl border border-slate-200 p-6 text-center">
-                <p class="text-sm text-slate-500">This ticket is closed. Reply to reopen it.</p>
             </div>
         </div>
     </AppLayout>

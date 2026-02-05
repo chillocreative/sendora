@@ -224,6 +224,7 @@ Route::middleware([
         Route::get('/tickets', [\App\Http\Controllers\AdminController::class, 'tickets'])->name('tickets');
         Route::get('/tickets/{id}', [\App\Http\Controllers\AdminController::class, 'ticketShow'])->name('tickets.show');
         Route::post('/tickets/{id}/reply', [\App\Http\Controllers\AdminController::class, 'ticketReply'])->name('tickets.reply');
+        Route::delete('/tickets/{id}', [\App\Http\Controllers\AdminController::class, 'ticketDelete'])->name('tickets.destroy');
     });
 });
 

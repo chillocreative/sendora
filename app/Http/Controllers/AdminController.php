@@ -381,4 +381,13 @@ class AdminController extends Controller
 
         return back()->with('success', 'Reply sent successfully.');
     }
+
+    public function ticketDelete($id)
+    {
+        $ticket = Ticket::findOrFail($id);
+        $ticket->replies()->delete();
+        $ticket->delete();
+
+        return redirect()->route('admin.tickets')->with('success', 'Ticket deleted successfully.');
+    }
 }

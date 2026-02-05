@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { useForm, Link } from '@inertiajs/vue3';
+import { useForm, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -54,6 +54,11 @@ const submitReply = () => {
     });
 };
 
+const deleteTicket = () => {
+    if (!confirm('Are you sure you want to delete this ticket? This action cannot be undone.')) return;
+    router.delete(route('admin.tickets.destroy', props.ticket.id));
+};
+
 const statusColors = {
     open: 'bg-blue-100 text-blue-700',
     in_progress: 'bg-yellow-100 text-yellow-700',
@@ -86,7 +91,12 @@ const formatDate = (date) => {
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 </Link>
                 <div class="flex-1">
-                    <h1 class="text-2xl font-black text-slate-900">{{ ticket.subject }}</h1>
+                    <div class="flex items-start justify-between">
+                        <h1 class="text-2xl font-black text-slate-900">{{ ticket.subject }}</h1>
+                        <button @click="deleteTicket" class="text-slate-400 hover:text-red-500 transition p-2 rounded-lg hover:bg-red-50" title="Delete ticket">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
                     <div class="flex items-center gap-3 mt-2 flex-wrap">
                         <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider" :class="statusColors[ticket.status]">
                             {{ statusLabel(ticket.status) }}
