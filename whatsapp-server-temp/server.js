@@ -76,13 +76,16 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
 
     try {
         console.log(`[${key}] Starting connection... ${new Date().toISOString()}`);
+        safeLog(`[${key}] Initiating connection process...`);
 
         // Ensure session folder exists
         if (!fs.existsSync(sessionPath)) {
             fs.mkdirSync(sessionPath, { recursive: true });
         }
 
+        safeLog(`[${key}] Fetching latest Baileys version...`);
         const { version } = await fetchLatestBaileysVersion();
+        safeLog(`[${key}] Using Baileys version: ${version.join('.')}`);
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
         const sock = makeWASocket({
