@@ -35,19 +35,14 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
-      - name: 📦 Archive Build Artifacts
-        run: |
-          # We EXCLUDE vendor to keep the upload tiny and fast
-          tar -czf deploy.tar.gz app bootstrap config database public resources routes whatsapp-server-temp composer.json composer.lock package.json artisan package-lock.json vite.config.js postcss.config.js tailwind.config.js
-
-      - name: 📂 Upload Archive (SCP)
+      - name: 📂 Upload Build Artifacts (SCP)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "deploy.tar.gz"
+          source: "public/build"
           target: ${{ secrets.REMOTE_TARGET }}
 
       - name: 🚀 Deploy & Configure via SSH
@@ -57,59 +52,42 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          command_timeout: 30m
           script: |
-            echo "--- STARTING FAST DEPLOYMENT ---"
-            cd ${{ secrets.REMOTE_TARGET }} || { echo "❌ Could not enter target directory"; exit 1; }
+            cd ${{ secrets.REMOTE_TARGET }}
             
-            echo "Step 1: Extracting Archive..."
-            if [ -f "deploy.tar.gz" ]; then
-              tar -xzf deploy.tar.gz && echo "✅ Extraction successful"
-              rm -f deploy.tar.gz
-            fi
-
-            echo "Step 2: Discovering Binaries..."
-            # Discover PHP and Composer
-            PHP_BIN=$(which php83 2>/dev/null || which php8.3 2>/dev/null || which php 2>/dev/null)
-            # Find composer in common cPanel paths
-            COMPOSER_BIN=$(which composer 2>/dev/null || [ -f /opt/cpanel/composer/bin/composer ] && echo "/opt/cpanel/composer/bin/composer" || echo "composer")
+            # 1. Pull latest code
+            git fetch origin main
+            git reset --hard origin/main
             
-            echo "Using PHP: $PHP_BIN"
-            echo "Using Composer: $COMPOSER_BIN"
-
-            echo "Step 3: Installing PHP Dependencies (Server-side)..."
-            # We run this on the server to avoid uploading the huge vendor folder
-            $PHP_BIN $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction || echo "⚠️ Composer install had issues"
-
-            echo "Step 4: Laravel Maintenance..."
-            $PHP_BIN artisan optimize:clear || true
-            $PHP_BIN artisan migrate --force || true
-            $PHP_BIN artisan storage:link --force || true
+            # 2. Migrate & optimize
+            # Note: We uploaded public/build via SCP, so no need to build on server.
             
-            echo "Step 5: Updating WhatsApp Configuration..."
-            $PHP_BIN artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
-            $PHP_BIN artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
-
-            echo "Step 6: Starting WhatsApp Server..."
-            if [ -d "whatsapp-server-temp" ]; then
-              cd whatsapp-server-temp
-              pkill -9 -f "server.js" || true
-              pkill -9 -u $(whoami) lsnode || true
-              
-              mkdir -p sessions
-              chmod -R 777 sessions
-              
-              export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
-              /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund --quiet || echo "⚠️ NPM issues"
-              
-              echo "WA_SERVER_PORT=3005" > .env
-              echo "API_BASE_URL=http://127.0.0.1" >> .env
-              > server.log
-              
-              echo "Triggering Restart..."
-              mkdir -p tmp
-              touch tmp/restart.txt
-              echo "✅ WHATSAPP SERVER READY"
-            fi
+            php artisan optimize:clear
+            php artisan migrate --force
+            php artisan storage:link || true
             
-            echo "--- DEPLOYMENT FINISHED ---"
+            # 3. Configure Node Environment (CRITICAL: Port 3005)
+            echo "WA_SERVER_PORT=3005" > whatsapp-server-temp/.env
+            echo "API_BASE_URL=http://127.0.0.1" >> whatsapp-server-temp/.env
+
+            # 4. Update Database Settings (CRITICAL: Port 3005)
+            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005'])"
+            php artisan tinker --execute="\App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc'])"
+
+            # 5. Management of Node Server
+            echo "Killing ghost processes..."
+            pkill -9 -f "server.js" || true
+            pkill -9 -u $(whoami) lsnode || true
+
+            cd whatsapp-server-temp
+            export PATH="/opt/alt/alt-nodejs24/root/usr/bin:$PATH"
+            
+            echo "Installing dependencies..."
+            /opt/alt/alt-nodejs24/root/usr/bin/npm install --no-audit --no-fund --quiet || echo "⚠️ NPM issues"
+            
+            # Restart Engine
+            mkdir -p tmp
+            touch tmp/restart.txt
+            
+            cd ..
+            echo "✅ Deployment complete on Port 3005!"
