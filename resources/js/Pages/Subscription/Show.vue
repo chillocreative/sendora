@@ -208,26 +208,34 @@ const formatDate = (date) => {
                             </div>
                         </div>
 
-                        <ul class="space-y-4 mb-12 flex-grow border-t border-slate-50 pt-8">
-                            <li class="flex items-center text-sm font-bold text-slate-600">
-                                <div class="size-6 rounded-lg bg-red-50 text-[#780116] flex items-center justify-center mr-4 shrink-0 shadow-sm">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        <div class="space-y-4 mb-12 flex-grow border-t border-slate-50 pt-8">
+                            <!-- Core Limits -->
+                            <div class="grid grid-cols-1 gap-3">
+                                <div class="flex items-center text-[13px] font-bold text-slate-600 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                                    <div class="size-2.5 rounded-full bg-[#780116] mr-4 shadow-sm shadow-red-200 shrink-0"></div>
+                                    <span>{{ plan.limits?.whatsapp_nos }} WhatsApp accounts</span>
                                 </div>
-                                <span class="text-[13px]">{{ plan.limits.whatsapp_nos }} Node Capacity</span>
-                            </li>
-                            <li class="flex items-center text-sm font-bold text-slate-600">
-                                <div class="size-6 rounded-lg bg-orange-50 text-[#db7c26] flex items-center justify-center mr-4 shrink-0 shadow-sm">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                <div class="flex items-center text-[13px] font-bold text-slate-600 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                                    <div class="size-2.5 rounded-full bg-[#f7b538] mr-4 shadow-sm shadow-orange-200 shrink-0"></div>
+                                    <span>{{ plan.limits?.contacts }} Contacts allowed</span>
                                 </div>
-                                <span class="text-[13px]">{{ plan.limits.contacts }} Directory Slots</span>
-                            </li>
-                            <li v-for="feature in getActiveFeatures(plan)" :key="feature" class="flex items-center text-sm font-bold text-slate-600">
-                                <div class="size-6 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center mr-4 shrink-0 shadow-sm group-hover:bg-red-50 group-hover:text-[#780116] transition-colors">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                <div class="flex items-center text-[13px] font-bold text-slate-600 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                                    <div class="size-2.5 rounded-full bg-[#db7c26] mr-4 shadow-sm shadow-orange-300 shrink-0"></div>
+                                    <span>{{ plan.limits?.messages }} Messages / mo</span>
                                 </div>
-                                <span class="text-[13px]">{{ feature }}</span>
-                            </li>
-                        </ul>
+                            </div>
+
+                            <!-- Included Features -->
+                            <div class="mt-8">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 ml-1">Included Features</p>
+                                <ul class="grid grid-cols-1 gap-3">
+                                    <li v-for="feature in getActiveFeatures(plan)" :key="feature" class="flex items-center text-[13px] font-bold text-slate-500">
+                                        <svg class="w-4 h-4 text-[#780116] mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                        {{ feature }}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
 
                         <button 
                             @click="selectPlan(plan)"
