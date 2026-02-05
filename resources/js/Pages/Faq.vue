@@ -11,42 +11,77 @@ defineProps({
 const faqs = ref([
     {
         question: "What is Sendora?",
-        answer: "Sendora is a powerful WhatsApp engagement platform designed for Malaysian SMEs. It allows you to send bulk messages, manage contacts, and automate customer interactions directly from your web browser.",
+        answer: "Sendora is a powerful WhatsApp engagement platform designed for businesses. It allows you to send bulk messages, manage contacts, automate customer interactions, and integrate with your applications via REST API - all directly from your web browser.",
         open: true
     },
     {
         question: "Is my WhatsApp number safe from being banned?",
-        answer: "Safety is our top priority. Sendora uses 'Human-Stagger' technology to simulate natural typing and sending patterns (variable time delays). Additionally, our AI Warmer Pool helps you build a strong reputation before sending large campaigns.",
+        answer: "Safety is our top priority. Sendora uses 'Human-Stagger' technology to simulate natural typing and sending patterns with variable time delays. Additionally, our AI Warmer Pool helps you build a strong reputation before sending large campaigns, significantly reducing the risk of bans.",
         open: false
     },
     {
         question: "How does the AI Warmer Pool work?",
-        answer: "The AI Warmer Pool is a community-powered feature. When enabled, your number will automatically exchange casual, realistic messages with other numbers in the Sendora community using OpenAI. This simulates natural human interaction, which builds trust with WhatsApp and significantly reduces the risk of bans. If you see casual messages from 'strangers' appearing in your chat, don't worry—that's just our AI helping you warm up!",
+        answer: "The AI Warmer Pool is a community-powered feature. When enabled, your number will automatically exchange casual, realistic messages with other numbers in the Sendora community using OpenAI. This simulates natural human interaction, building trust with WhatsApp and reducing ban risks. If you see casual messages from 'strangers' appearing in your chat, that's our AI helping you warm up!",
         open: false
     },
     {
         question: "Do I need the official WhatsApp Business API?",
-        answer: "No! Sendora works by scanning the QR code of your existing WhatsApp or WhatsApp Business app, just like WhatsApp Web. This means you can get started instantly without complex approvals or per-message fees.",
+        answer: "No! Sendora works by scanning the QR code of your existing WhatsApp or WhatsApp Business app, just like WhatsApp Web. This means you can get started instantly without complex approvals, per-message fees, or waiting for Meta's approval process.",
         open: false
     },
     {
         question: "Can I send media files like images or PDFs?",
-        answer: "Absolutely. Sendora supports images (JPG, PNG), documents (PDF), and emojis. You can attach these to your campaigns to create rich, engaging messages.",
+        answer: "Absolutely. Sendora supports multiple media types including images (JPG, PNG), documents (PDF), text messages, and emojis. You can attach these to your campaigns to create rich, engaging messages. All media uploads are handled securely through our platform.",
+        open: false
+    },
+    {
+        question: "What are Auto-Replies and how do they work?",
+        answer: "Auto-Replies let you automatically respond to incoming WhatsApp messages based on keywords. You can choose between two match types: 'Contains' (triggers when the keyword appears anywhere in the message) or 'Exact' (triggers only when the message exactly matches the keyword). Perfect for handling FAQs, business hours inquiries, or quick responses!",
+        open: false
+    },
+    {
+        question: "Does Sendora have an API for developers?",
+        answer: "Yes! Our Business plan includes full REST API access. You can programmatically manage contacts, send messages, check usage stats, and more. API tokens are secured with encryption and can be copied anytime from your dashboard. We provide comprehensive documentation, test scripts, and interactive API docs at /api-docs.",
+        open: false
+    },
+    {
+        question: "How do I manage my API tokens?",
+        answer: "Go to the API Tokens page in your dashboard. You can create new tokens with specific permissions (Full Access or granular abilities), view all your tokens, and copy the actual token anytime using the copy button. Tokens are encrypted and stored securely. If you lose a token, simply delete it and create a new one.",
+        open: false
+    },
+    {
+        question: "Can I schedule campaigns?",
+        answer: "Yes! Sendora supports scheduled campaigns. You can set a specific date and time for your campaign to be sent. You can also enable drip campaigns with delay intervals between messages to avoid spam detection and maintain natural sending patterns.",
+        open: false
+    },
+    {
+        question: "How does contact management work?",
+        answer: "Sendora provides a comprehensive contact management system. Import contacts individually or in bulk, organize them with tags, search by name or phone number, and track all communication history. Your Business plan supports up to 10,000 contacts with full API access for integration with your CRM.",
+        open: false
+    },
+    {
+        question: "Can multiple team members use one account?",
+        answer: "Yes! Our Business plan supports multi-user access, allowing your team to collaborate on campaigns, manage contacts, and track results together. Each team member can access the dashboard from their own browser with secure authentication.",
         open: false
     },
     {
         question: "How does the pricing work?",
-        answer: "We offer transparent subscription tiers (Starter, Basic, Pro, Business) based on your needs (volume of messages, number of contacts). You can pay monthly or save 20% with our yearly access pass. No hidden per-message costs.",
+        answer: "We offer a Business plan with comprehensive features including 5 WhatsApp numbers, 10,000 contacts, 20,000 messages per month, and full API access. You can pay monthly or yearly. No hidden per-message costs, no Meta API fees, and no surprise charges.",
         open: false
     },
     {
-        question: "Can I use Sendora on multiple devices?",
-        answer: "Sendora is cloud-based, so you can access your dashboard from any browser. Our Business plan even supports multi-user access so your team can manage campaigns together.",
+        question: "What happens if I exceed my message limit?",
+        answer: "When you reach your monthly message limit, you won't be able to send new messages until the next billing cycle or until you upgrade your plan. You can always check your usage stats in real-time from the dashboard or via the API (/api/v1/usage endpoint).",
+        open: false
+    },
+    {
+        question: "How do I connect my WhatsApp number?",
+        answer: "Simply go to WhatsApp Manager, click 'Add Number', and scan the QR code that appears with your WhatsApp mobile app (like connecting to WhatsApp Web). Your number will be connected instantly and you can start sending messages. You can connect up to 5 numbers on the Business plan.",
         open: false
     },
     {
         question: "What if I need to cancel my subscription?",
-        answer: "You are free to cancel anytime directly from your dashboard. There are no lock-in contracts. Your access will continue until the end of your current billing period.",
+        answer: "You are free to cancel anytime directly from your subscription dashboard. There are no lock-in contracts or cancellation fees. Your access will continue until the end of your current billing period, and you can export all your data before canceling.",
         open: false
     }
 ]);
