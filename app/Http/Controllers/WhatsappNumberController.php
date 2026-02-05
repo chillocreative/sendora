@@ -77,12 +77,14 @@ class WhatsappNumberController extends Controller
                 
                 if ($response->successful()) {
                     $data = $response->json();
+                    Log::info("WhatsApp status response for device {$number->id}: ", $data);
                     
                     $updateData = [
                         'status' => $data['status'] ?? 'disconnected',
                     ];
                     
                     if (!empty($data['qr'])) {
+                        Log::info("QR Code received from Node server.");
                         $updateData['qr_code'] = $data['qr'];
                     }
                     
