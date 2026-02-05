@@ -16,6 +16,8 @@ const page = usePage();
 const showingNavigationDropdown = ref(false);
 const showMobileMenu = ref(false);
 
+const isAdmin = computed(() => page.props.auth.user?.is_admin || false);
+
 const switchToTeam = (team) => {
     router.put(route('current-team.update'), {
         team_id: team.id,
@@ -187,11 +189,11 @@ const navigation = computed(() => {
                                         Profile Settings
                                     </DropdownLink>
 
-                                    <DropdownLink :href="route('subscription.show')">
+                                    <DropdownLink v-if="!isAdmin" :href="route('subscription.show')">
                                         Subscription
                                     </DropdownLink>
 
-                                    <DropdownLink :href="route('api-tokens.index')">
+                                    <DropdownLink v-if="!isAdmin" :href="route('api-tokens.index')">
                                         API Tokens
                                     </DropdownLink>
 
