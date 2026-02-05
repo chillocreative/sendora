@@ -131,7 +131,8 @@ const formatDate = (date) => {
                                 </button>
                              </div>
                              <div v-else class="px-5 py-3 bg-red-50 text-red-700 rounded-xl text-xs font-bold border border-red-100">
-                                Cancellation Scheduled for {{ formatDate(subscription.ends_at) }}
+                                <span v-if="subscription.ends_at">Cancellation Scheduled for {{ formatDate(subscription.ends_at) }}</span>
+                                <span v-else>Subscription Cancelled - Access will continue until billing period ends</span>
                              </div>
                         </div>
                     </div>

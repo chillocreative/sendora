@@ -76,6 +76,10 @@ class PaymentController extends Controller
             'reference_id' => 'txn_' . uniqid(),
         ]);
 
+        // Generate absolute URLs for payment gateway callbacks
+        $successUrl = url('/payments/success?ref=' . $transaction->reference_id);
+        $failureUrl = url('/payments/fail');
+
         $params = [
             'brand_id' => $brandId,
             'client' => [
@@ -93,13 +97,11 @@ class PaymentController extends Controller
                 ],
             ],
             'reference' => $transaction->reference_id,
-            'success_callback' => route('payments.success', ['ref' => $transaction->reference_id]),
-            'redirect_url' => route('payments.success', ['ref' => $transaction->reference_id]),
-            'return_url' => route('payments.success', ['ref' => $transaction->reference_id]),
-            'callback_url' => route('payments.success', ['ref' => $transaction->reference_id]),
-            'error_callback' => route('payments.fail'),
-            'cancel_url' => route('payments.fail'),
-            'test' => true, 
+            'success_redirect' => $successUrl,
+            'success_callback' => $successUrl,
+            'failure_redirect' => $failureUrl,
+            'cancel_redirect' => $failureUrl,
+            'test' => true,
         ];
 
         try {
