@@ -114,7 +114,7 @@ const formatDate = (date) => {
                             </div>
                             <div v-if="subscription.ends_at" class="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 group">
                                 <p class="text-[10px] font-black text-slate-300 group-hover:text-[#f7b538] uppercase tracking-[0.2em] mb-3 transition-colors">Synchronization Date</p>
-                                <p class="text-2xl font-black text-slate-900 tracking-tight">{{ new Date(subscription.ends_at).toLocaleDateString() }}</p>
+                                <p class="text-2xl font-black text-slate-900 tracking-tight">{{ formatDate(subscription.ends_at) }}</p>
                             </div>
                         </div>
                         <div v-if="subscription" class="mt-12 flex justify-end pt-6 border-t border-slate-50">
