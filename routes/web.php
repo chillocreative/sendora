@@ -19,11 +19,21 @@ Route::get('/', function () {
 
 Route::get('/l/{messageId}', [\App\Http\Controllers\LinkController::class, 'track'])->name('link.track');
 
+// System Utility Route
+Route::get('/system/force-clear', function() {
+    \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+    \Illuminate\Support\Facades\Artisan::call('route:clear');
+    return 'System Cache Cleared via Web Route';
+});
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
+    // EMERGENCY ROUTE for Cancellation
+    Route::post('/cancel-plan-action', [\App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('subscription.cancel_action');
+
     Route::get('/dashboard', function () {
         $user = auth()->user();
 
