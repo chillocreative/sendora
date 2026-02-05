@@ -49,21 +49,25 @@ jobs:
 
       - name: 🚀 Deploy & Configure via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          G_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          envs: G_TOKEN
           script: |
             cd ${{ secrets.REMOTE_TARGET }}
             
             set -e # Stop on any error
             
             # 1. Pull latest code (using temporary token for auth)
-            # We use the actor's token to ensure we have permission to pull the repo
-            git remote set-url origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-            git fetch origin main
+            git config --local credential.helper ""
+            git remote set-url origin "https://x-access-token:$G_TOKEN@github.com/${{ github.repository }}.git"
+            git fetch --depth=1 origin main
             git reset --hard origin/main
+
             
             # 2. Migrate & optimize
             php artisan optimize:clear
