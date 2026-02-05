@@ -26,6 +26,17 @@ app.use(cors({ origin: '*' }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Health Check & Log Viewer
+app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
+app.get('/debug/logs', (req, res) => {
+    const logPath = path.join(__dirname, 'server.log');
+    if (fs.existsSync(logPath)) {
+        res.sendFile(logPath);
+    } else {
+        res.status(404).json({ error: 'Log file not found' });
+    }
+});
+
 // cPanel Subfolder Fix: Strip the base path from the URL if it exists
 app.use((req, res, next) => {
     const basePath = '/whatsapp-server-temp';

@@ -86,8 +86,16 @@ jobs:
             echo "WA_SERVER_PORT=3000" > .env
             echo "API_BASE_URL=https://sendora.cc" >> .env
             
-            # Restart Passenger
+            # Clear old log to keep it fresh
+            > server.log
+            
+            # Restart Passenger (Node Server)
             mkdir -p tmp
             touch tmp/restart.txt
+            
+            # Also trigger restart from root just in case
+            cd ..
+            mkdir -p whatsapp-server-temp/tmp
+            touch whatsapp-server-temp/tmp/restart.txt
             
             echo "Deployment SUCCESS!"
