@@ -89,7 +89,13 @@ const copyTokenId = async (tokenId) => {
         });
 
         if (!response.ok) {
-            alert('Failed to retrieve token. Please try again.');
+            const errorData = await response.json().catch(() => ({}));
+
+            if (response.status === 404) {
+                alert('⚠️ This token was created before the copy feature was added.\n\nPlease delete this token and create a new one to use the copy feature.');
+            } else {
+                alert('Failed to retrieve token. Please try again or contact support.');
+            }
             return;
         }
 
@@ -98,7 +104,7 @@ const copyTokenId = async (tokenId) => {
         alert('✅ API token copied to clipboard!');
     } catch (error) {
         console.error('Error copying token:', error);
-        alert('Failed to copy token. Please try again.');
+        alert('❌ Network error. Please check your connection and try again.');
     }
 };
 
