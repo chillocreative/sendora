@@ -19,21 +19,31 @@ $nodeLog = $nodeDir . '/server.log';
 echo "Checking directory: $nodeDir\n";
 if (is_dir($nodeDir)) {
     echo "Files in directory:\n" . shell_exec("ls -F " . escapeshellarg($nodeDir));
+    
     if (is_dir("$nodeDir/node_modules")) {
-        echo "\n✅ node_modules found.\n";
+        echo "✅ node_modules found in root.\n";
+    } elseif (is_dir("$nodeDir/whatsapp-server-temp/node_modules")) {
+        echo "⚠️ node_modules found in NESTED directory. (Path issue identified)\n";
     } else {
-        echo "\n❌ node_modules MISSING! (Server cannot start)\n";
+        echo "❌ node_modules MISSING in both places!\n";
     }
 } else {
     echo "❌ Directory $nodeDir not found!\n";
 }
 
-echo "\n--- Last 50 lines of server.log ---\n";
-if (file_exists($nodeLog)) {
-    echo shell_exec("tail -n 50 " . escapeshellarg($nodeLog));
-} else {
-    echo "WhatsApp Node log file not found. Ensure the server is running.\n";
-    echo "NPM Path: " . shell_exec("which npm 2>&1") . "\n";
-    echo "Node Path: " . shell_exec("which node 2>&1") . "\n";
+echo "\n--- Environment Check ---\n";
+echo "NPM Path (which): " . shell_exec("which npm 2>&1") . "\n";
+echo "Node Path (which): " . shell_exec("which node 2>&1") . "\n";
+
+echo "\nSearching common cPanel Node paths:\n";
+$paths = [
+    '/usr/local/bin/node',
+    '/usr/bin/node',
+    '/opt/cpanel/ea-nodejs20/bin/node',
+    '/opt/cpanel/ea-nodejs22/bin/node',
+    '/opt/cpanel/ea-nodejs18/bin/node',
+];
+foreach($paths as $p) {
+    if (file_exists($p)) echo "✅ Found: $p\n";
 }
 echo "</pre>";
