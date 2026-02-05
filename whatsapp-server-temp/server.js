@@ -502,43 +502,6 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-// Disconnect a specific user's connection
-app.post('/disconnect', async (req, res) => {
-    const { user_id, phone_number } = req.body;
-    const key = `${user_id}_${phone_number}`;
-    const conn = connections.get(key);
-
-    if (!conn) {
-        return res.status(404).json({ error: 'Connection not found' });
-    }
-
-    try {
-        if (conn.sock) {
-            conn.sock.ev.removeAllListeners();
-            await conn.sock.logout();
-        }
-    } catch (e) {
-        console.error(`[${key}] Logout error:`, e);
-    }
-
-    connections.delete(key);
-
-    const sessionPath = path.join(sessionsDir, `session_${user_id}_${phone_number}`);
-    cleanupSession(sessionPath);
-
-    res.json({ success: true, message: 'Disconnected' });
-});
-
-// Health check
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        total_connections: connections.size,
-        connections: Array.from(connections.keys()),
-        uptime: process.uptime()
-    });
-});
-
 // Root route
 app.get('/', (req, res) => {
     res.send('🚀 Blaster WhatsApp Server is Running!');
@@ -577,18 +540,20 @@ app.listen(port, () => {
     console.log(`👥 Ready for multiple user connections`);
 
     // Auto-reconnect existing sessions
+    // Sessions are stored as {userId}_{whatsappNumberId} directories
     if (fs.existsSync(sessionsDir)) {
         fs.readdirSync(sessionsDir).forEach(file => {
-            if (file.startsWith('session_')) {
-                const parts = file.split('_');
-                if (parts.length === 3) {
-                    const userId = parts[1];
-                    const whatsappNumberId = parts[2];
-                    console.log(`[Startup] Restoring session for User ${userId}, Number ${whatsappNumberId}`);
-                    connectToWhatsApp(userId, whatsappNumberId).catch(err => {
-                        console.error(`[Startup] Failed to restore session ${file}:`, err.message);
-                    });
-                }
+            const fullPath = path.join(sessionsDir, file);
+            if (!fs.lstatSync(fullPath).isDirectory()) return;
+
+            const parts = file.split('_');
+            if (parts.length === 2) {
+                const userId = parts[0];
+                const whatsappNumberId = parts[1];
+                console.log(`[Startup] Restoring session for User ${userId}, Number ${whatsappNumberId}`);
+                connectToWhatsApp(userId, whatsappNumberId).catch(err => {
+                    console.error(`[Startup] Failed to restore session ${file}:`, err.message);
+                });
             }
         });
     }
