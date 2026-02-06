@@ -10,6 +10,7 @@ const props = defineProps({
 });
 
 const billingCycle = ref('monthly');
+const showMobileMenu = ref(false);
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
@@ -73,6 +74,9 @@ const selectPlan = (plan) => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-20">
                     <div class="flex items-center">
+                        <button @click="showMobileMenu = true" class="lg:hidden mr-4 text-slate-500 hover:text-slate-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        </button>
                         <Link :href="'/'" class="flex-shrink-0 flex items-center group cursor-pointer">
                             <div class="w-10 h-10 bg-[#780116] rounded-xl flex items-center justify-center shadow-lg shadow-red-200 group-hover:scale-110 transition-transform duration-300">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,8 +86,9 @@ const selectPlan = (plan) => {
                             <span class="ml-3 text-2xl font-black tracking-tight text-slate-900">Sendora</span>
                         </Link>
                     </div>
-                    
-                    <div class="flex items-center space-x-6">
+
+                    <!-- Desktop Menu -->
+                    <div class="hidden lg:flex items-center space-x-6">
                         <Link :href="'/'" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Home</Link>
                         <Link :href="route('pricing')" class="text-sm font-semibold text-[#780116] transition">Pricing</Link>
                         <Link :href="route('faq')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">FAQ</Link>
@@ -95,44 +100,96 @@ const selectPlan = (plan) => {
                             <Link :href="route('register')" class="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition shadow-md">Start Free</Link>
                         </template>
                     </div>
+
+                    <!-- Mobile CTA Button -->
+                    <div class="flex lg:hidden items-center">
+                        <Link v-if="!user" :href="route('register')" class="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-slate-800 transition shadow-md">Start Free</Link>
+                        <Link v-else :href="route('dashboard')" class="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-slate-800 transition shadow-md">Dashboard</Link>
+                    </div>
                 </div>
             </div>
         </nav>
 
+        <!-- Mobile Menu Overlay -->
+        <div v-if="showMobileMenu" class="fixed inset-0 z-40 bg-slate-900/90 backdrop-blur-sm lg:hidden" @click="showMobileMenu = false"></div>
+
+        <!-- Mobile Menu Sidebar -->
+        <div :class="showMobileMenu ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transition-transform duration-500 lg:hidden flex flex-col">
+            <div class="h-20 px-4 flex items-center justify-between border-b border-slate-100">
+                <Link :href="'/'" class="flex items-center">
+                    <div class="w-10 h-10 bg-[#780116] rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <span class="ml-3 text-2xl font-black tracking-tight text-slate-900">Sendora</span>
+                </Link>
+                <button @click="showMobileMenu = false" class="size-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:text-slate-900 transition-all active:scale-90">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <nav class="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+                <Link :href="'/'" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
+                    Home
+                </Link>
+                <Link :href="route('pricing')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-[#780116] bg-red-50" @click="showMobileMenu = false">
+                    Pricing
+                </Link>
+                <Link :href="route('faq')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
+                    FAQ
+                </Link>
+                <template v-if="user">
+                    <Link :href="route('dashboard')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
+                        Dashboard
+                    </Link>
+                </template>
+                <template v-else>
+                    <Link :href="route('login')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
+                        Log in
+                    </Link>
+                    <Link :href="route('register')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl bg-slate-900 text-white hover:bg-slate-800" @click="showMobileMenu = false">
+                        Start Free
+                    </Link>
+                </template>
+            </nav>
+        </div>
+
         <main class="flex-grow pt-32 pb-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Copywriting Section -->
-                <div class="text-center mb-24">
-                    <h1 class="text-5xl md:text-7xl font-black text-slate-900 mb-8 tracking-tight max-w-4xl mx-auto leading-[1.1]">
-                        Scale Your Customer <br/>
+                <div class="text-center mb-24 px-4">
+                    <h1 class="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 mb-6 sm:mb-8 tracking-tight max-w-4xl mx-auto leading-[1.1]">
+                        Scale Your Customer <br class="hidden sm:block"/>
                         <span class="text-[#780116]">Engagement Effortlessly.</span>
                     </h1>
-                    <p class="text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
+                    <p class="text-base sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
                         Stop overpaying for features you don't use. Choose a plan that grows with your business, whether you're a solopreneur or a high-volume enterprise.
                     </p>
 
                     <!-- Enhanced Switcher -->
-                    <div class="mt-12 flex flex-col items-center">
-                        <div class="flex items-center space-x-4 bg-white p-2.5 rounded-[1.75rem] border border-slate-100 shadow-xl shadow-slate-200/50">
-                            <button 
+                    <div class="mt-12 flex flex-col items-center px-4">
+                        <div class="flex items-center space-x-2 sm:space-x-4 bg-white p-2 sm:p-2.5 rounded-[1.75rem] border border-slate-100 shadow-xl shadow-slate-200/50">
+                            <button
                                 @click="billingCycle = 'monthly'"
                                 :class="billingCycle === 'monthly' ? 'bg-[#780116] text-white shadow-xl shadow-red-200' : 'text-slate-400 hover:text-slate-600'"
-                                class="px-10 py-5 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest transition-all duration-300 transform active:scale-95"
+                                class="px-5 sm:px-10 py-3 sm:py-5 rounded-[1.25rem] text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all duration-300 transform active:scale-95"
                             >
-                                Regular Billing
+                                <span class="hidden sm:inline">Regular Billing</span>
+                                <span class="sm:hidden">Monthly</span>
                             </button>
-                            <button 
+                            <button
                                 @click="billingCycle = 'yearly'"
                                 :class="billingCycle === 'yearly' ? 'bg-[#780116] text-white shadow-xl shadow-red-200' : 'text-slate-400 hover:text-slate-600'"
-                                class="px-10 py-5 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center transform active:scale-95"
+                                class="px-5 sm:px-10 py-3 sm:py-5 rounded-[1.25rem] text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all duration-300 flex items-center transform active:scale-95"
                             >
-                                Annual Plan
-                                <span class="ml-3 px-2 py-1 rounded-lg bg-[#f7b538] text-[9px] text-[#780116] font-black tracking-normal" :class="billingCycle === 'yearly' ? 'animate-pulse' : ''">
+                                <span class="hidden sm:inline">Annual Plan</span>
+                                <span class="sm:hidden">Yearly</span>
+                                <span class="ml-2 sm:ml-3 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg bg-[#f7b538] text-[9px] text-[#780116] font-black tracking-normal" :class="billingCycle === 'yearly' ? 'animate-pulse' : ''">
                                     - 20% OFF
                                 </span>
                             </button>
                         </div>
-                        <p class="mt-8 text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">Secure Checkout • Instant Deployment • Enterprise Grade</p>
+                        <p class="mt-8 text-[9px] sm:text-[11px] font-black text-slate-300 uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">Secure Checkout • Instant Deployment • Enterprise Grade</p>
                     </div>
                 </div>
 

@@ -84,7 +84,7 @@ const formatDate = (date) => {
         </template>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Current Subscription Status -->
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-3xl border border-slate-100 mb-12">
                     <div class="p-8 sm:p-12">
@@ -164,22 +164,23 @@ const formatDate = (date) => {
                     <p class="text-slate-500 font-medium max-w-2xl mx-auto">Scale your performance with our premium features. Upgrade your subscription anytime.</p>
                 
                     <!-- Billing Switcher -->
-                    <div class="mt-8 flex justify-center">
-                        <div class="flex items-center space-x-2 bg-white p-2 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-100">
-                            <button 
+                    <div class="mt-8 flex justify-center px-4">
+                        <div class="flex items-center space-x-1 sm:space-x-2 bg-white p-1.5 sm:p-2 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-100">
+                            <button
                                 @click="billingCycle = 'monthly'"
                                 :class="billingCycle === 'monthly' ? 'bg-[#780116] text-white shadow-xl shadow-red-100' : 'text-slate-400 hover:text-slate-700'"
-                                class="px-10 py-4 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest transition-all duration-300"
+                                class="px-4 sm:px-10 py-3 sm:py-4 rounded-[1.25rem] text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all duration-300"
                             >
                                 Monthly
                             </button>
-                            <button 
+                            <button
                                 @click="billingCycle = 'yearly'"
                                 :class="billingCycle === 'yearly' ? 'bg-[#780116] text-white shadow-xl shadow-red-100' : 'text-slate-400 hover:text-slate-700'"
-                                class="px-10 py-4 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center"
+                                class="px-4 sm:px-10 py-3 sm:py-4 rounded-[1.25rem] text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all duration-300 flex items-center"
                             >
-                                Yearly Access
-                                <span class="ml-3 px-2 py-0.5 rounded-lg bg-[#f7b538] text-[9px] text-[#780116] font-black tracking-normal" :class="billingCycle === 'yearly' ? 'bg-white/20 text-white' : ''">
+                                <span class="hidden sm:inline">Yearly Access</span>
+                                <span class="sm:hidden">Yearly</span>
+                                <span class="ml-2 sm:ml-3 px-1.5 sm:px-2 py-0.5 rounded-lg bg-[#f7b538] text-[9px] text-[#780116] font-black tracking-normal" :class="billingCycle === 'yearly' ? 'bg-white/20 text-white' : ''">
                                     - 20%
                                 </span>
                             </button>

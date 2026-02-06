@@ -64,7 +64,7 @@ const hideTooltip = () => {
         </template>
 
         <div class="py-8">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
                 
                 <!-- Subscription Alerts -->
                 <div v-if="subscription && subscription.status === 'waiting_for_payment'" class="bg-gradient-to-r from-[#db7c26] to-[#c32f27] rounded-2xl shadow-xl p-8 text-white flex flex-col md:flex-row justify-between items-center gap-6">
@@ -78,7 +78,7 @@ const hideTooltip = () => {
                 </div>
 
                 <!-- Performance Rates Cards -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center hover:shadow-md transition-shadow relative overflow-hidden group">
                         <div class="absolute top-0 left-0 w-1 h-full bg-[#f7b538]"></div>
                         <div class="text-3xl font-black text-[#f7b538] group-hover:scale-110 transition-transform">{{ overallStats?.send_rate || 0 }}%</div>

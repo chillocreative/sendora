@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import Footer from '@/Components/Footer.vue';
+import { ref } from 'vue';
 
 defineProps({
     canLogin: Boolean,
@@ -8,6 +9,8 @@ defineProps({
     laravelVersion: String,
     phpVersion: String,
 });
+
+const showMobileMenu = ref(false);
 </script>
 
 <template>
@@ -22,6 +25,9 @@ defineProps({
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-20">
                     <div class="flex items-center">
+                        <button @click="showMobileMenu = true" class="lg:hidden mr-4 text-slate-500 hover:text-slate-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        </button>
                         <div class="flex-shrink-0 flex items-center group cursor-pointer">
                             <div class="w-10 h-10 bg-[#780116] rounded-xl flex items-center justify-center shadow-lg shadow-red-200 group-hover:scale-110 transition-transform duration-300">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,8 +37,9 @@ defineProps({
                             <span class="ml-3 text-2xl font-black tracking-tight text-slate-900">Sendora</span>
                         </div>
                     </div>
-                    
-                    <div class="flex items-center space-x-6">
+
+                    <!-- Desktop Menu -->
+                    <div class="hidden lg:flex items-center space-x-6">
                         <Link :href="'/'" class="text-sm font-semibold text-[#780116] transition">Home</Link>
                         <Link :href="route('pricing')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Pricing</Link>
                         <Link :href="route('faq')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">FAQ</Link>
@@ -44,33 +51,83 @@ defineProps({
                             </template>
                         </template>
                     </div>
+
+                    <!-- Mobile CTA Button -->
+                    <div class="flex lg:hidden items-center">
+                        <Link v-if="canLogin && !$page.props.auth.user && canRegister" :href="route('register')" class="bg-[#780116] text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-[#c32f27] transition shadow-md">Start Free</Link>
+                        <Link v-else-if="canLogin && $page.props.auth.user" :href="route('dashboard')" class="bg-[#780116] text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-[#c32f27] transition shadow-md">Dashboard</Link>
+                    </div>
                 </div>
             </div>
         </nav>
 
+        <!-- Mobile Menu Overlay -->
+        <div v-if="showMobileMenu" class="fixed inset-0 z-40 bg-slate-900/90 backdrop-blur-sm lg:hidden" @click="showMobileMenu = false"></div>
+
+        <!-- Mobile Menu Sidebar -->
+        <div :class="showMobileMenu ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transition-transform duration-500 lg:hidden flex flex-col">
+            <div class="h-20 px-4 flex items-center justify-between border-b border-slate-100">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-[#780116] rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <span class="ml-3 text-2xl font-black tracking-tight text-slate-900">Sendora</span>
+                </div>
+                <button @click="showMobileMenu = false" class="size-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:text-slate-900 transition-all active:scale-90">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <nav class="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+                <Link :href="'/'" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-[#780116] bg-red-50" @click="showMobileMenu = false">
+                    Home
+                </Link>
+                <Link :href="route('pricing')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
+                    Pricing
+                </Link>
+                <Link :href="route('faq')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
+                    FAQ
+                </Link>
+                <template v-if="canLogin">
+                    <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
+                        Dashboard
+                    </Link>
+                    <template v-else>
+                        <Link :href="route('login')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
+                            Log in
+                        </Link>
+                        <Link v-if="canRegister" :href="route('register')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl bg-[#780116] text-white hover:bg-[#c32f27]" @click="showMobileMenu = false">
+                            Start Free
+                        </Link>
+                    </template>
+                </template>
+            </nav>
+        </div>
+
         <!-- Hero Section -->
-        <section class="pt-40 pb-20 px-4">
+        <section class="pt-32 sm:pt-40 pb-16 sm:pb-20 px-4">
             <div class="max-w-7xl mx-auto text-center">
-                
+
                 <div class="relative inline-block">
-                    <h1 class="relative text-5xl md:text-7xl font-black text-slate-900 mb-8 tracking-tight max-w-4xl mx-auto leading-[1.1]">
-                        WhatsApp Marketing <br/>
+                    <h1 class="relative text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 mb-6 sm:mb-8 tracking-tight max-w-4xl mx-auto leading-[1.1]">
+                        WhatsApp Marketing <br class="hidden sm:block"/>
                         <span class="text-[#780116]">Made Simple & Powerful</span>
                     </h1>
                 </div>
 
-                <p class="text-xl text-slate-500 mb-12 max-w-3xl mx-auto leading-relaxed relative">
+                <p class="text-base sm:text-xl text-slate-500 mb-10 sm:mb-12 max-w-3xl mx-auto leading-relaxed relative">
                     <span class="absolute -left-8 top-0 text-red-200 opacity-20 hidden md:block">
                         <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
                     </span>
                     Send bulk WhatsApp messages, automate campaigns, manage unlimited contacts, and track performance in real-time. The complete WhatsApp marketing automation platform for businesses in Malaysia and beyond.
                 </p>
-                
-                <div class="flex flex-col sm:flex-row items-center justify-center space-y-5 sm:space-y-0 sm:space-x-6">
-                    <Link :href="route('register')" class="w-full sm:w-auto bg-[#780116] text-white px-12 py-5 rounded-2xl text-xl font-black flex items-center justify-center shadow-2xl shadow-red-900/40 hover:bg-[#c32f27] transition">
+
+                <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+                    <Link :href="route('register')" class="w-full sm:w-auto bg-[#780116] text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-black flex items-center justify-center shadow-2xl shadow-red-900/40 hover:bg-[#c32f27] transition">
                         Connect WhatsApp — It's Free
                     </Link>
-                    <Link :href="route('pricing')" class="w-full sm:w-auto bg-slate-900 text-white px-12 py-5 rounded-2xl text-xl font-bold flex items-center justify-center">
+                    <Link :href="route('pricing')" class="w-full sm:w-auto bg-slate-900 text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center">
                         View Pricing
                     </Link>
                 </div>
@@ -87,12 +144,12 @@ defineProps({
         </section>
 
         <!-- Trust & Value -->
-        <section class="py-24 bg-slate-900 text-white overflow-hidden relative">
+        <section class="py-16 sm:py-24 bg-slate-900 text-white overflow-hidden relative">
             <div class="max-w-7xl mx-auto px-4 relative z-10">
-                <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="grid md:grid-cols-2 gap-10 sm:gap-16 items-center">
                     <div>
-                        <h2 class="text-4xl md:text-5xl font-black mb-8 leading-tight">Complete WhatsApp Marketing Solution <br/><span class="text-[#f7b538]">for Modern Businesses</span></h2>
-                        <p class="text-slate-400 text-xl mb-10 leading-relaxed">
+                        <h2 class="text-3xl sm:text-4xl md:text-5xl font-black mb-6 sm:mb-8 leading-tight">Complete WhatsApp Marketing Solution <br class="hidden sm:block"/><span class="text-[#f7b538]">for Modern Businesses</span></h2>
+                        <p class="text-slate-400 text-base sm:text-xl mb-8 sm:mb-10 leading-relaxed">
                             Reach customers directly on WhatsApp with bulk messaging, automated replies, and advanced contact management. Send promotional campaigns, customer updates, and personalized messages at scale while maintaining high engagement rates.
                         </p>
                         <ul class="space-y-4 text-slate-300">
@@ -114,20 +171,20 @@ defineProps({
                             </li>
                         </ul>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
                             <div class="text-3xl font-bold text-[#f7b538] mb-2">98%</div>
                             <div class="text-sm text-slate-400 uppercase tracking-wider font-bold">Open Rate</div>
                         </div>
-                        <div class="p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm translate-y-8">
+                        <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm sm:translate-y-8">
                             <div class="text-3xl font-bold text-[#db7c26] mb-2">45%</div>
                             <div class="text-sm text-slate-400 uppercase tracking-wider font-bold">CTR</div>
                         </div>
-                        <div class="p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
+                        <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
                             <div class="text-3xl font-bold text-[#d8572a] mb-2">3.5x</div>
                             <div class="text-sm text-slate-400 uppercase tracking-wider font-bold">Conversion</div>
                         </div>
-                        <div class="p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm translate-y-8">
+                        <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm sm:translate-y-8">
                             <div class="text-3xl font-bold text-[#c32f27] mb-2">24h</div>
                             <div class="text-sm text-slate-400 uppercase tracking-wider font-bold">Support</div>
                         </div>
@@ -137,11 +194,11 @@ defineProps({
         </section>
 
         <!-- Features -->
-        <section class="py-24 bg-white">
+        <section class="py-16 sm:py-24 bg-white">
             <div class="max-w-7xl mx-auto px-4">
-                <div class="text-center mb-20">
-                    <h2 class="text-4xl font-black text-slate-900 mb-4">Powerful WhatsApp Marketing Features</h2>
-                    <p class="text-lg text-slate-500">Everything you need to grow your business on WhatsApp</p>
+                <div class="text-center mb-12 sm:mb-20">
+                    <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-3 sm:mb-4">Powerful WhatsApp Marketing Features</h2>
+                    <p class="text-base sm:text-lg text-slate-500">Everything you need to grow your business on WhatsApp</p>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-12">
@@ -221,12 +278,12 @@ defineProps({
         </section>
 
         <!-- How It Works -->
-        <section class="py-32 bg-slate-50 border-y border-slate-200 relative overflow-hidden">
+        <section class="py-20 sm:py-32 bg-slate-50 border-y border-slate-200 relative overflow-hidden">
             <div class="absolute inset-0 opacity-40 bg-[url('/images/steps_bg.png')] bg-cover bg-center"></div>
             <div class="max-w-7xl mx-auto px-4 relative z-10">
-                <div class="text-center mb-24">
-                    <h2 class="text-5xl font-black text-slate-900 mb-6 tracking-tight">Get Started in 3 Simple Steps</h2>
-                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Launch your first WhatsApp campaign in minutes</p>
+                <div class="text-center mb-16 sm:mb-24">
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-4 sm:mb-6 tracking-tight">Get Started in 3 Simple Steps</h2>
+                    <p class="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em]">Launch your first WhatsApp campaign in minutes</p>
                 </div>
 
                 <div class="relative">
@@ -260,19 +317,19 @@ defineProps({
         </section>
 
         <!-- Final CTA -->
-        <section class="py-24 bg-white px-4">
-            <div class="max-w-5xl mx-auto rounded-[3rem] bg-slate-900 p-12 md:p-20 text-center relative overflow-hidden">
-                
-                <h2 class="text-4xl md:text-5xl font-black text-white mb-8">Start Your WhatsApp Marketing Journey Today</h2>
+        <section class="py-16 sm:py-24 bg-white px-4">
+            <div class="max-w-5xl mx-auto rounded-[2rem] sm:rounded-[3rem] bg-slate-900 p-8 sm:p-12 md:p-20 text-center relative overflow-hidden">
+
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6 sm:mb-8">Start Your WhatsApp Marketing Journey Today</h2>
                 <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    <Link :href="route('register')" class="w-full sm:w-auto bg-[#780116] text-white px-10 py-5 rounded-2xl text-xl font-bold hover:bg-[#c32f27] transition shadow-2xl shadow-red-900/40">
+                    <Link :href="route('register')" class="w-full sm:w-auto bg-[#780116] text-white px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold hover:bg-[#c32f27] transition shadow-2xl shadow-red-900/40">
                         Start for Free Now
                     </Link>
-                    <Link :href="route('pricing')" class="w-full sm:w-auto bg-white/10 text-white border border-white/20 px-10 py-5 rounded-2xl text-xl font-bold hover:bg-white/20 transition">
+                    <Link :href="route('pricing')" class="w-full sm:w-auto bg-white/10 text-white border border-white/20 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold hover:bg-white/20 transition">
                         Compare Plans
                     </Link>
                 </div>
-                <p class="mt-8 text-slate-400 font-medium tracking-wide flex items-center justify-center">
+                <p class="mt-6 sm:mt-8 text-slate-400 font-medium text-sm sm:text-base tracking-wide flex items-center justify-center flex-wrap">
                     <svg class="w-5 h-5 text-[#f7b538] mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
                     No credit card required. Cancel anytime.
                 </p>
