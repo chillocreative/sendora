@@ -17,7 +17,7 @@ class CheckMaintenanceMode
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Don't check for admin routes, authentication routes, or if the user is an admin
+        // Don't check for admin routes, authentication routes, system routes, or if the user is an admin
         if (
             $request->is('admin*') ||
             $request->is('login*') ||
@@ -26,6 +26,7 @@ class CheckMaintenanceMode
             $request->is('reset-password*') ||
             $request->is('two-factor-challenge*') ||
             $request->is('two-factor-recovery*') ||
+            $request->is('system/*') ||
             ($request->user() && $request->user()->is_admin)
         ) {
             return $next($request);
