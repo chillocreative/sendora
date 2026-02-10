@@ -108,12 +108,6 @@ const showMobileMenu = ref(false);
         <!-- 1. Hero Section -->
         <section class="pt-32 sm:pt-40 pb-16 sm:pb-20 px-4">
             <div class="max-w-7xl mx-auto text-center">
-                <!-- Trust Badge -->
-                <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-100 rounded-full mb-8">
-                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                    <span class="text-[11px] font-black text-green-700 uppercase tracking-widest">Compliance-First Platform</span>
-                </div>
-
                 <h1 class="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 mb-6 sm:mb-8 tracking-tight max-w-5xl mx-auto leading-[1.1]">
                     Your AI Replies to WhatsApp Leads. <br class="hidden sm:block"/>
                     <span class="text-[#780116]">Only When They Message You First.</span>
