@@ -206,13 +206,30 @@ class AiReplyService
                 . "The customer has already been greeted. Continue the conversation naturally — do NOT repeat any greeting or introduction.";
         }
 
+        Log::debug('AI buildPrompt', [
+            'conversation_id' => $conversation->id,
+            'history_count' => $history->count(),
+        ]);
+
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
         ];
 
         foreach ($history as $msg) {
-            $role = ($msg->direction === 'inbound') ? 'user' : 'assistant';
-            $messages[] = ['role' => $role, 'content' => $msg->body];
+            if ($msg->direction === 'inbound') {
+                $messages[] = ['role' => 'user', 'content' => $msg->body];
+            } else {
+                // Wrap outbound messages in the same JSON format the system prompt
+                // instructs the AI to use, so OpenAI recognizes them as its own replies
+                // and doesn't restart the conversation with a fresh greeting.
+                $messages[] = ['role' => 'assistant', 'content' => json_encode([
+                    'reply' => $msg->body,
+                    'confidence' => (float) ($msg->confidence_score ?? 0.9),
+                    'reasoning_source' => $msg->reasoning_source ?? 'previous_reply',
+                    'escalate' => false,
+                    'escalation_reason' => null,
+                ])];
+            }
         }
 
         return $messages;
