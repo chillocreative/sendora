@@ -34,10 +34,12 @@ class WhatsappService
                        ?? env('WA_SERVER_URL', 'http://localhost:3000');
         $waServerUrl = rtrim($waServerUrl, '/');
         
-        // Clean the recipient number
-        $to = preg_replace('/[^0-9]/', '', $to);
-        if (str_starts_with($to, '0')) {
-            $to = '6' . $to; // Default to Malaysia country code if starting with 0
+        // Clean the recipient number (skip if already a full JID with @lid or @s.whatsapp.net)
+        if (!str_contains($to, '@')) {
+            $to = preg_replace('/[^0-9]/', '', $to);
+            if (str_starts_with($to, '0')) {
+                $to = '6' . $to; // Default to Malaysia country code if starting with 0
+            }
         }
 
         $payload = [

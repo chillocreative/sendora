@@ -147,16 +147,16 @@ class AiReplyService
                 'latency_ms' => $result['latency_ms'],
             ]);
 
-            // Send the handoff message if the AI produced one
+            // Send the handoff message if the AI produced one (use original JID for @lid support)
             if (!empty($parsed['reply'])) {
-                $this->whatsapp->sendMessage($whatsappNumber, $cleanPhone, $parsed['reply']);
+                $this->whatsapp->sendMessage($whatsappNumber, $contactPhone, $parsed['reply']);
             }
 
             return ['replied' => true, 'reason' => 'escalated: ' . $parsed['escalation_reason'], 'conversation_id' => $conversation->id];
         }
 
-        // -- Step 8: Send AI reply --
-        $sendResult = $this->whatsapp->sendMessage($whatsappNumber, $cleanPhone, $parsed['reply']);
+        // -- Step 8: Send AI reply (use original JID to preserve @lid format) --
+        $sendResult = $this->whatsapp->sendMessage($whatsappNumber, $contactPhone, $parsed['reply']);
 
         $outboundWaMessageId = null;
         if ($sendResult && $sendResult->successful()) {
