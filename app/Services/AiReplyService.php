@@ -200,10 +200,21 @@ class AiReplyService
 
         $history = $conversation->latestMessages(20);
 
+        // Add explicit conversation state to help AI understand context
         if ($history->count() > 1) {
-            $systemPrompt .= "\n\n=== CONVERSATION CONTEXT ===\n"
-                . "This is an ongoing conversation with {$history->count()} messages. "
-                . "The customer has already been greeted. Continue the conversation naturally — do NOT repeat any greeting or introduction.";
+            $lastAiMessage = $history->where('direction', 'outbound')->last();
+            $lastUserMessage = $history->where('direction', 'inbound')->last();
+
+            $systemPrompt .= "\n\n=== CONVERSATION STATE ===\n";
+            $systemPrompt .= "IMPORTANT: This conversation already has {$history->count()} messages.\n";
+            $systemPrompt .= "You have ALREADY greeted this customer.\n";
+            if ($lastAiMessage) {
+                $systemPrompt .= "Your last message: \"" . substr($lastAiMessage->body, 0, 100) . "\"\n";
+            }
+            if ($lastUserMessage) {
+                $systemPrompt .= "Customer's latest message: \"" . substr($lastUserMessage->body, 0, 100) . "\"\n";
+            }
+            $systemPrompt .= "\nDO NOT send another greeting. Respond directly to the customer's latest message based on the conversation history below.";
         }
 
         Log::debug('AI buildPrompt', [
@@ -215,21 +226,10 @@ class AiReplyService
             ['role' => 'system', 'content' => $systemPrompt],
         ];
 
+        // Add conversation history as PLAIN TEXT (not JSON wrapped)
         foreach ($history as $msg) {
-            if ($msg->direction === 'inbound') {
-                $messages[] = ['role' => 'user', 'content' => $msg->body];
-            } else {
-                // Wrap outbound messages in the same JSON format the system prompt
-                // instructs the AI to use, so OpenAI recognizes them as its own replies
-                // and doesn't restart the conversation with a fresh greeting.
-                $messages[] = ['role' => 'assistant', 'content' => json_encode([
-                    'reply' => $msg->body,
-                    'confidence' => (float) ($msg->confidence_score ?? 0.9),
-                    'reasoning_source' => $msg->reasoning_source ?? 'previous_reply',
-                    'escalate' => false,
-                    'escalation_reason' => null,
-                ])];
-            }
+            $role = ($msg->direction === 'inbound') ? 'user' : 'assistant';
+            $messages[] = ['role' => $role, 'content' => $msg->body];
         }
 
         return $messages;
@@ -260,6 +260,24 @@ You MUST respond in the following JSON format only. Do NOT include any text outs
   "escalation_reason": null
 }
 
+=== CONVERSATION PROGRESSION RULES ===
+CRITICAL: The playbook shows a conversation FLOW, not a rigid script. You must adapt based on what information you've ALREADY collected.
+
+Before asking ANY question, CHECK THE CONVERSATION HISTORY:
+- If customer already mentioned their business type → DO NOT ask again, use that information
+- If customer already mentioned their budget → DO NOT ask again, acknowledge it
+- If customer already mentioned their goals → DO NOT ask again, reference them
+- If customer already answered a question → MOVE FORWARD to the next step
+
+PROGRESSION LOGIC:
+1. If this is the FIRST message (no history) → Send greeting + ask about business
+2. If customer answered about business → Ask about budget/audience (only if not mentioned yet)
+3. If customer provided budget info → Suggest tailored solution
+4. If customer shows interest → Offer consultation
+5. If any qualification criteria met (e.g., high budget) → Escalate to human
+
+NEVER REPEAT QUESTIONS. Read the conversation history carefully and respond to what the customer JUST said.
+
 === RULES ===
 1. "reply" is the actual text message to send to the customer via WhatsApp. Keep it natural, concise, and conversational.
 2. "confidence" is a float from 0.0 to 1.0 indicating how confident you are that your reply correctly follows the playbook.
@@ -274,13 +292,14 @@ You MUST respond in the following JSON format only. Do NOT include any text outs
    - You detect a forbidden topic or action from the playbook
    - Your confidence would be below 0.5
    - The customer appears frustrated after 3+ exchanges without resolution
-5. When escalating, "reply" should contain a polite handoff message (e.g. "Let me connect you with a team member who can help further.").
+   - Budget threshold exceeded (per playbook escalation rules)
+5. When escalating, "reply" should contain a polite handoff message (e.g. "Terima kasih, saya sambungkan anda dengan team kami sebentar ya.").
 6. "escalation_reason" should explain why you are escalating (only when escalate=true).
 7. Never make up information not in the playbook.
 8. Never share pricing, promotions, or policies not explicitly stated in the playbook.
 9. If unsure, escalate rather than guess.
 10. Keep replies WhatsApp-appropriate: short paragraphs, no markdown formatting, no bullet points unless the customer asked for a list.
-11. This is a multi-turn conversation. The message history contains previous exchanges with this customer. NEVER repeat a greeting or introduction you have already sent. Read the full conversation history and respond contextually to the customer's latest message only.
+11. This is a multi-turn conversation. NEVER repeat greetings or questions you've already asked. Read the full conversation history and respond contextually.
 PROMPT;
     }
 
