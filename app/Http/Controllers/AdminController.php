@@ -288,6 +288,7 @@ class AdminController extends Controller
             'mail_from_address' => 'hello@sendora.com',
             'mail_from_name' => 'Sendora',
             'openai_api_key' => '',
+            'deepseek_api_key' => '',
             'openai_default_model' => 'gpt-4o',
             'ai_reply_enabled' => '1',
         ];

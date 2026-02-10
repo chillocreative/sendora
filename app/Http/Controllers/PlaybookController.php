@@ -19,6 +19,9 @@ class PlaybookController extends Controller
                 ->withCount(['whatsappNumbers', 'versions'])
                 ->latest()
                 ->paginate(10),
+            'whatsappNumbers' => $user->whatsappNumbers()
+                ->select('id', 'phone_number', 'status', 'playbook_id', 'ai_reply_enabled')
+                ->get(),
         ]);
     }
 
@@ -37,9 +40,11 @@ class PlaybookController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'content' => 'required|string|min:50',
-            'model' => 'nullable|string|in:gpt-4o,gpt-4o-mini,gpt-3.5-turbo',
+            'model' => 'nullable|string|in:gpt-4o,gpt-4o-mini,gpt-3.5-turbo,deepseek-chat,deepseek-reasoner',
             'temperature' => 'nullable|numeric|min:0|max:2',
             'max_tokens' => 'nullable|integer|min:100|max:2000',
+            'assign_numbers' => 'nullable|array',
+            'assign_numbers.*' => 'exists:whatsapp_numbers,id',
         ]);
 
         $content = PlaybookSanitizer::sanitize($request->content);
@@ -67,6 +72,16 @@ class PlaybookController extends Controller
             'created_at' => now(),
         ]);
 
+        // Assign to selected WhatsApp numbers
+        if (!empty($request->assign_numbers)) {
+            auth()->user()->whatsappNumbers()
+                ->whereIn('id', $request->assign_numbers)
+                ->update([
+                    'playbook_id' => $playbook->id,
+                    'ai_reply_enabled' => true,
+                ]);
+        }
+
         return redirect()->route('playbooks.index')->with('success', 'Playbook created.');
     }
 
@@ -90,7 +105,7 @@ class PlaybookController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'content' => 'required|string|min:50',
-            'model' => 'nullable|string|in:gpt-4o,gpt-4o-mini,gpt-3.5-turbo',
+            'model' => 'nullable|string|in:gpt-4o,gpt-4o-mini,gpt-3.5-turbo,deepseek-chat,deepseek-reasoner',
             'temperature' => 'nullable|numeric|min:0|max:2',
             'max_tokens' => 'nullable|integer|min:100|max:2000',
             'is_active' => 'boolean',

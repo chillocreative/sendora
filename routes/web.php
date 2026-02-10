@@ -26,6 +26,83 @@ Route::get('/system/force-clear', function() {
     return 'System Cache Cleared via Web Route';
 });
 
+Route::get('/system/reset-conversation/{id}', function($id) {
+    $conversation = \App\Models\Conversation::findOrFail($id);
+    $count = $conversation->messages()->count();
+    $conversation->messages()->delete();
+    $conversation->update([
+        'message_count' => 0,
+        'last_customer_message_at' => null,
+        'last_ai_reply_at' => null,
+    ]);
+    return "✅ Deleted {$count} messages from conversation {$id}. Start fresh now!";
+});
+
+Route::get('/system/test-openai', function() {
+    $key = \App\Models\Setting::where('key', 'openai_api_key')->first();
+
+    echo "<h1>OpenAI & WhatsApp Configuration Check</h1><pre>";
+
+    // Check WhatsApp Server URL
+    $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value');
+    echo "=== WhatsApp Server ===\n";
+    echo "Configured URL: " . ($waServerUrl ?: 'NOT SET (using default)') . "\n";
+    echo "Should be: http://localhost:3005\n";
+    if ($waServerUrl !== 'http://localhost:3005' && $waServerUrl !== 'http://127.0.0.1:3005') {
+        echo "❌ WRONG PORT! This is why AI replies don't send!\n\n";
+        echo "Fixing now...\n";
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'wa_server_url'],
+            ['value' => 'http://localhost:3005']
+        );
+        echo "✅ Fixed! Now set to http://localhost:3005\n\n";
+    } else {
+        echo "✅ Correct!\n\n";
+    }
+
+    echo "=== OpenAI API ===\n";
+    if ($key) {
+        $value = $key->value;
+        echo "✅ OpenAI API Key is SAVED in database\n";
+        echo "Key starts with: " . substr($value, 0, 20) . "...\n";
+        echo "Key length: " . strlen($value) . " characters\n\n";
+
+        // Test if it's valid format
+        if (str_starts_with($value, 'sk-proj-')) {
+            echo "✅ Key format looks correct (sk-proj-...)\n\n";
+        } else {
+            echo "⚠️  Key format might be invalid\n\n";
+        }
+
+        // Check AI reply enabled
+        $aiEnabled = \App\Models\Setting::where('key', 'ai_reply_enabled')->value('value');
+        echo "AI Reply Enabled: " . ($aiEnabled === '1' ? 'YES ✅' : 'NO ❌') . "\n\n";
+
+        // Test OpenAI connection
+        echo "Testing OpenAI API connection...\n";
+        try {
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'Bearer ' . $value,
+            ])->get('https://api.openai.com/v1/models');
+
+            if ($response->successful()) {
+                echo "✅ OpenAI API Key is VALID and working!\n";
+            } else {
+                echo "❌ OpenAI API returned error: " . $response->status() . "\n";
+                echo "Response: " . $response->body() . "\n";
+            }
+        } catch (\Exception $e) {
+            echo "❌ Connection failed: " . $e->getMessage() . "\n";
+        }
+
+    } else {
+        echo "❌ OpenAI API Key is NOT saved in database\n";
+        echo "Please go to Admin > Global Settings and save it again\n";
+    }
+
+    echo "</pre>";
+});
+
 Route::get('/system/wa-debug', function() {
     $target = "127.0.0.1";
     $port = 3005;

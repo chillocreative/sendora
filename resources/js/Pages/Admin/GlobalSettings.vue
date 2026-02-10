@@ -25,6 +25,7 @@ const form = useForm({
     warmer_min_delay: props.settings.warmer_min_delay || 15,
     warmer_max_delay: props.settings.warmer_max_delay || 30,
     openai_api_key: props.settings.openai_api_key || '',
+    deepseek_api_key: props.settings.deepseek_api_key || '',
     openai_default_model: props.settings.openai_default_model || 'gpt-4o',
     ai_reply_enabled: props.settings.ai_reply_enabled === '1' || props.settings.ai_reply_enabled === true,
 });
@@ -90,6 +91,10 @@ const submit = () => {
                                 <div class="md:col-span-2">
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">OpenAI API Key (For AI Replies & Warmer)</label>
                                     <input v-model="form.openai_api_key" type="password" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none" placeholder="sk-...">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">DeepSeek API Key (For DeepSeek Models)</label>
+                                    <input v-model="form.deepseek_api_key" type="password" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none" placeholder="sk-...">
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Default AI Model</label>

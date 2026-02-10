@@ -46,7 +46,9 @@ class Conversation extends Model
     public function latestMessages(int $limit = 20)
     {
         return $this->messages()
+            ->reorder()
             ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->limit($limit)
             ->get()
             ->reverse()

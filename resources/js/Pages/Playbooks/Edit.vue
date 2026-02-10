@@ -291,9 +291,15 @@ const formatDate = (date) => {
                                     <div>
                                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Model</label>
                                         <select v-model="form.model" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-red-50 focus:border-[#780116] transition-all outline-none">
-                                            <option value="gpt-4o">GPT-4o (Recommended)</option>
-                                            <option value="gpt-4o-mini">GPT-4o Mini (Faster)</option>
-                                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Budget)</option>
+                                            <optgroup label="OpenAI">
+                                                <option value="gpt-4o">GPT-4o (Recommended)</option>
+                                                <option value="gpt-4o-mini">GPT-4o Mini (Faster)</option>
+                                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Budget)</option>
+                                            </optgroup>
+                                            <optgroup label="DeepSeek">
+                                                <option value="deepseek-chat">DeepSeek V3 (Budget)</option>
+                                                <option value="deepseek-reasoner">DeepSeek R1 (Reasoning)</option>
+                                            </optgroup>
                                         </select>
                                     </div>
 

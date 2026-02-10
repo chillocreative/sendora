@@ -16,7 +16,17 @@ const form = useForm({
     model: 'gpt-4o',
     temperature: 0.7,
     max_tokens: 500,
+    assign_numbers: [],
 });
+
+const toggleNumber = (numberId) => {
+    const idx = form.assign_numbers.indexOf(numberId);
+    if (idx === -1) {
+        form.assign_numbers.push(numberId);
+    } else {
+        form.assign_numbers.splice(idx, 1);
+    }
+};
 
 const activeTab = ref('edit');
 const fileInput = ref(null);
@@ -144,6 +154,34 @@ const submit = () => {
                                 Use markdown sections: # Persona, # Tone & Style, # Knowledge Base, # Goals, # Escalation Rules, # Forbidden Actions
                             </p>
                         </div>
+                        <!-- Assign to WhatsApp Numbers -->
+                        <div class="bg-white overflow-hidden shadow-xl sm:rounded-[2rem] p-8 border border-slate-100">
+                            <h3 class="text-xl font-black text-slate-900 border-b border-slate-50 pb-6 mb-8 tracking-tight">Assign to WhatsApp Numbers</h3>
+                            <p class="text-[10px] text-slate-400 font-bold mb-4 ml-1 uppercase tracking-wider">Select numbers to activate AI replies on creation.</p>
+                            <div v-if="whatsappNumbers.length > 0" class="space-y-4">
+                                <div v-for="number in whatsappNumbers" :key="number.id" @click="toggleNumber(number.id)" class="flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer" :class="form.assign_numbers.includes(number.id) ? 'bg-green-50/50 border-green-100' : 'bg-slate-50 border-slate-100 hover:border-slate-200'">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="number.status === 'connected' ? 'bg-green-100 text-green-600' : 'bg-slate-200 text-slate-400'">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                        </div>
+                                        <div>
+                                            <div class="font-black text-slate-900 text-sm">{{ number.phone_number || 'Device #' + number.id }}</div>
+                                            <div class="text-[10px] font-bold uppercase tracking-widest" :class="number.status === 'connected' ? 'text-green-500' : 'text-slate-400'">{{ number.status }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span v-if="number.playbook_id" class="text-[9px] font-bold text-orange-500 uppercase tracking-widest">Has Playbook</span>
+                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all" :class="form.assign_numbers.includes(number.id) ? 'bg-green-100 text-green-600 border border-green-200' : 'bg-slate-100 text-slate-400'">
+                                            <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="form.assign_numbers.includes(number.id) ? 'bg-green-400' : 'bg-slate-300'"></span>
+                                            {{ form.assign_numbers.includes(number.id) ? 'Selected' : 'Not Selected' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="text-center py-8">
+                                <p class="text-slate-400 text-sm font-bold">No WhatsApp numbers connected. Connect a number first.</p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Sidebar -->
@@ -170,9 +208,15 @@ const submit = () => {
                                     <div>
                                         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Model</label>
                                         <select v-model="form.model" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-red-50 focus:border-[#780116] transition-all outline-none">
-                                            <option value="gpt-4o">GPT-4o (Recommended)</option>
-                                            <option value="gpt-4o-mini">GPT-4o Mini (Faster)</option>
-                                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Budget)</option>
+                                            <optgroup label="OpenAI">
+                                                <option value="gpt-4o">GPT-4o (Recommended)</option>
+                                                <option value="gpt-4o-mini">GPT-4o Mini (Faster)</option>
+                                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Budget)</option>
+                                            </optgroup>
+                                            <optgroup label="DeepSeek">
+                                                <option value="deepseek-chat">DeepSeek V3 (Budget)</option>
+                                                <option value="deepseek-reasoner">DeepSeek R1 (Reasoning)</option>
+                                            </optgroup>
                                         </select>
                                         <InputError :message="form.errors.model" class="mt-2" />
                                     </div>
@@ -209,7 +253,7 @@ const submit = () => {
                                 <div class="flex items-center gap-3 mb-3">
                                     <div class="px-2 py-1 bg-[#f7b538] text-slate-900 text-[8px] font-black uppercase tracking-widest rounded">Tip</div>
                                 </div>
-                                <p class="text-[10px] font-bold leading-relaxed text-slate-500 uppercase tracking-wider">After creating, assign this playbook to a WhatsApp number from the edit page to activate AI replies.</p>
+                                <p class="text-[10px] font-bold leading-relaxed text-slate-500 uppercase tracking-wider">Select WhatsApp numbers below to assign this playbook and enable AI replies immediately on creation.</p>
                             </div>
                         </div>
                     </div>
