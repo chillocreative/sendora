@@ -222,23 +222,6 @@ class AiReplyService
 
         $history = $conversation->latestMessages(20);
 
-        // Add explicit conversation state to help AI understand context
-        if ($history->count() > 1) {
-            $lastAiMessage = $history->where('direction', 'outbound')->last();
-            $lastUserMessage = $history->where('direction', 'inbound')->last();
-
-            $systemPrompt .= "\n\n=== CONVERSATION STATE ===\n";
-            $systemPrompt .= "IMPORTANT: This conversation already has {$history->count()} messages.\n";
-            $systemPrompt .= "You have ALREADY greeted this customer.\n";
-            if ($lastAiMessage) {
-                $systemPrompt .= "Your last message: \"" . substr($lastAiMessage->body, 0, 100) . "\"\n";
-            }
-            if ($lastUserMessage) {
-                $systemPrompt .= "Customer's latest message: \"" . substr($lastUserMessage->body, 0, 100) . "\"\n";
-            }
-            $systemPrompt .= "\nDO NOT send another greeting. Respond directly to the customer's latest message based on the conversation history below.";
-        }
-
         Log::debug('AI buildPrompt', [
             'conversation_id' => $conversation->id,
             'history_count' => $history->count(),
@@ -248,10 +231,19 @@ class AiReplyService
             ['role' => 'system', 'content' => $systemPrompt],
         ];
 
-        // Add conversation history as PLAIN TEXT (not JSON wrapped)
+        // Wrap outbound (AI) messages in JSON so OpenAI recognizes its own prior replies
         foreach ($history as $msg) {
-            $role = ($msg->direction === 'inbound') ? 'user' : 'assistant';
-            $messages[] = ['role' => $role, 'content' => $msg->body];
+            if ($msg->direction === 'inbound') {
+                $messages[] = ['role' => 'user', 'content' => $msg->body];
+            } else {
+                $messages[] = ['role' => 'assistant', 'content' => json_encode([
+                    'reply' => $msg->body,
+                    'confidence' => (float) ($msg->confidence_score ?? 0.9),
+                    'reasoning_source' => $msg->reasoning_source ?? 'previous_reply',
+                    'escalate' => false,
+                    'escalation_reason' => null,
+                ])];
+            }
         }
 
         return $messages;

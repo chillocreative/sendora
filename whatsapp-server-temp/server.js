@@ -117,7 +117,8 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
             browser: ['Blaster User', 'Chrome', '120.0.0.0'],
             connectTimeoutMs: 60000,
             defaultQueryTimeoutMs: 30000,
-            keepAliveIntervalMs: 30000,
+            keepAliveIntervalMs: 25000,
+            retryRequestDelayMs: 2000,
             generateHighQualityLinkPreview: true,
         });
 
@@ -129,6 +130,7 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
             status: 'starting',
             phoneInfo: null,
             lastActivity: new Date(),
+            retryCount: 0,
         };
 
         connections.set(key, connectionData);
@@ -184,12 +186,49 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
                             console.error(`[${key}] Backend notification failed`);
                         }
                     } else {
-                        // Temporary disconnect - try to reconnect
-                        connectionData.status = 'reconnecting';
-                        setTimeout(() => {
+                        // Temporary disconnect - reconnect with exponential backoff
+                        const maxRetries = 5;
+                        const retryCount = connectionData.retryCount || 0;
+
+                        if (retryCount >= maxRetries) {
+                            safeLog(`[${key}] Max retries (${maxRetries}) reached, giving up`);
                             connections.delete(key);
-                            connectToWhatsApp(userId, whatsappNumberId);
-                        }, 5000);
+                            try {
+                                await axios.post(`${API_BASE_URL}/api/whatsapp/status-update`, {
+                                    user_id: userId,
+                                    phone_number: whatsappNumberId,
+                                    status: 'disconnected',
+                                });
+                            } catch (error) {
+                                safeLog(`[${key}] Backend notification failed: ${error.message}`);
+                            }
+                        } else {
+                            const backoffDelays = [5000, 10000, 30000, 60000, 120000];
+                            const delay = backoffDelays[retryCount] || 120000;
+                            const nextRetry = retryCount + 1;
+                            safeLog(`[${key}] Reconnecting in ${delay / 1000}s (attempt ${nextRetry}/${maxRetries})`);
+                            connectionData.status = 'reconnecting';
+
+                            // Notify backend of reconnecting status
+                            try {
+                                await axios.post(`${API_BASE_URL}/api/whatsapp/status-update`, {
+                                    user_id: userId,
+                                    phone_number: whatsappNumberId,
+                                    status: 'reconnecting',
+                                });
+                            } catch (error) {
+                                // Silent - best effort
+                            }
+
+                            setTimeout(() => {
+                                connections.delete(key);
+                                connectToWhatsApp(userId, whatsappNumberId).then(conn => {
+                                    conn.retryCount = nextRetry;
+                                }).catch(err => {
+                                    safeLog(`[${key}] Reconnect attempt ${nextRetry} failed: ${err.message}`);
+                                });
+                            }, delay);
+                        }
                     }
                 } else if (connection === 'open') {
                     safeLog(`[${key}] ✅ Connected!`, sock.user);
@@ -197,6 +236,7 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
                     connectionData.qr = null;
                     connectionData.phoneInfo = sock.user;
                     connectionData.lastActivity = new Date();
+                    connectionData.retryCount = 0;
 
                     // Notify backend
                     try {
@@ -533,6 +573,25 @@ app.get('/status', (req, res) => {
         connections: allConnections,
     });
 });
+
+// Graceful shutdown handler
+function gracefulShutdown(signal) {
+    safeLog(`Received ${signal}, shutting down gracefully...`);
+    for (const [key, conn] of connections.entries()) {
+        safeLog(`[${key}] Closing connection...`);
+        try {
+            if (conn.sock) conn.sock.end();
+        } catch (e) {
+            safeLog(`[${key}] Error closing: ${e.message}`);
+        }
+    }
+    connections.clear();
+    safeLog('All connections closed. Exiting.');
+    process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 app.listen(port, () => {
     console.log(`🚀 Blaster Multi-User WhatsApp Engine on port ${port}`);

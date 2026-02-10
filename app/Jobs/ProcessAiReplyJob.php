@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class ProcessAiReplyJob implements ShouldQueue
@@ -32,35 +33,48 @@ class ProcessAiReplyJob implements ShouldQueue
 
     public function handle(): void
     {
-        $whatsappNumber = WhatsappNumber::where('id', $this->whatsappNumberId)
-            ->where('user_id', $this->userId)
-            ->first();
+        $lockKey = "ai_reply:{$this->whatsappNumberId}:{$this->contactPhone}";
+        $lock = Cache::lock($lockKey, 55);
 
-        if (!$whatsappNumber) {
-            Log::warning('ProcessAiReplyJob: WhatsApp number not found', [
-                'user_id' => $this->userId,
-                'whatsapp_number_id' => $this->whatsappNumberId,
-            ]);
+        if (!$lock->get()) {
+            // Another job is processing for this conversation — re-queue with delay
+            $this->release(5);
             return;
         }
 
-        $service = new AiReplyService(
-            new OpenAiService(),
-            new WhatsappService()
-        );
+        try {
+            $whatsappNumber = WhatsappNumber::where('id', $this->whatsappNumberId)
+                ->where('user_id', $this->userId)
+                ->first();
 
-        $result = $service->processInboundMessage(
-            $whatsappNumber,
-            $this->contactPhone,
-            $this->messageText,
-            $this->waMessageId
-        );
+            if (!$whatsappNumber) {
+                Log::warning('ProcessAiReplyJob: WhatsApp number not found', [
+                    'user_id' => $this->userId,
+                    'whatsapp_number_id' => $this->whatsappNumberId,
+                ]);
+                return;
+            }
 
-        Log::info('ProcessAiReplyJob completed', [
-            'user_id' => $this->userId,
-            'contact_phone' => $this->contactPhone,
-            'result' => $result,
-        ]);
+            $service = new AiReplyService(
+                new OpenAiService(),
+                new WhatsappService()
+            );
+
+            $result = $service->processInboundMessage(
+                $whatsappNumber,
+                $this->contactPhone,
+                $this->messageText,
+                $this->waMessageId
+            );
+
+            Log::info('ProcessAiReplyJob completed', [
+                'user_id' => $this->userId,
+                'contact_phone' => $this->contactPhone,
+                'result' => $result,
+            ]);
+        } finally {
+            $lock->release();
+        }
     }
 
     public function failed(\Throwable $exception): void
