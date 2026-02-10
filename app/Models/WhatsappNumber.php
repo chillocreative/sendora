@@ -13,6 +13,8 @@ class WhatsappNumber extends Model
         'status',
         'qr_code',
         'phone_info',
+        'playbook_id',
+        'ai_reply_enabled',
         'is_warmer_pool_enabled',
         'warmer_daily_limit',
         'warmer_messages_sent_today',
@@ -21,6 +23,7 @@ class WhatsappNumber extends Model
 
     protected $casts = [
         'phone_info' => 'array',
+        'ai_reply_enabled' => 'boolean',
         'warmer_last_chatted_at' => 'datetime',
     ];
 
@@ -32,4 +35,15 @@ class WhatsappNumber extends Model
     public function contacts()
     {
         return $this->hasMany(Contact::class);
-    }}
+    }
+
+    public function playbook()
+    {
+        return $this->belongsTo(Playbook::class);
+    }
+
+    public function conversations()
+    {
+        return $this->hasMany(Conversation::class);
+    }
+}

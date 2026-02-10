@@ -14,9 +14,9 @@ const showMobileMenu = ref(false);
 </script>
 
 <template>
-    <Head title="Sendora - WhatsApp Bulk Messaging & Marketing Automation Platform">
-        <meta name="description" content="Professional WhatsApp marketing automation platform. Send bulk messages, automate campaigns, manage contacts, schedule messages, and track performance. Perfect for Malaysian SMEs." />
-        <meta name="keywords" content="WhatsApp bulk messaging, WhatsApp marketing, WhatsApp automation, WhatsApp CRM, bulk WhatsApp sender, WhatsApp campaign, WhatsApp business API, Malaysia WhatsApp marketing" />
+    <Head title="Sendora - AI-Powered WhatsApp Auto-Reply & Follow-Up Platform">
+        <meta name="description" content="Sendora helps businesses respond to WhatsApp leads instantly with AI trained on your SOPs. Compliance-first, no cold messaging, no spam. Built for agencies and lead-driven businesses." />
+        <meta name="keywords" content="WhatsApp auto reply, WhatsApp AI assistant, WhatsApp business automation, WhatsApp lead response, AI customer reply, WhatsApp official API, compliance WhatsApp, agency WhatsApp tool" />
     </Head>
 
     <div class="min-h-screen bg-white text-slate-900 font-sans selection:bg-red-100 selection:text-[#780116] overflow-x-hidden relative">
@@ -47,7 +47,7 @@ const showMobileMenu = ref(false);
                             <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Dashboard</Link>
                             <template v-else>
                                 <Link :href="route('login')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Log in</Link>
-                                <Link v-if="canRegister" :href="route('register')" class="bg-[#780116] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-[#c32f27] transition shadow-md">Start Free</Link>
+                                <Link v-if="canRegister" :href="route('register')" class="bg-[#780116] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-[#c32f27] transition shadow-md">Start Free Trial</Link>
                             </template>
                         </template>
                     </div>
@@ -98,245 +98,345 @@ const showMobileMenu = ref(false);
                             Log in
                         </Link>
                         <Link v-if="canRegister" :href="route('register')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl bg-[#780116] text-white hover:bg-[#c32f27]" @click="showMobileMenu = false">
-                            Start Free
+                            Start Free Trial
                         </Link>
                     </template>
                 </template>
             </nav>
         </div>
 
-        <!-- Hero Section -->
+        <!-- 1. Hero Section -->
         <section class="pt-32 sm:pt-40 pb-16 sm:pb-20 px-4">
             <div class="max-w-7xl mx-auto text-center">
-
-                <div class="relative inline-block">
-                    <h1 class="relative text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 mb-6 sm:mb-8 tracking-tight max-w-4xl mx-auto leading-[1.1]">
-                        WhatsApp Marketing <br class="hidden sm:block"/>
-                        <span class="text-[#780116]">Made Simple & Powerful</span>
-                    </h1>
+                <!-- Trust Badge -->
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-100 rounded-full mb-8">
+                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                    <span class="text-[11px] font-black text-green-700 uppercase tracking-widest">Compliance-First Platform</span>
                 </div>
 
-                <p class="text-base sm:text-xl text-slate-500 mb-10 sm:mb-12 max-w-3xl mx-auto leading-relaxed relative">
-                    <span class="absolute -left-8 top-0 text-red-200 opacity-20 hidden md:block">
-                        <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-                    </span>
-                    Send bulk WhatsApp messages, automate campaigns, manage unlimited contacts, and track performance in real-time. The complete WhatsApp marketing automation platform for businesses in Malaysia and beyond.
+                <h1 class="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 mb-6 sm:mb-8 tracking-tight max-w-5xl mx-auto leading-[1.1]">
+                    Your AI Replies to WhatsApp Leads. <br class="hidden sm:block"/>
+                    <span class="text-[#780116]">Only When They Message You First.</span>
+                </h1>
+
+                <p class="text-base sm:text-xl text-slate-500 mb-10 sm:mb-12 max-w-3xl mx-auto leading-relaxed">
+                    Sendora trains an AI on your SOPs, product details, and brand voice — then handles WhatsApp replies for you. No cold messaging. No spam. Customers start the conversation, your AI continues it.
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
                     <Link :href="route('register')" class="w-full sm:w-auto bg-[#780116] text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-black flex items-center justify-center shadow-2xl shadow-red-900/40 hover:bg-[#c32f27] transition">
-                        Connect WhatsApp — It's Free
+                        Start Free Trial
                     </Link>
-                    <Link :href="route('pricing')" class="w-full sm:w-auto bg-slate-900 text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center">
-                        View Pricing
-                    </Link>
+                    <a href="https://wa.me/60123456789?text=Hi%2C%20I%27d%20like%20a%20demo%20of%20Sendora" target="_blank" rel="noopener" class="w-full sm:w-auto bg-slate-900 text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-3">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        Request a Demo
+                    </a>
                 </div>
 
-                <!-- App Preview Mockup -->
-                <div class="mt-20 relative max-w-4xl mx-auto px-4">
-                    <div class="relative rounded-[2.5rem] p-1.5 bg-slate-100 shadow-2xl shadow-slate-200/50">
-                        <div class="relative bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-inner aspect-video">
-                            <img src="/images/sendora_hero.png" alt="Sendora Dashboard Preview" class="w-full h-full object-cover object-center" />
-                        </div>
+                <!-- Anti-Spam Badges -->
+                <div class="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+                    <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
+                        <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        No cold messaging
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
+                        <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        No spam
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
+                        <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Human takeover anytime
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
+                        <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        WhatsApp Official API ready
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Trust & Value -->
-        <section class="py-16 sm:py-24 bg-slate-900 text-white overflow-hidden relative">
-            <div class="max-w-7xl mx-auto px-4 relative z-10">
+        <!-- 3. Problem Section -->
+        <section class="py-16 sm:py-24 bg-slate-50 border-y border-slate-100">
+            <div class="max-w-7xl mx-auto px-4">
                 <div class="grid md:grid-cols-2 gap-10 sm:gap-16 items-center">
                     <div>
-                        <h2 class="text-3xl sm:text-4xl md:text-5xl font-black mb-6 sm:mb-8 leading-tight">Complete WhatsApp Marketing Solution <br class="hidden sm:block"/><span class="text-[#f7b538]">for Modern Businesses</span></h2>
-                        <p class="text-slate-400 text-base sm:text-xl mb-8 sm:mb-10 leading-relaxed">
-                            Reach customers directly on WhatsApp with bulk messaging, automated replies, and advanced contact management. Send promotional campaigns, customer updates, and personalized messages at scale while maintaining high engagement rates.
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-100 rounded-full mb-6">
+                            <span class="text-[10px] font-black text-red-600 uppercase tracking-widest">The Problem</span>
+                        </div>
+                        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-6 leading-tight tracking-tight">Your Team Spends Hours<br/> Typing the Same WhatsApp Replies</h2>
+                        <p class="text-slate-500 text-base sm:text-lg leading-relaxed mb-8">
+                            Leads message your WhatsApp at all hours. Your sales team copies and pastes the same answers. Response times slip. Leads go cold. You hire more staff but the problem scales with you.
                         </p>
-                        <ul class="space-y-4 text-slate-300">
-                            <li class="flex items-center">
-                                <svg class="w-6 h-6 text-[#f7b538] mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                Multi-account WhatsApp management (up to 5 accounts)
+                        <ul class="space-y-4">
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <span class="text-slate-600 font-medium">Slow reply times lose leads to competitors</span>
                             </li>
-                            <li class="flex items-center">
-                                <svg class="w-6 h-6 text-[#f7b538] mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                Smart contact segmentation with unlimited tags
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <span class="text-slate-600 font-medium">Inconsistent answers damage your brand</span>
                             </li>
-                            <li class="flex items-center">
-                                <svg class="w-6 h-6 text-[#f7b538] mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                Advanced scheduling & automated campaigns
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <span class="text-slate-600 font-medium">After-hours messages go unanswered until morning</span>
                             </li>
-                            <li class="flex items-center">
-                                <svg class="w-6 h-6 text-[#f7b538] mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                Real-time analytics & performance tracking
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <span class="text-slate-600 font-medium">Hiring more reps doesn't scale cost-effectively</span>
                             </li>
                         </ul>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
-                            <div class="text-3xl font-bold text-[#f7b538] mb-2">98%</div>
-                            <div class="text-sm text-slate-400 uppercase tracking-wider font-bold">Open Rate</div>
+                    <div class="space-y-4">
+                        <div class="p-6 sm:p-8 bg-white border border-slate-200 rounded-3xl shadow-sm">
+                            <div class="text-4xl font-black text-slate-900 mb-1">78%</div>
+                            <div class="text-sm text-slate-500 font-medium">of customers buy from the business that responds first</div>
                         </div>
-                        <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm sm:translate-y-8">
-                            <div class="text-3xl font-bold text-[#db7c26] mb-2">45%</div>
-                            <div class="text-sm text-slate-400 uppercase tracking-wider font-bold">CTR</div>
-                        </div>
-                        <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
-                            <div class="text-3xl font-bold text-[#d8572a] mb-2">3.5x</div>
-                            <div class="text-sm text-slate-400 uppercase tracking-wider font-bold">Conversion</div>
-                        </div>
-                        <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm sm:translate-y-8">
-                            <div class="text-3xl font-bold text-[#c32f27] mb-2">24h</div>
-                            <div class="text-sm text-slate-400 uppercase tracking-wider font-bold">Support</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
+                                <div class="text-3xl font-black text-red-600 mb-1">5 min</div>
+                                <div class="text-xs text-slate-500 font-medium">Optimal response window before a lead goes cold</div>
+                            </div>
+                            <div class="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
+                                <div class="text-3xl font-black text-slate-900 mb-1">24/7</div>
+                                <div class="text-xs text-slate-500 font-medium">When your customers expect a reply</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Features -->
+        <!-- 4. Solution Section -->
         <section class="py-16 sm:py-24 bg-white">
             <div class="max-w-7xl mx-auto px-4">
-                <div class="text-center mb-12 sm:mb-20">
-                    <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-3 sm:mb-4">Powerful WhatsApp Marketing Features</h2>
-                    <p class="text-base sm:text-lg text-slate-500">Everything you need to grow your business on WhatsApp</p>
-                </div>
-
-                <div class="grid md:grid-cols-3 gap-12">
-                    <div class="group">
-                        <div class="w-16 h-16 bg-red-50 rounded-2xl mb-6 flex items-center justify-center text-[#780116] group-hover:bg-[#780116] group-hover:text-white transition-all duration-300">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                <div class="grid md:grid-cols-2 gap-10 sm:gap-16 items-center">
+                    <div class="order-2 md:order-1 space-y-6">
+                        <div class="p-6 bg-green-50 border border-green-100 rounded-3xl">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                </div>
+                                <h4 class="font-black text-green-900">AI Trained on Your SOPs</h4>
+                            </div>
+                            <p class="text-green-800 text-sm leading-relaxed">Upload your playbook — product info, pricing, FAQs, tone guidelines — and the AI follows it precisely. No hallucinations, no off-brand answers.</p>
                         </div>
-                        <h3 class="text-xl font-bold mb-3">Bulk WhatsApp Campaigns</h3>
-                        <p class="text-slate-500 leading-relaxed">Send thousands of personalized messages with images, PDFs, and links. Track delivery, opens, and clicks in real-time with detailed analytics.</p>
+                        <div class="p-6 bg-blue-50 border border-blue-100 rounded-3xl">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </div>
+                                <h4 class="font-black text-blue-900">Human Takeover Anytime</h4>
+                            </div>
+                            <p class="text-blue-800 text-sm leading-relaxed">AI knows its limits. When a conversation needs a human touch — refunds, complaints, complex deals — it escalates automatically and your team steps in.</p>
+                        </div>
+                        <div class="p-6 bg-purple-50 border border-purple-100 rounded-3xl">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                </div>
+                                <h4 class="font-black text-purple-900">Full Conversation Audit Trail</h4>
+                            </div>
+                            <p class="text-purple-800 text-sm leading-relaxed">Every message logged with confidence scores, reasoning source, and timestamps. See exactly why the AI said what it said.</p>
+                        </div>
                     </div>
-
-                    <div class="group">
-                        <div class="w-16 h-16 bg-blue-50 rounded-2xl mb-6 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <div class="order-1 md:order-2">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-100 rounded-full mb-6">
+                            <span class="text-[10px] font-black text-green-700 uppercase tracking-widest">The Solution</span>
                         </div>
-                        <h3 class="text-xl font-bold mb-3">Smart Contact Management</h3>
-                        <p class="text-slate-500 leading-relaxed">Import unlimited contacts, organize with custom tags, segment audiences by behavior, and export data anytime. Built-in CRM for WhatsApp.</p>
-                    </div>
-
-                    <div class="group">
-                        <div class="w-16 h-16 bg-orange-50 rounded-2xl mb-6 flex items-center justify-center text-[#db7c26] group-hover:bg-[#db7c26] group-hover:text-white transition-all duration-300">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">Campaign Scheduling</h3>
-                        <p class="text-slate-500 leading-relaxed">Schedule messages for optimal delivery times. Set up recurring campaigns, automate follow-ups, and run promotions on autopilot.</p>
-                    </div>
-
-                    <div class="group">
-                        <div class="w-16 h-16 bg-green-50 rounded-2xl mb-6 flex items-center justify-center text-green-600 group-hover:bg-green-600 group-hover:text-white transition-all duration-300">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">Auto-Reply System</h3>
-                        <p class="text-slate-500 leading-relaxed">Set up keyword-based automatic responses. Answer common questions 24/7, qualify leads instantly, and never miss a customer inquiry.</p>
-                    </div>
-
-                    <div class="group">
-                        <div class="w-16 h-16 bg-purple-50 rounded-2xl mb-6 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">Advanced Analytics</h3>
-                        <p class="text-slate-500 leading-relaxed">Track delivery rates, open rates, click rates, and engagement metrics. Export reports and optimize campaigns based on real data.</p>
-                    </div>
-
-                    <div class="group">
-                        <div class="w-16 h-16 bg-red-50 rounded-2xl mb-6 flex items-center justify-center text-[#c32f27] group-hover:bg-[#c32f27] group-hover:text-white transition-all duration-300">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">WhatsApp Warmer</h3>
-                        <p class="text-slate-500 leading-relaxed">AI-powered account warming to build sender reputation. Prevent blocks and bans with smart sending patterns and gradual volume increase.</p>
-                    </div>
-
-                    <div class="group">
-                        <div class="w-16 h-16 bg-indigo-50 rounded-2xl mb-6 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">Developer API & Webhooks</h3>
-                        <p class="text-slate-500 leading-relaxed">Integrate with your existing systems via REST API. Receive real-time webhooks for message events and build custom workflows.</p>
-                    </div>
-
-                    <div class="group">
-                        <div class="w-16 h-16 bg-yellow-50 rounded-2xl mb-6 flex items-center justify-center text-yellow-600 group-hover:bg-yellow-600 group-hover:text-white transition-all duration-300">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">Rich Media Support</h3>
-                        <p class="text-slate-500 leading-relaxed">Send images, PDFs, documents, and files up to 5MB. Include link previews, file attachments, and message templates for better engagement.</p>
-                    </div>
-
-                    <div class="group">
-                        <div class="w-16 h-16 bg-teal-50 rounded-2xl mb-6 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-all duration-300">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">Multi-Account Support</h3>
-                        <p class="text-slate-500 leading-relaxed">Manage up to 5 WhatsApp accounts from one dashboard. Perfect for agencies, multiple brands, or different business units.</p>
+                        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-6 leading-tight tracking-tight">An AI Sales Assistant Trained on <span class="text-[#780116]">Your Business Playbook</span></h2>
+                        <p class="text-slate-500 text-base sm:text-lg leading-relaxed mb-6">
+                            Sendora gives every WhatsApp number its own AI assistant. You define the persona, knowledge base, and escalation rules in a simple markdown playbook. The AI handles routine conversations so your team focuses on closing deals.
+                        </p>
+                        <p class="text-slate-500 text-base leading-relaxed">
+                            The AI only responds after a customer messages you. It never initiates cold conversations. It follows your playbook, stays on-brand, and hands off to a human when it should.
+                        </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- How It Works -->
+        <!-- 5. How It Works -->
         <section class="py-20 sm:py-32 bg-slate-50 border-y border-slate-200 relative overflow-hidden">
             <div class="absolute inset-0 opacity-40 bg-[url('/images/steps_bg.png')] bg-cover bg-center"></div>
             <div class="max-w-7xl mx-auto px-4 relative z-10">
                 <div class="text-center mb-16 sm:mb-24">
-                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-4 sm:mb-6 tracking-tight">Get Started in 3 Simple Steps</h2>
-                    <p class="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em]">Launch your first WhatsApp campaign in minutes</p>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-4 sm:mb-6 tracking-tight">How Sendora Works</h2>
+                    <p class="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em]">From setup to first AI reply in under 15 minutes</p>
                 </div>
 
                 <div class="relative">
                     <!-- Connector Line (Desktop) -->
                     <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -translate-y-1/2 z-0"></div>
 
-                    <div class="grid md:grid-cols-3 gap-12 relative z-10">
+                    <div class="grid md:grid-cols-4 gap-8 relative z-10">
                         <!-- Step 1 -->
-                        <div class="bg-white/90 backdrop-blur-md p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
-                            <div class="w-20 h-20 bg-slate-900 text-white rounded-3xl flex items-center justify-center text-3xl font-black mx-auto mb-8 shadow-2xl shadow-slate-900/20 group-hover:scale-110 transition-transform">1</div>
-                            <h3 class="text-2xl font-black mb-4 text-slate-900 tracking-tight leading-none">Connect Your WhatsApp</h3>
-                            <p class="text-slate-500 font-bold text-xs uppercase tracking-widest leading-relaxed">Scan QR code to link your WhatsApp account. Takes less than 30 seconds. Support for multiple accounts.</p>
+                        <div class="bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
+                            <div class="w-16 h-16 bg-slate-900 text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-slate-900/20 group-hover:scale-110 transition-transform">1</div>
+                            <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">Connect WhatsApp</h3>
+                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Scan QR code to link your WhatsApp Business number. Multiple numbers supported per account.</p>
                         </div>
 
                         <!-- Step 2 -->
-                        <div class="bg-white/90 backdrop-blur-md p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
-                            <div class="w-20 h-20 bg-[#db7c26] text-white rounded-3xl flex items-center justify-center text-3xl font-black mx-auto mb-8 shadow-2xl shadow-orange-600/20 group-hover:scale-110 transition-transform">2</div>
-                            <h3 class="text-2xl font-black mb-4 text-slate-900 tracking-tight leading-none">Import & Organize Contacts</h3>
-                            <p class="text-slate-500 font-bold text-xs uppercase tracking-widest leading-relaxed">Upload contacts via CSV or add manually. Tag and segment for targeted campaigns.</p>
+                        <div class="bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
+                            <div class="w-16 h-16 bg-[#db7c26] text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-orange-600/20 group-hover:scale-110 transition-transform">2</div>
+                            <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">Write Your Playbook</h3>
+                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Define persona, product info, FAQs, tone, and escalation rules. Upload a .md file or type directly.</p>
                         </div>
 
                         <!-- Step 3 -->
-                        <div class="bg-white/90 backdrop-blur-md p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
-                            <div class="w-20 h-20 bg-[#780116] text-white rounded-3xl flex items-center justify-center text-3xl font-black mx-auto mb-8 shadow-2xl shadow-red-900/20 group-hover:scale-110 transition-transform">3</div>
-                            <h3 class="text-2xl font-black mb-4 text-slate-900 tracking-tight leading-none">Launch & Track Campaigns</h3>
-                            <p class="text-slate-500 font-bold text-xs uppercase tracking-widest leading-relaxed">Send bulk messages with media. Schedule for later. Track opens, clicks, and engagement in real-time.</p>
+                        <div class="bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
+                            <div class="w-16 h-16 bg-[#780116] text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-red-900/20 group-hover:scale-110 transition-transform">3</div>
+                            <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">Assign & Activate</h3>
+                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Assign the playbook to a WhatsApp number and toggle AI replies on. Ready in seconds.</p>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
+                            <div class="w-16 h-16 bg-green-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-green-600/20 group-hover:scale-110 transition-transform">4</div>
+                            <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">AI Handles Replies</h3>
+                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">When a customer messages you, AI responds instantly. Monitor conversations and take over when needed.</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Final CTA -->
+        <!-- 6. Compliance & Safety -->
+        <section class="py-16 sm:py-24 bg-slate-900 text-white">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="text-center mb-12 sm:mb-16">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/20 rounded-full mb-6">
+                        <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span class="text-[10px] font-black text-white/90 uppercase tracking-widest">Compliance & Safety</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-6 tracking-tight">Built for Trust,<br/> <span class="text-[#f7b538]">Not for Spam</span></h2>
+                    <p class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+                        Sendora is architecturally designed so AI can never send unsolicited messages. Every safeguard is structural, not just policy.
+                    </p>
+                </div>
+
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
+                        <div class="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center mb-5">
+                            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-black mb-2">No Cold Start</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">AI can only reply after a customer messages you first. The system is architecturally unable to initiate conversations.</p>
+                    </div>
+
+                    <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
+                        <div class="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-5">
+                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-black mb-2">24-Hour Window</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Respects WhatsApp's messaging window. Manual replies are locked after 24 hours of customer inactivity.</p>
+                    </div>
+
+                    <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
+                        <div class="w-12 h-12 bg-orange-500/20 rounded-2xl flex items-center justify-center mb-5">
+                            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-black mb-2">Auto-Escalation</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">AI detects when to stop. Frustrated customers, out-of-scope topics, or requests for a human trigger automatic escalation.</p>
+                    </div>
+
+                    <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
+                        <div class="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-5">
+                            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-black mb-2">Full Audit Trail</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Every AI reply is logged with confidence score, reasoning source, and token usage. Complete transparency for compliance reviews.</p>
+                    </div>
+
+                    <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
+                        <div class="w-12 h-12 bg-red-500/20 rounded-2xl flex items-center justify-center mb-5">
+                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                        </div>
+                        <h3 class="text-lg font-black mb-2">Prompt Injection Protection</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Playbook content is sanitized before injection into AI prompts. Dangerous patterns are stripped automatically.</p>
+                    </div>
+
+                    <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
+                        <div class="w-12 h-12 bg-[#f7b538]/20 rounded-2xl flex items-center justify-center mb-5">
+                            <svg class="w-6 h-6 text-[#f7b538]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                        </div>
+                        <h3 class="text-lg font-black mb-2">Official API Ready</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Transport-agnostic architecture. Designed for migration to WhatsApp Official API and BSP providers when you're ready to scale.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Who It's For -->
+        <section class="py-16 sm:py-24 bg-white">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="text-center mb-12 sm:mb-16">
+                    <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-4 tracking-tight">Built for Businesses That Rely on WhatsApp Leads</h2>
+                    <p class="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto">If your revenue depends on responding to WhatsApp inquiries quickly and consistently, Sendora is for you.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="p-8 bg-slate-50 border border-slate-100 rounded-3xl hover:shadow-xl transition-shadow duration-300">
+                        <div class="w-14 h-14 bg-[#780116] rounded-2xl flex items-center justify-center mb-6">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-900 mb-3">Digital Agencies</h3>
+                        <p class="text-slate-500 leading-relaxed">Manage AI reply bots across multiple client WhatsApp numbers. Each client gets their own playbook, persona, and conversation history.</p>
+                    </div>
+
+                    <div class="p-8 bg-slate-50 border border-slate-100 rounded-3xl hover:shadow-xl transition-shadow duration-300">
+                        <div class="w-14 h-14 bg-[#db7c26] rounded-2xl flex items-center justify-center mb-6">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-900 mb-3">Lead-Driven Businesses</h3>
+                        <p class="text-slate-500 leading-relaxed">Real estate, education, insurance, automotive. Any business that generates WhatsApp leads and needs instant, consistent follow-up.</p>
+                    </div>
+
+                    <div class="p-8 bg-slate-50 border border-slate-100 rounded-3xl hover:shadow-xl transition-shadow duration-300">
+                        <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mb-6">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-900 mb-3">High-Volume Support Teams</h3>
+                        <p class="text-slate-500 leading-relaxed">E-commerce, SaaS, clinics. Let AI handle the repetitive questions while your team focuses on complex cases that need a human touch.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Final CTA -->
         <section class="py-16 sm:py-24 bg-white px-4">
             <div class="max-w-5xl mx-auto rounded-[2rem] sm:rounded-[3rem] bg-slate-900 p-8 sm:p-12 md:p-20 text-center relative overflow-hidden">
-
-                <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6 sm:mb-8">Start Your WhatsApp Marketing Journey Today</h2>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 sm:mb-6">Stop Losing Leads to Slow Replies</h2>
+                <p class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-8 sm:mb-10">
+                    Set up your AI WhatsApp assistant in under 15 minutes. No credit card required. No spam, ever.
+                </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
                     <Link :href="route('register')" class="w-full sm:w-auto bg-[#780116] text-white px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold hover:bg-[#c32f27] transition shadow-2xl shadow-red-900/40">
-                        Start for Free Now
+                        Start Free Trial
                     </Link>
-                    <Link :href="route('pricing')" class="w-full sm:w-auto bg-white/10 text-white border border-white/20 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold hover:bg-white/20 transition">
-                        Compare Plans
-                    </Link>
+                    <a href="https://wa.me/60123456789?text=Hi%2C%20I%27d%20like%20a%20demo%20of%20Sendora" target="_blank" rel="noopener" class="w-full sm:w-auto bg-white/10 text-white border border-white/20 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold hover:bg-white/20 transition flex items-center justify-center gap-3">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        WhatsApp Us for a Demo
+                    </a>
                 </div>
-                <p class="mt-6 sm:mt-8 text-slate-400 font-medium text-sm sm:text-base tracking-wide flex items-center justify-center flex-wrap">
-                    <svg class="w-5 h-5 text-[#f7b538] mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-                    No credit card required. Cancel anytime.
+                <p class="mt-6 sm:mt-8 text-slate-400 font-medium text-sm sm:text-base tracking-wide flex items-center justify-center flex-wrap gap-4">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-[#f7b538]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        No credit card required
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-[#f7b538]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        Cancel anytime
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-[#f7b538]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        No spam, ever
+                    </span>
                 </p>
             </div>
         </section>
 
-        <!-- Stunning Footer -->
+        <!-- Footer -->
         <Footer />
     </div>
 </template>

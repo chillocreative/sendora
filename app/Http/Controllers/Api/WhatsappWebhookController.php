@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessAiReplyJob;
 use Illuminate\Http\Request;
 use App\Models\WhatsappNumber;
-use App\Models\AutoReply;
 use Illuminate\Support\Facades\Log;
 
 class WhatsappWebhookController extends Controller
@@ -90,62 +90,46 @@ class WhatsappWebhookController extends Controller
 
     public function incomingMessage(Request $request)
     {
-        Log::info('Incoming Message Webhook Called', [
+        Log::info('Incoming Message Webhook', [
             'user_id' => $request->user_id,
             'from' => $request->from,
-            'message' => $request->message,
+            'message' => substr($request->message ?? '', 0, 100),
         ]);
 
         try {
-            // Check for auto-replies with match type logic
-            $message = strtolower(trim($request->message));
-
-            $autoReply = AutoReply::where('user_id', $request->user_id)
-                ->where('is_active', true)
-                ->get()
-                ->first(function ($reply) use ($message) {
-                    try {
-                        $keyword = strtolower($reply->keyword);
-                        $matchType = $reply->match_type ?? 'contains'; // Default to 'contains' if null or column doesn't exist
-
-                        if ($matchType === 'exact') {
-                            // Exact match
-                            return $message === $keyword;
-                        } else {
-                            // Contains match (default)
-                            return str_contains($message, $keyword);
-                        }
-                    } catch (\Exception $e) {
-                        // Fallback to contains logic if match_type column doesn't exist yet
-                        Log::warning('Auto-reply match_type access error, using contains: ' . $e->getMessage());
-                        $keyword = strtolower($reply->keyword);
-                        return str_contains($message, $keyword);
-                    }
-                });
-
-            if ($autoReply) {
-                Log::info('Auto-reply match found!', ['reply' => $autoReply->reply_message]);
-                
-                // Send auto-reply via WhatsApp server
-                $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
-                               ?? env('WA_SERVER_URL', 'http://localhost:3000');
-                $waServerUrl = rtrim($waServerUrl, '/');
-                
-                $response = \Illuminate\Support\Facades\Http::post("{$waServerUrl}/send-message", [
-                    'user_id' => $request->user_id,
-                    'phone_number' => $request->phone_number,
-                    'to' => $request->from,
-                    'message' => $autoReply->reply_message,
-                ]);
-
-                if (!$response->successful()) {
-                    Log::error('Failed to send auto-reply', ['error' => $response->body()]);
-                }
-            } else {
-                Log::info('No auto-reply match found for keyword: ' . $request->message);
+            if (empty($request->user_id) || empty($request->from) || empty($request->message)) {
+                return response()->json(['success' => false, 'error' => 'Missing required fields'], 422);
             }
 
-            return response()->json(['success' => true]);
+            // Verify the WhatsApp number exists and is connected
+            $whatsappNumber = WhatsappNumber::where('user_id', $request->user_id)
+                ->where('id', $request->phone_number)
+                ->where('status', 'connected')
+                ->first();
+
+            if (!$whatsappNumber) {
+                Log::warning('Incoming message for unknown/disconnected number', [
+                    'user_id' => $request->user_id,
+                    'phone_number' => $request->phone_number,
+                ]);
+                return response()->json(['success' => false, 'error' => 'Number not found or disconnected'], 404);
+            }
+
+            // Skip group messages
+            if (str_contains($request->from, '@g.us')) {
+                return response()->json(['success' => true, 'skipped' => 'group_message']);
+            }
+
+            // Dispatch AI reply job to queue
+            ProcessAiReplyJob::dispatch(
+                (int) $request->user_id,
+                (int) $request->phone_number,
+                (string) $request->from,
+                (string) $request->message,
+                $request->message_id ?? null
+            );
+
+            return response()->json(['success' => true, 'queued' => true]);
         } catch (\Exception $e) {
             Log::error('Incoming Message Error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);

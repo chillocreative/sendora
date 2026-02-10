@@ -25,6 +25,8 @@ const form = useForm({
     warmer_min_delay: props.settings.warmer_min_delay || 15,
     warmer_max_delay: props.settings.warmer_max_delay || 30,
     openai_api_key: props.settings.openai_api_key || '',
+    openai_default_model: props.settings.openai_default_model || 'gpt-4o',
+    ai_reply_enabled: props.settings.ai_reply_enabled === '1' || props.settings.ai_reply_enabled === true,
 });
 
 const submit = () => {
@@ -79,15 +81,33 @@ const submit = () => {
                             </div>
                         </div>
 
-                        <!-- Warmer Settings (Added) -->
+                        <!-- AI Configuration -->
                         <div class="bg-white overflow-hidden shadow-xl sm:rounded-[2rem] p-8 border border-slate-100 relative group">
                             <div class="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-green-100/50 transition-colors"></div>
-                            <h3 class="text-xl font-black text-slate-900 border-b border-slate-50 pb-6 mb-8 tracking-tight relative z-10">Warmer AI Configuration</h3>
-                            
+                            <h3 class="text-xl font-black text-slate-900 border-b border-slate-50 pb-6 mb-8 tracking-tight relative z-10">AI Configuration</h3>
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                                 <div class="md:col-span-2">
-                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">OpenAI API Key (For AI Warmer)</label>
+                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">OpenAI API Key (For AI Replies & Warmer)</label>
                                     <input v-model="form.openai_api_key" type="password" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none" placeholder="sk-...">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Default AI Model</label>
+                                    <select v-model="form.openai_default_model" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none">
+                                        <option value="gpt-4o">GPT-4o (Recommended)</option>
+                                        <option value="gpt-4o-mini">GPT-4o Mini (Faster)</option>
+                                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Budget)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">AI Auto-Reply</label>
+                                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <span class="text-sm font-black text-slate-700">Global Kill Switch</span>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" v-model="form.ai_reply_enabled" class="sr-only peer">
+                                            <div class="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-[20px] after:w-[22px] after:transition-all peer-checked:bg-green-500 shadow-inner"></div>
+                                        </label>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Warmer Min Delay (Seconds)</label>
@@ -99,7 +119,7 @@ const submit = () => {
                                 </div>
                             </div>
                             <p class="text-[10px] text-slate-400 font-bold mt-4 uppercase tracking-wider ml-1 relative z-10">
-                                Controls the AI powered conversations and randomization range for the Human-Stagger logic.
+                                Controls AI-powered auto-replies, warmer conversations, and the Human-Stagger delay logic.
                             </p>
                         </div>
 

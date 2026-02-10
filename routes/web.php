@@ -215,11 +215,23 @@ Route::middleware([
     Route::post('/campaigns/{id}/stop', [\App\Http\Controllers\CampaignController::class, 'stop'])->name('campaigns.stop');
     Route::delete('/campaigns/{id}', [\App\Http\Controllers\CampaignController::class, 'destroy'])->name('campaigns.destroy');
 
+    // AI Playbooks & Conversations (replaces legacy auto-replies)
     Route::middleware(['subscription.limit:auto_reply'])->group(function () {
-        Route::get('/auto-replies', [\App\Http\Controllers\AutoReplyController::class, 'index'])->name('auto-replies.index');
-        Route::post('/auto-replies', [\App\Http\Controllers\AutoReplyController::class, 'store'])->name('auto-replies.store');
-        Route::put('/auto-replies/{id}', [\App\Http\Controllers\AutoReplyController::class, 'update'])->name('auto-replies.update');
-        Route::delete('/auto-replies/{id}', [\App\Http\Controllers\AutoReplyController::class, 'destroy'])->name('auto-replies.destroy');
+        Route::get('/playbooks', [\App\Http\Controllers\PlaybookController::class, 'index'])->name('playbooks.index');
+        Route::get('/playbooks/create', [\App\Http\Controllers\PlaybookController::class, 'create'])->name('playbooks.create');
+        Route::post('/playbooks', [\App\Http\Controllers\PlaybookController::class, 'store'])->name('playbooks.store');
+        Route::get('/playbooks/{id}/edit', [\App\Http\Controllers\PlaybookController::class, 'edit'])->name('playbooks.edit');
+        Route::put('/playbooks/{id}', [\App\Http\Controllers\PlaybookController::class, 'update'])->name('playbooks.update');
+        Route::delete('/playbooks/{id}', [\App\Http\Controllers\PlaybookController::class, 'destroy'])->name('playbooks.destroy');
+        Route::post('/playbooks/assign', [\App\Http\Controllers\PlaybookController::class, 'assignToNumber'])->name('playbooks.assign');
+        Route::get('/playbooks/{id}/versions', [\App\Http\Controllers\PlaybookController::class, 'versions'])->name('playbooks.versions');
+        Route::get('/playbooks/{id}/versions/{versionId}', [\App\Http\Controllers\PlaybookController::class, 'showVersion'])->name('playbooks.version.show');
+        Route::post('/playbooks/{id}/versions/{versionId}/restore', [\App\Http\Controllers\PlaybookController::class, 'restoreVersion'])->name('playbooks.version.restore');
+
+        Route::get('/conversations', [\App\Http\Controllers\ConversationController::class, 'index'])->name('conversations.index');
+        Route::get('/conversations/{id}', [\App\Http\Controllers\ConversationController::class, 'show'])->name('conversations.show');
+        Route::put('/conversations/{id}/mode', [\App\Http\Controllers\ConversationController::class, 'toggleMode'])->name('conversations.toggle-mode');
+        Route::post('/conversations/{id}/reply', [\App\Http\Controllers\ConversationController::class, 'sendReply'])->name('conversations.reply');
     });
 
     Route::post('/subscription/cancel-plan', [\App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('subscription.cancel');

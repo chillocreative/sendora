@@ -111,6 +111,16 @@ class User extends Authenticatable
         return $this->hasMany(AutoReply::class);
     }
 
+    public function playbooks()
+    {
+        return $this->hasMany(Playbook::class);
+    }
+
+    public function conversations()
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
     public function tickets()
     {
         return $this->hasMany(Ticket::class);
