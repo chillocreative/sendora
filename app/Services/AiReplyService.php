@@ -81,7 +81,15 @@ class AiReplyService
             $conversation->update(['contact_jid' => $contactPhone]);
         }
 
-        // -- Step 2: Store inbound message --
+        // -- Step 2: Store inbound message (with deduplication) --
+        if ($waMessageId) {
+            $existingMsg = ConversationMessage::where('wa_message_id', $waMessageId)->first();
+            if ($existingMsg) {
+                Log::info('Duplicate message skipped', ['wa_message_id' => $waMessageId]);
+                return ['replied' => false, 'reason' => 'duplicate_message', 'conversation_id' => $conversation->id];
+            }
+        }
+
         ConversationMessage::create([
             'conversation_id' => $conversation->id,
             'direction' => 'inbound',
@@ -90,10 +98,8 @@ class AiReplyService
             'wa_message_id' => $waMessageId,
         ]);
 
-        $conversation->update([
-            'last_customer_message_at' => now(),
-            'message_count' => $conversation->message_count + 1,
-        ]);
+        $conversation->increment('message_count');
+        $conversation->update(['last_customer_message_at' => now()]);
 
         // -- Step 3: Check conversation status --
         if ($conversation->status === 'escalated') {
@@ -112,12 +118,13 @@ class AiReplyService
         // -- Step 4: Build prompt --
         $messages = $this->buildPrompt($playbook, $conversation);
 
-        // -- Step 5: Call OpenAI --
+        // -- Step 5: Call OpenAI (with JSON mode for reliable parsing) --
         $result = $this->openAi->chatCompletion(
             $messages,
             $playbook->model ?? 'gpt-4o',
             (float) ($playbook->temperature ?? 0.7),
-            (int) ($playbook->max_tokens ?? 500)
+            (int) ($playbook->max_tokens ?? 500),
+            true // JSON mode
         );
 
         if (!$result['success']) {
@@ -126,6 +133,12 @@ class AiReplyService
                 'error' => $result['error'],
             ]);
             return ['replied' => false, 'reason' => 'openai_error: ' . $result['error'], 'conversation_id' => $conversation->id];
+        }
+
+        // Handle null/empty content from OpenAI
+        if (empty($result['content'])) {
+            Log::error('AI Reply returned empty content', ['conversation_id' => $conversation->id]);
+            return ['replied' => false, 'reason' => 'openai_empty_response', 'conversation_id' => $conversation->id];
         }
 
         // -- Step 6: Parse response --
@@ -165,8 +178,15 @@ class AiReplyService
         $sendResult = $this->whatsapp->sendMessage($whatsappNumber, $contactPhone, $parsed['reply']);
 
         $outboundWaMessageId = null;
+        $sendFailed = true;
         if ($sendResult && $sendResult->successful()) {
             $outboundWaMessageId = $sendResult->json('message_id');
+            $sendFailed = false;
+        } else {
+            Log::error('AI reply WhatsApp send failed', [
+                'conversation_id' => $conversation->id,
+                'contact_phone' => $contactPhone,
+            ]);
         }
 
         ConversationMessage::create([
@@ -183,10 +203,12 @@ class AiReplyService
             'latency_ms' => $result['latency_ms'],
         ]);
 
-        $conversation->update([
-            'last_ai_reply_at' => now(),
-            'message_count' => $conversation->message_count + 1,
-        ]);
+        $conversation->increment('message_count');
+        $conversation->update(['last_ai_reply_at' => now()]);
+
+        if ($sendFailed) {
+            return ['replied' => false, 'reason' => 'whatsapp_send_failed', 'conversation_id' => $conversation->id];
+        }
 
         return ['replied' => true, 'reason' => 'ai_reply_sent', 'conversation_id' => $conversation->id];
     }
@@ -264,17 +286,15 @@ You MUST respond in the following JSON format only. Do NOT include any text outs
 CRITICAL: The playbook shows a conversation FLOW, not a rigid script. You must adapt based on what information you've ALREADY collected.
 
 Before asking ANY question, CHECK THE CONVERSATION HISTORY:
-- If customer already mentioned their business type → DO NOT ask again, use that information
-- If customer already mentioned their budget → DO NOT ask again, acknowledge it
-- If customer already mentioned their goals → DO NOT ask again, reference them
-- If customer already answered a question → MOVE FORWARD to the next step
+- If customer already provided information → DO NOT ask again, use what they gave you
+- If customer already answered a question → MOVE FORWARD to the next logical step
+- If customer asked something specific → Answer it directly, don't redirect to a script
 
 PROGRESSION LOGIC:
-1. If this is the FIRST message (no history) → Send greeting + ask about business
-2. If customer answered about business → Ask about budget/audience (only if not mentioned yet)
-3. If customer provided budget info → Suggest tailored solution
-4. If customer shows interest → Offer consultation
-5. If any qualification criteria met (e.g., high budget) → Escalate to human
+1. If this is the FIRST message (no history) → Follow the playbook's opening/greeting flow
+2. For subsequent messages → Read what the customer JUST said and respond based on the playbook
+3. Always progress the conversation forward — never loop back to earlier steps
+4. If the playbook defines escalation triggers → Follow them
 
 NEVER REPEAT QUESTIONS. Read the conversation history carefully and respond to what the customer JUST said.
 
@@ -348,9 +368,15 @@ PROMPT;
 
     /**
      * Clean phone number: strip WhatsApp JID suffix and non-digit chars.
+     * Handles @lid JIDs by using them as-is (they are opaque identifiers).
      */
     protected function cleanPhone(string $phone): string
     {
+        // @lid JIDs are opaque identifiers - store the part before @lid as the key
+        if (str_contains($phone, '@lid')) {
+            return str_replace('@lid', '', $phone);
+        }
+
         $phone = str_replace('@s.whatsapp.net', '', $phone);
         $phone = str_replace('@g.us', '', $phone);
         $phone = preg_replace('/[^0-9]/', '', $phone);

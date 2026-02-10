@@ -39,7 +39,7 @@ class WhatsappWebhookController extends Controller
                 // KILL ROGUE SESSION: Tell the node server to stop this connection
                 try {
                     $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
-                                   ?? env('WA_SERVER_URL', 'http://localhost:3000');
+                                   ?? env('WA_SERVER_URL', 'http://127.0.0.1:3005');
                     $waServerUrl = rtrim($waServerUrl, '/');
                     \Illuminate\Support\Facades\Http::post("{$waServerUrl}/disconnect", [
                         'user_id' => $request->user_id,

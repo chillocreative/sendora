@@ -114,9 +114,7 @@ class ConversationController extends Controller
             'wa_message_id' => $waMessageId,
         ]);
 
-        $conversation->update([
-            'message_count' => $conversation->message_count + 1,
-        ]);
+        $conversation->increment('message_count');
 
         return back()->with('success', 'Message sent.');
     }

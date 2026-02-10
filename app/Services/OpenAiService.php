@@ -30,7 +30,8 @@ class OpenAiService
         array $messages,
         string $model = 'gpt-4o',
         float $temperature = 0.7,
-        int $maxTokens = 500
+        int $maxTokens = 500,
+        bool $jsonMode = false
     ): array {
         if (!$this->isConfigured()) {
             return [
@@ -48,12 +49,13 @@ class OpenAiService
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->timeout(30)->post($this->apiUrl, [
+            ])->timeout(30)->post($this->apiUrl, array_filter([
                 'model' => $model,
                 'messages' => $messages,
                 'max_tokens' => $maxTokens,
                 'temperature' => $temperature,
-            ]);
+                'response_format' => $jsonMode ? ['type' => 'json_object'] : null,
+            ]));
 
             $latencyMs = (int) round((microtime(true) - $startTime) * 1000);
 

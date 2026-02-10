@@ -31,7 +31,7 @@ class WhatsappService
     public function sendMessage(WhatsappNumber $whatsappNumber, $to, $message, $mediaUrl = null, $mediaType = null)
     {
         $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
-                       ?? env('WA_SERVER_URL', 'http://localhost:3000');
+                       ?? env('WA_SERVER_URL', 'http://127.0.0.1:3005');
         $waServerUrl = rtrim($waServerUrl, '/');
         
         // Clean the recipient number (skip if already a full JID with @lid or @s.whatsapp.net)
