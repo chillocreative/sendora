@@ -198,11 +198,17 @@ class AiReplyService
     {
         $systemPrompt = $this->buildSystemPrompt($playbook);
 
+        $history = $conversation->latestMessages(20);
+
+        if ($history->count() > 1) {
+            $systemPrompt .= "\n\n=== CONVERSATION CONTEXT ===\n"
+                . "This is an ongoing conversation with {$history->count()} messages. "
+                . "The customer has already been greeted. Continue the conversation naturally — do NOT repeat any greeting or introduction.";
+        }
+
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
         ];
-
-        $history = $conversation->latestMessages(20);
 
         foreach ($history as $msg) {
             $role = ($msg->direction === 'inbound') ? 'user' : 'assistant';
@@ -257,6 +263,7 @@ You MUST respond in the following JSON format only. Do NOT include any text outs
 8. Never share pricing, promotions, or policies not explicitly stated in the playbook.
 9. If unsure, escalate rather than guess.
 10. Keep replies WhatsApp-appropriate: short paragraphs, no markdown formatting, no bullet points unless the customer asked for a list.
+11. This is a multi-turn conversation. The message history contains previous exchanges with this customer. NEVER repeat a greeting or introduction you have already sent. Read the full conversation history and respond contextually to the customer's latest message only.
 PROMPT;
     }
 
