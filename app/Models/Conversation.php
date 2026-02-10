@@ -10,6 +10,7 @@ class Conversation extends Model
         'user_id',
         'whatsapp_number_id',
         'contact_phone',
+        'contact_jid',
         'contact_name',
         'status',
         'escalation_reason',

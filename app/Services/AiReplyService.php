@@ -72,8 +72,14 @@ class AiReplyService
                 'user_id' => $whatsappNumber->user_id,
                 'status' => 'active',
                 'contact_name' => $this->resolveContactName($whatsappNumber->user_id, $cleanPhone),
+                'contact_jid' => $contactPhone,
             ]
         );
+
+        // Update JID on existing conversations (in case format changed)
+        if (!$conversation->wasRecentlyCreated && $conversation->contact_jid !== $contactPhone) {
+            $conversation->update(['contact_jid' => $contactPhone]);
+        }
 
         // -- Step 2: Store inbound message --
         ConversationMessage::create([

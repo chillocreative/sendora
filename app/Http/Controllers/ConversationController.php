@@ -97,7 +97,7 @@ class ConversationController extends Controller
         $whatsappService = new WhatsappService();
         $sendResult = $whatsappService->sendMessage(
             $whatsappNumber,
-            $conversation->contact_phone,
+            $conversation->contact_jid ?? $conversation->contact_phone,
             $request->message
         );
 
