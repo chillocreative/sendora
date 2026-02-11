@@ -11,6 +11,7 @@ const props = defineProps({
     chartData: Array,
     overallStats: Object,
     recentCampaigns: Array,
+    aiStats: Object,
 });
 
 // Auto-refresh for live data
@@ -18,11 +19,11 @@ let pollInterval;
 onMounted(() => {
     pollInterval = setInterval(() => {
         router.reload({
-            only: ['whatsappCount', 'contactCount', 'messagesThisMonth', 'chartData', 'overallStats', 'recentCampaigns'],
+            only: ['whatsappCount', 'contactCount', 'messagesThisMonth', 'chartData', 'overallStats', 'recentCampaigns', 'aiStats'],
             preserveScroll: true,
             preserveState: true,
         });
-    }, 10000); // 10 seconds
+    }, 10000);
 });
 
 onUnmounted(() => {
@@ -35,7 +36,7 @@ const tooltipData = ref(null);
 
 const maxSent = computed(() => {
     if (!props.chartData || props.chartData.length === 0) return 1;
-    return Math.max(...props.chartData.map(d => d.sent), 5); // Minimum 5 for scale
+    return Math.max(...props.chartData.map(d => d.sent), 5);
 });
 
 const getBarHeight = (value) => {
@@ -51,6 +52,17 @@ const hideTooltip = () => {
     hoveredDay.value = null;
     tooltipData.value = null;
 };
+
+const timeAgo = (dateString) => {
+    if (!dateString) return 'Never';
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+};
 </script>
 
 <template>
@@ -65,7 +77,7 @@ const hideTooltip = () => {
 
         <div class="py-8">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-                
+
                 <!-- Subscription Alerts -->
                 <div v-if="subscription && subscription.status === 'waiting_for_payment'" class="bg-gradient-to-r from-[#db7c26] to-[#c32f27] rounded-2xl shadow-xl p-8 text-white flex flex-col md:flex-row justify-between items-center gap-6">
                     <div>
@@ -105,6 +117,103 @@ const hideTooltip = () => {
                     </div>
                 </div>
 
+                <!-- AI Playbook Section -->
+                <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-xl border border-slate-700/50 overflow-hidden">
+                    <div class="p-6 sm:p-8">
+                        <!-- AI Section Header -->
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2.5 bg-emerald-500/20 rounded-xl">
+                                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-black text-white">AI Autopilot</h3>
+                                    <p class="text-xs text-slate-400 font-medium">Real-time AI conversation engine status</p>
+                                </div>
+                            </div>
+                            <Link :href="route('playbooks.index')" class="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-bold hover:bg-white/20 transition backdrop-blur-sm border border-white/10">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                Manage Playbooks
+                            </Link>
+                        </div>
+
+                        <!-- AI Stats Cards -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Active Playbooks</span>
+                                </div>
+                                <div class="text-2xl sm:text-3xl font-black text-white">{{ aiStats?.active_playbooks || 0 }}</div>
+                                <p class="text-xs text-slate-500 mt-1">of {{ aiStats?.total_playbooks || 0 }} total</p>
+                            </div>
+                            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">AI Replies Today</span>
+                                </div>
+                                <div class="text-2xl sm:text-3xl font-black text-white">{{ aiStats?.ai_replies_today || 0 }}</div>
+                                <p class="text-xs text-slate-500 mt-1">{{ aiStats?.ai_replies_this_month || 0 }} this month</p>
+                            </div>
+                            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Active Chats</span>
+                                </div>
+                                <div class="text-2xl sm:text-3xl font-black text-white">{{ aiStats?.active_conversations || 0 }}</div>
+                                <p class="text-xs text-slate-500 mt-1">{{ aiStats?.total_conversations || 0 }} total conversations</p>
+                            </div>
+                            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-2 h-2 rounded-full" :class="(aiStats?.escalated_conversations || 0) > 0 ? 'bg-red-400 animate-pulse' : 'bg-slate-500'"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Escalated</span>
+                                </div>
+                                <div class="text-2xl sm:text-3xl font-black" :class="(aiStats?.escalated_conversations || 0) > 0 ? 'text-red-400' : 'text-white'">{{ aiStats?.escalated_conversations || 0 }}</div>
+                                <p class="text-xs text-slate-500 mt-1">{{ aiStats?.numbers_with_ai || 0 }} numbers with AI</p>
+                            </div>
+                        </div>
+
+                        <!-- Recent AI Conversations -->
+                        <div v-if="aiStats?.recent_conversations && aiStats.recent_conversations.length > 0">
+                            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Live Conversations</h4>
+                            <div class="space-y-2">
+                                <div v-for="conv in aiStats.recent_conversations" :key="conv.id"
+                                    class="flex items-center justify-between p-3 sm:p-4 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                                            :class="conv.status === 'escalated' ? 'bg-red-500/20' : 'bg-emerald-500/20'">
+                                            <svg v-if="conv.status === 'escalated'" class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                                            <svg v-else class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="text-sm font-bold text-white truncate">{{ conv.contact_name || conv.contact_phone }}</div>
+                                            <div class="text-[10px] text-slate-500 font-medium truncate">
+                                                <span v-if="conv.contact_name">{{ conv.contact_phone }} &middot; </span>
+                                                {{ conv.message_count }} messages
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                                        <span v-if="conv.status === 'escalated'" class="hidden sm:inline-block px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-500/20 text-red-400 border border-red-500/20">
+                                            Needs Attention
+                                        </span>
+                                        <span class="text-[10px] text-slate-500 font-bold whitespace-nowrap">{{ timeAgo(conv.last_customer_message_at) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty AI State -->
+                        <div v-else class="text-center py-6">
+                            <div class="inline-flex p-3 rounded-2xl bg-white/5 mb-3">
+                                <svg class="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            </div>
+                            <p class="text-slate-500 text-xs font-bold">No active AI conversations yet</p>
+                            <p class="text-slate-600 text-[10px] mt-1">Create a playbook and assign it to a WhatsApp number to start</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Campaign Performance Chart -->
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 sm:p-8">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -139,8 +248,8 @@ const hideTooltip = () => {
 
                         <!-- Chart Area -->
                         <div class="ml-12 h-full flex items-end gap-2 pb-8 border-b border-slate-50">
-                            <div 
-                                v-for="(day, index) in chartData" 
+                            <div
+                                v-for="(day, index) in chartData"
                                 :key="index"
                                 class="flex-1 flex flex-col items-center justify-end h-full gap-1 group relative cursor-pointer hover:bg-slate-50 rounded-t-lg transition-colors"
                                 @mouseenter="showTooltip(day, $event)"
@@ -148,33 +257,30 @@ const hideTooltip = () => {
                             >
                                 <!-- Stacked/Layered Bars -->
                                 <div class="w-full relative flex items-end px-1" style="height: 100%">
-                                    
                                     <!-- Sent Layer (Back) -->
-                                    <div 
+                                    <div
                                         class="w-full absolute bottom-0 bg-[#f7b538] rounded-t-sm z-10 transition-all duration-500 group-hover:opacity-90"
                                         :style="{ height: getBarHeight(day.sent) + '%' }"
                                     ></div>
-
                                     <!-- Delivered Layer (Middle) -->
-                                    <div 
+                                    <div
                                         class="w-full absolute bottom-0 bg-[#db7c26] rounded-t-sm z-20 transition-all duration-500"
                                         :style="{ height: getBarHeight(day.delivered) + '%' }"
                                     ></div>
-
                                      <!-- Opened Layer (Front) -->
-                                    <div 
+                                    <div
                                         class="w-full absolute bottom-0 bg-[#d8572a] rounded-t-sm z-30 transition-all duration-500"
                                         :style="{ height: getBarHeight(day.opened) + '%' }"
                                     ></div>
                                 </div>
-                                
+
                                 <!-- X-axis label -->
                                 <span class="text-[9px] text-slate-400 font-bold whitespace-nowrap absolute -bottom-6 group-hover:text-slate-600">
                                     {{ day.date?.split(' ')[1] || '' }}
                                 </span>
 
                                 <!-- Tooltip -->
-                                <div 
+                                <div
                                     v-if="hoveredDay === day.date"
                                     class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-3 rounded-xl text-xs shadow-2xl z-50 whitespace-nowrap border border-slate-700 min-w-[120px]"
                                 >
@@ -336,7 +442,7 @@ const hideTooltip = () => {
                                     <td class="px-6 py-4 text-center font-bold text-[#db7c26]">{{ campaign.opened_count }}</td>
                                     <td class="px-6 py-4 text-center font-bold text-[#c32f27]">{{ campaign.clicked_count }}</td>
                                     <td class="px-6 py-4 text-center">
-                                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors" 
+                                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors"
                                               :class="campaign.success_count > 0 && campaign.opened_count / campaign.success_count > 0.5 ? 'bg-red-50 text-[#780116]' : 'bg-slate-50 text-slate-400'">
                                             {{ campaign.success_count > 0 ? Math.round((campaign.opened_count / campaign.success_count) * 100) : 0 }}% Efficiency
                                         </span>
@@ -356,7 +462,7 @@ const hideTooltip = () => {
                     </div>
                 </div>
 
-                <!-- SAAS Copywriting & Package Info -->
+                <!-- Package Info -->
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 sm:p-12">
                     <div class="flex flex-col lg:flex-row gap-10 lg:gap-12 items-center">
                         <div class="w-full lg:w-1/2">

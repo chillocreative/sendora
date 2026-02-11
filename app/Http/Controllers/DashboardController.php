@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Campaign;
 use App\Models\CampaignMessage;
+use App\Models\Conversation;
+use App\Models\ConversationMessage;
+use App\Models\Playbook;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -117,6 +120,9 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // AI Playbook stats
+        $aiStats = $this->getAiStats($user);
+
         return Inertia::render('Dashboard', [
             'subscription' => $subscription,
             'whatsappCount' => $user->whatsappNumbers()->count(),
@@ -125,7 +131,57 @@ class DashboardController extends Controller
             'chartData' => $chartData,
             'overallStats' => $overallStats,
             'recentCampaigns' => $recentCampaigns,
+            'aiStats' => $aiStats,
         ]);
+    }
+
+    protected function getAiStats($user): array
+    {
+        $waNumberIds = $user->whatsappNumbers()->pluck('id');
+
+        $activePlaybooks = Playbook::where('user_id', $user->id)->where('is_active', true)->count();
+        $totalPlaybooks = Playbook::where('user_id', $user->id)->count();
+
+        $totalConversations = Conversation::whereIn('whatsapp_number_id', $waNumberIds)->count();
+        $activeConversations = Conversation::whereIn('whatsapp_number_id', $waNumberIds)->where('status', 'active')->count();
+        $escalatedConversations = Conversation::whereIn('whatsapp_number_id', $waNumberIds)->where('status', 'escalated')->count();
+
+        $aiRepliesToday = ConversationMessage::whereIn('conversation_id',
+                Conversation::whereIn('whatsapp_number_id', $waNumberIds)->pluck('id')
+            )
+            ->where('sender_type', 'ai')
+            ->where('direction', 'outbound')
+            ->whereDate('created_at', Carbon::today())
+            ->count();
+
+        $aiRepliesThisMonth = ConversationMessage::whereIn('conversation_id',
+                Conversation::whereIn('whatsapp_number_id', $waNumberIds)->pluck('id')
+            )
+            ->where('sender_type', 'ai')
+            ->where('direction', 'outbound')
+            ->whereYear('created_at', Carbon::now()->year)
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->count();
+
+        $numbersWithAi = $user->whatsappNumbers()->where('ai_reply_enabled', true)->whereNotNull('playbook_id')->count();
+
+        $recentConversations = Conversation::whereIn('whatsapp_number_id', $waNumberIds)
+            ->whereIn('status', ['active', 'escalated'])
+            ->orderByDesc('updated_at')
+            ->take(5)
+            ->get(['id', 'contact_phone', 'contact_name', 'status', 'message_count', 'last_customer_message_at', 'escalation_reason']);
+
+        return [
+            'active_playbooks' => $activePlaybooks,
+            'total_playbooks' => $totalPlaybooks,
+            'total_conversations' => $totalConversations,
+            'active_conversations' => $activeConversations,
+            'escalated_conversations' => $escalatedConversations,
+            'ai_replies_today' => $aiRepliesToday,
+            'ai_replies_this_month' => $aiRepliesThisMonth,
+            'numbers_with_ai' => $numbersWithAi,
+            'recent_conversations' => $recentConversations,
+        ];
     }
 
     public function exportReport(Request $request)
