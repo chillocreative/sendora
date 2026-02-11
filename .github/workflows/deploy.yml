@@ -102,6 +102,7 @@ jobs:
             php artisan config:cache || echo "⚠️ Config cache had issues"
             php artisan route:cache || echo "⚠️ Route cache had issues"
             php artisan view:cache || echo "⚠️ View cache had issues"
+            php artisan queue:restart || echo "⚠️ Queue restart had issues"
             echo "✅ Laravel optimized"
             echo ""
 
