@@ -71,7 +71,15 @@ class WhatsappWebhookController extends Controller
 
                 if ($request->status === 'connected' && $request->phone_info) {
                     $updateData['phone_info'] = $request->phone_info;
-                    $updateData['phone_number'] = $request->phone_info['id'] ?? null;
+
+                    // Clean phone number from JID format (e.g. "60148885659:55@s.whatsapp.net" → "60148885659")
+                    $rawId = $request->phone_info['id'] ?? null;
+                    if ($rawId) {
+                        $cleanPhone = preg_replace('/:.*$/', '', $rawId); // strip :device suffix
+                        $cleanPhone = str_replace('@s.whatsapp.net', '', $cleanPhone);
+                        $cleanPhone = preg_replace('/[^0-9]/', '', $cleanPhone);
+                        $updateData['phone_number'] = $cleanPhone;
+                    }
                 }
 
                 if ($request->status === 'disconnected') {

@@ -33,15 +33,36 @@ class AiReplyService
         string $messageText,
         ?string $waMessageId = null
     ): array {
-        // -- Guard 1: AI reply enabled on this number? --
-        if (!$whatsappNumber->ai_reply_enabled) {
-            return ['replied' => false, 'reason' => 'ai_reply_disabled', 'conversation_id' => null];
+        // -- Guard 1 & 2: Resolve playbook (direct or fallback) --
+        $playbook = $whatsappNumber->playbook;
+
+        if (!$playbook || !$playbook->is_active) {
+            // Fallback: find the user's first active playbook and auto-assign
+            $fallbackPlaybook = Playbook::where('user_id', $whatsappNumber->user_id)
+                ->where('is_active', true)
+                ->first();
+
+            if ($fallbackPlaybook) {
+                Log::info('AI fallback playbook assigned', [
+                    'whatsapp_number_id' => $whatsappNumber->id,
+                    'playbook_id' => $fallbackPlaybook->id,
+                    'playbook_name' => $fallbackPlaybook->name,
+                ]);
+
+                $whatsappNumber->update([
+                    'playbook_id' => $fallbackPlaybook->id,
+                    'ai_reply_enabled' => true,
+                ]);
+                $whatsappNumber->refresh();
+                $playbook = $fallbackPlaybook;
+            } else {
+                return ['replied' => false, 'reason' => 'no_active_playbook', 'conversation_id' => null];
+            }
         }
 
-        // -- Guard 2: Playbook assigned and active? --
-        $playbook = $whatsappNumber->playbook;
-        if (!$playbook || !$playbook->is_active) {
-            return ['replied' => false, 'reason' => 'no_active_playbook', 'conversation_id' => null];
+        // Auto-enable AI reply if playbook is assigned but AI was off
+        if (!$whatsappNumber->ai_reply_enabled && $playbook) {
+            $whatsappNumber->update(['ai_reply_enabled' => true]);
         }
 
         // -- Guard 3: AI provider configured? --
@@ -733,13 +754,18 @@ PROMPT;
      */
     protected function cleanPhone(string $phone): string
     {
-        // @lid JIDs are opaque identifiers - store the part before @lid as the key
+        // @lid JIDs are opaque identifiers - store the numeric part before @lid as the key
         if (str_contains($phone, '@lid')) {
-            return str_replace('@lid', '', $phone);
+            $phone = str_replace('@lid', '', $phone);
+            // Strip :device suffix (e.g. "84155605983354:55" → "84155605983354")
+            $phone = preg_replace('/:.*$/', '', $phone);
+            return $phone;
         }
 
         $phone = str_replace('@s.whatsapp.net', '', $phone);
         $phone = str_replace('@g.us', '', $phone);
+        // Strip :device suffix if present
+        $phone = preg_replace('/:.*$/', '', $phone);
         $phone = preg_replace('/[^0-9]/', '', $phone);
         return $phone;
     }
