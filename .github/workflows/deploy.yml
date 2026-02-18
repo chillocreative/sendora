@@ -138,7 +138,7 @@ jobs:
             require __DIR__.'/vendor/autoload.php';
             \$app = require_once __DIR__.'/bootstrap/app.php';
             \$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
-            \App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'https://sendora.cc/whatsapp-server-temp']);
+            \App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005']);
             \App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc']);
             echo 'Settings updated';
             " || echo "⚠️ Settings update failed"
