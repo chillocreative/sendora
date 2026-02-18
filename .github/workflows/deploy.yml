@@ -147,7 +147,8 @@ jobs:
 
             # 10. Setup Laravel cron job
             echo "⏰ Step 10: Configuring cron job for Laravel scheduler..."
-            CRON_CMD="* * * * * cd ${{ secrets.REMOTE_TARGET }} && php artisan schedule:run >> /dev/null 2>&1"
+            PHP_BIN=$(which php 2>/dev/null || echo "/usr/bin/php")
+            CRON_CMD="* * * * * $PHP_BIN ${{ secrets.REMOTE_TARGET }}/artisan schedule:run >> /dev/null 2>&1"
             ( crontab -l 2>/dev/null | grep -v "artisan schedule:run"; echo "$CRON_CMD" ) | crontab -
             echo "✅ Cron job configured: $CRON_CMD"
             crontab -l | grep "artisan" || echo "⚠️ Could not verify cron - check manually"
