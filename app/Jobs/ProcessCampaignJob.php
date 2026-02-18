@@ -20,6 +20,18 @@ class ProcessCampaignJob implements ShouldQueue
     protected $campaign;
     protected $waServerUrl;
 
+    /**
+     * The number of seconds the job can run before timing out.
+     * Campaigns with many contacts and sleep delays can take hours.
+     */
+    public $timeout = 7200;
+
+    /**
+     * The number of times the job may be attempted.
+     * Set to 1 to prevent duplicate message sends on retry.
+     */
+    public $tries = 1;
+
     public function __construct(Campaign $campaign)
     {
         $this->campaign = $campaign;
@@ -142,6 +154,10 @@ class ProcessCampaignJob implements ShouldQueue
             }
         }
 
-        $campaign->update(['status' => 'completed']);
+        // Only mark as completed if not cancelled during processing
+        $campaign->refresh();
+        if ($campaign->status === 'processing') {
+            $campaign->update(['status' => 'completed']);
+        }
     }
 }

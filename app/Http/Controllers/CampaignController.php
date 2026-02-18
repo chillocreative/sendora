@@ -66,8 +66,8 @@ class CampaignController extends Controller
 
         $user = auth()->user();
 
-        // Transaction to ensure campaign + messages created effectively
-        DB::transaction(function () use ($request, $user) {
+        // Transaction to ensure campaign + messages created atomically
+        $campaign = DB::transaction(function () use ($request, $user) {
             $mediaPath = null;
             $type = 'text';
 
@@ -75,7 +75,7 @@ class CampaignController extends Controller
                 $file = $request->file('media');
                 $filename = time() . '_' . $file->getClientOriginalName();
                 $mediaPath = $file->storeAs('campaigns', $filename, 'public');
-                
+
                 $mime = $file->getMimeType();
                 if (str_starts_with($mime, 'image/')) $type = 'image';
                 elseif (str_starts_with($mime, 'video/')) $type = 'video';
@@ -116,10 +116,13 @@ class CampaignController extends Controller
                 CampaignMessage::insert($messages);
             }
 
-            if (!$request->scheduled_at) {
-                ProcessCampaignJob::dispatch($campaign);
-            }
+            return $campaign;
         });
+
+        // Dispatch after transaction commits to ensure campaign data is available
+        if (!$request->scheduled_at) {
+            ProcessCampaignJob::dispatch($campaign);
+        }
 
         return redirect()->route('campaigns.index')->with('success', 'Campaign created successfully.');
     }
