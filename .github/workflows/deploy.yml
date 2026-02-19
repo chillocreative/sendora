@@ -151,9 +151,9 @@ jobs:
             APP_DIR="${{ secrets.REMOTE_TARGET }}"
 
             LARAVEL_CRON="* * * * * $PHP_BIN $APP_DIR/artisan schedule:run >> /dev/null 2>&1"
-            # Run node in FOREGROUND (no &) so cPanel/CloudLinux cannot kill the background process.
-            # The cron job itself becomes the parent - when node crashes, next minute's cron restarts it.
-            WA_KEEPALIVE_CRON="* * * * * pgrep -f 'node.*server\.js' > /dev/null 2>&1 || (cd $APP_DIR/whatsapp-server-temp && $NODE_BIN server.js >> $APP_DIR/storage/logs/whatsapp-server.log 2>&1 < /dev/null)"
+            # Use nohup + & so cron finishes immediately. nohup protects node from SIGHUP when cron's shell exits.
+            # If node crashes, next minute's cron detects it missing via pgrep and restarts it.
+            WA_KEEPALIVE_CRON="* * * * * pgrep -f 'node.*server\.js' > /dev/null 2>&1 || (cd $APP_DIR/whatsapp-server-temp && nohup $NODE_BIN server.js >> $APP_DIR/storage/logs/whatsapp-server.log 2>&1 &)"
 
             (
               crontab -l 2>/dev/null \
@@ -181,14 +181,28 @@ jobs:
             kill $(pgrep -f "node.*server\.js" 2>/dev/null) 2>/dev/null || echo "No existing node processes"
             sleep 2
 
-            # Start with PM2 if available, otherwise let keepalive cron handle it
-            if command -v pm2 &> /dev/null; then
-              pm2 describe sendora-wa &>/dev/null \
-                && pm2 restart sendora-wa \
-                || pm2 start server.js --name sendora-wa
-              echo "✅ WhatsApp server started via PM2"
+            # Start Node.js server with nohup (backgrounds immediately, survives shell exit)
+            echo "Starting Node.js server with nohup..."
+            nohup $NODE_BIN server.js >> ${{ secrets.REMOTE_TARGET }}/storage/logs/whatsapp-server.log 2>&1 &
+            disown
+            WA_PID=$!
+            echo "Node.js started with PID: $WA_PID"
+
+            # Health check: wait up to 15 seconds for server to respond
+            echo "Waiting for health check on http://127.0.0.1:3005/health ..."
+            WA_STARTED=false
+            for i in $(seq 1 15); do
+              if curl -s --max-time 2 http://127.0.0.1:3005/health > /dev/null 2>&1; then
+                WA_STARTED=true
+                break
+              fi
+              sleep 1
+            done
+
+            if [ "$WA_STARTED" = true ]; then
+              echo "✅ WhatsApp server is running and healthy (PID: $WA_PID)"
             else
-              echo "ℹ️ No PM2 found - keepalive cron will start Node.js server within 1 minute"
+              echo "⚠️ WhatsApp server health check failed after 15s - keepalive cron will retry within 1 minute"
             fi
 
             cd ${{ secrets.REMOTE_TARGET }}
