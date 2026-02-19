@@ -145,13 +145,24 @@ jobs:
             echo "✅ Step 9 done"
             echo ""
 
-            # 10. Setup Laravel cron job
-            echo "⏰ Step 10: Configuring cron job for Laravel scheduler..."
+            # 10. Setup Laravel cron job + Node.js keepalive cron
+            echo "⏰ Step 10: Configuring cron jobs..."
             PHP_BIN=$(which php 2>/dev/null || echo "/usr/bin/php")
-            CRON_CMD="* * * * * $PHP_BIN ${{ secrets.REMOTE_TARGET }}/artisan schedule:run >> /dev/null 2>&1"
-            ( crontab -l 2>/dev/null | grep -v "artisan schedule:run"; echo "$CRON_CMD" ) | crontab -
-            echo "✅ Cron job configured: $CRON_CMD"
-            crontab -l | grep "artisan" || echo "⚠️ Could not verify cron - check manually"
+            APP_DIR="${{ secrets.REMOTE_TARGET }}"
+
+            LARAVEL_CRON="* * * * * $PHP_BIN $APP_DIR/artisan schedule:run >> /dev/null 2>&1"
+            WA_KEEPALIVE_CRON="* * * * * pgrep -f 'node.*server\.js' > /dev/null 2>&1 || (cd $APP_DIR/whatsapp-server-temp && $NODE_BIN server.js >> $APP_DIR/storage/logs/whatsapp-server.log 2>&1 &)"
+
+            (
+              crontab -l 2>/dev/null \
+                | grep -v "artisan schedule:run" \
+                | grep -v "node.*server\.js"
+              echo "$LARAVEL_CRON"
+              echo "$WA_KEEPALIVE_CRON"
+            ) | crontab -
+
+            echo "✅ Laravel cron: $LARAVEL_CRON"
+            echo "✅ WA keepalive: $WA_KEEPALIVE_CRON"
             echo ""
 
             # 11. Setup & start WhatsApp server
@@ -164,23 +175,23 @@ jobs:
               $NPM_BIN install --no-audit --no-fund --prefer-offline 2>&1 | tail -5 || echo "⚠️ WhatsApp npm install had issues"
             fi
 
-            # Stop existing process
+            # Stop existing process cleanly
             kill $(pgrep -f "node.*server\.js" 2>/dev/null) 2>/dev/null || echo "No existing node processes"
             sleep 2
 
-            # Start with PM2 if available, otherwise use nohup
+            # Start with PM2 if available, otherwise nohup
             if command -v pm2 &> /dev/null; then
               pm2 describe sendora-wa &>/dev/null \
                 && pm2 restart sendora-wa \
-                || pm2 start server.js --name sendora-wa --no-autorestart
+                || pm2 start server.js --name sendora-wa
               echo "✅ WhatsApp server started via PM2"
             else
-              nohup $NODE_BIN server.js > ../storage/logs/whatsapp-server.log 2>&1 &
+              nohup $NODE_BIN server.js >> $APP_DIR/storage/logs/whatsapp-server.log 2>&1 &
               sleep 3
               if pgrep -f "node.*server\.js" > /dev/null; then
-                echo "✅ WhatsApp server started via nohup (PID: $(pgrep -f 'node.*server\.js'))"
+                echo "✅ WhatsApp server started (PID: $(pgrep -f 'node.*server\.js'))"
               else
-                echo "❌ WhatsApp server failed to start - check storage/logs/whatsapp-server.log"
+                echo "⚠️ WhatsApp server may not have started - keepalive cron will retry every minute"
               fi
             fi
 
