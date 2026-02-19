@@ -151,7 +151,9 @@ jobs:
             APP_DIR="${{ secrets.REMOTE_TARGET }}"
 
             LARAVEL_CRON="* * * * * $PHP_BIN $APP_DIR/artisan schedule:run >> /dev/null 2>&1"
-            WA_KEEPALIVE_CRON="* * * * * pgrep -f 'node.*server\.js' > /dev/null 2>&1 || (cd $APP_DIR/whatsapp-server-temp && $NODE_BIN server.js >> $APP_DIR/storage/logs/whatsapp-server.log 2>&1 &)"
+            # Run node in FOREGROUND (no &) so cPanel/CloudLinux cannot kill the background process.
+            # The cron job itself becomes the parent - when node crashes, next minute's cron restarts it.
+            WA_KEEPALIVE_CRON="* * * * * pgrep -f 'node.*server\.js' > /dev/null 2>&1 || (cd $APP_DIR/whatsapp-server-temp && $NODE_BIN server.js >> $APP_DIR/storage/logs/whatsapp-server.log 2>&1 < /dev/null)"
 
             (
               crontab -l 2>/dev/null \
@@ -179,20 +181,14 @@ jobs:
             kill $(pgrep -f "node.*server\.js" 2>/dev/null) 2>/dev/null || echo "No existing node processes"
             sleep 2
 
-            # Start with PM2 if available, otherwise nohup
+            # Start with PM2 if available, otherwise let keepalive cron handle it
             if command -v pm2 &> /dev/null; then
               pm2 describe sendora-wa &>/dev/null \
                 && pm2 restart sendora-wa \
                 || pm2 start server.js --name sendora-wa
               echo "✅ WhatsApp server started via PM2"
             else
-              nohup $NODE_BIN server.js >> $APP_DIR/storage/logs/whatsapp-server.log 2>&1 &
-              sleep 3
-              if pgrep -f "node.*server\.js" > /dev/null; then
-                echo "✅ WhatsApp server started (PID: $(pgrep -f 'node.*server\.js'))"
-              else
-                echo "⚠️ WhatsApp server may not have started - keepalive cron will retry every minute"
-              fi
+              echo "ℹ️ No PM2 found - keepalive cron will start Node.js server within 1 minute"
             fi
 
             cd ${{ secrets.REMOTE_TARGET }}
