@@ -12,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 class ProcessCampaignJob implements ShouldQueue
 {
@@ -50,9 +51,14 @@ class ProcessCampaignJob implements ShouldQueue
 
         $user = $campaign->user;
         
-        // Use database setting for APP_URL if it exists (fixes asset() in production)
+        // Use database setting for APP_URL if it exists.
+        // We MUST call URL::forceRootUrl() because the UrlGenerator singleton caches
+        // its root at queue-worker startup (usually http://localhost), so config() alone
+        // does not fix asset() / route() URL generation in queue context.
         $appUrl = \App\Models\Setting::where('key', 'app_url')->value('value') ?? config('app.url');
+        $appUrl = rtrim($appUrl, '/');
         config(['app.url' => $appUrl]);
+        URL::forceRootUrl($appUrl);
 
         // Use campaign's assigned number if available
         if ($campaign->whatsapp_number_id) {
@@ -89,12 +95,16 @@ class ProcessCampaignJob implements ShouldQueue
                 break;
             }
 
-            // Ensure we use the correct asset URL for media
+            // Build the absolute media URL directly from $appUrl.
+            // Do NOT use asset() here — the UrlGenerator caches its root URL at worker
+            // startup and asset() would generate http://localhost/storage/... even after
+            // URL::forceRootUrl(). Direct string construction is always correct.
             $mediaUrl = null;
             if ($campaign->media_path) {
                 $path = $campaign->media_path;
-                // If it's already a full URL, use it, otherwise use asset()
-                $mediaUrl = str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+                $mediaUrl = str_starts_with($path, 'http')
+                    ? $path
+                    : $appUrl . '/storage/' . ltrim($path, '/');
             }
             
             $mediaType = $campaign->message_type;
