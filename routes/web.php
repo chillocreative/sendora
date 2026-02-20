@@ -26,6 +26,14 @@ Route::get('/system/force-clear', function() {
     return 'System Cache Cleared via Web Route';
 });
 
+Route::get('/system/last-error', function() {
+    $logFile = storage_path('logs/laravel.log');
+    if (!file_exists($logFile)) return 'No log file found';
+    $lines = file($logFile);
+    $lastLines = array_slice($lines, -80);
+    return '<pre>' . htmlspecialchars(implode('', $lastLines)) . '</pre>';
+});
+
 Route::get('/system/reset-conversation/{id}', function($id) {
     $conversation = \App\Models\Conversation::findOrFail($id);
     $count = $conversation->messages()->count();
