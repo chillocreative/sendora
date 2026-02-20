@@ -33,3 +33,4 @@ class Contact extends Model
     {
         return $this->belongsToMany(ContactBook::class);
     }
+}

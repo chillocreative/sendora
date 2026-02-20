@@ -26,25 +26,6 @@ Route::get('/system/force-clear', function() {
     return 'System Cache Cleared via Web Route';
 });
 
-Route::get('/system/enable-debug', function() {
-    $envPath = base_path('.env');
-    $env = file_get_contents($envPath);
-    $env = preg_replace('/^APP_DEBUG=.*/m', 'APP_DEBUG=true', $env);
-    file_put_contents($envPath, $env);
-    \Illuminate\Support\Facades\Artisan::call('config:clear');
-    return 'Debug mode enabled. Visit the broken page to see the error, then visit /system/disable-debug';
-});
-
-Route::get('/system/disable-debug', function() {
-    $envPath = base_path('.env');
-    $env = file_get_contents($envPath);
-    $env = preg_replace('/^APP_DEBUG=.*/m', 'APP_DEBUG=false', $env);
-    file_put_contents($envPath, $env);
-    \Illuminate\Support\Facades\Artisan::call('config:clear');
-    \Illuminate\Support\Facades\Artisan::call('config:cache');
-    return 'Debug mode disabled.';
-});
-
 
 Route::get('/system/reset-conversation/{id}', function($id) {
     $conversation = \App\Models\Conversation::findOrFail($id);
