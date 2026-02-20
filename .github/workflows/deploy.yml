@@ -59,10 +59,20 @@ jobs:
           php artisan route:cache
           php artisan view:cache
 
-          # 6. Ensure storage link exists
-          if [ ! -L public/storage ]; then
-            php artisan storage:link
-          fi
+          # 6. Fix storage directories, permissions and symlink
+          echo "--- Setting up storage ---"
+          # Create upload directories in case they don't exist yet
+          mkdir -p storage/app/public/campaigns
+          mkdir -p storage/logs
+          mkdir -p bootstrap/cache
+          # Directories need 775: owner+group can write, world can read+traverse
+          find storage -type d -exec chmod 775 {} \;
+          find bootstrap/cache -type d -exec chmod 775 {} \;
+          # Files need 664: world-readable so Nginx can serve them
+          find storage/app/public -type f -exec chmod 664 {} \;
+          # Always force-recreate the symlink (fixes broken/stale symlinks)
+          php artisan storage:link --force
+          echo "Storage symlink: $(readlink public/storage)"
 
           # 7. Configure WhatsApp server
           echo "--- Configuring WhatsApp server ---"

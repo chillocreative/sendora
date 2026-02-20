@@ -26,6 +26,42 @@ Route::get('/system/force-clear', function() {
     return 'System Cache Cleared via Web Route';
 });
 
+// Storage diagnostic route
+Route::get('/system/check-storage', function() {
+    $publicSymlink  = public_path('storage');
+    $storagePath    = storage_path('app/public');
+    $campaignsPath  = storage_path('app/public/campaigns');
+
+    $info = [
+        'symlink_exists'         => is_link($publicSymlink),
+        'symlink_target'         => is_link($publicSymlink) ? readlink($publicSymlink) : null,
+        'symlink_resolves'       => is_dir($publicSymlink),
+        'storage_dir_exists'     => is_dir($storagePath),
+        'storage_dir_perms'      => is_dir($storagePath) ? decoct(fileperms($storagePath) & 0777) : null,
+        'campaigns_dir_exists'   => is_dir($campaignsPath),
+        'campaigns_dir_perms'    => is_dir($campaignsPath) ? decoct(fileperms($campaignsPath) & 0777) : null,
+        'app_url_config'         => config('app.url'),
+        'app_url_setting'        => \App\Models\Setting::where('key', 'app_url')->value('value'),
+        'recent_campaign_files'  => [],
+    ];
+
+    if (is_dir($campaignsPath)) {
+        $files = array_values(array_diff(scandir($campaignsPath, SCANDIR_SORT_DESCENDING), ['.', '..']));
+        foreach (array_slice($files, 0, 5) as $file) {
+            $fp = $campaignsPath . '/' . $file;
+            $info['recent_campaign_files'][] = [
+                'name'     => $file,
+                'size'     => filesize($fp),
+                'perms'    => decoct(fileperms($fp) & 0777),
+                'readable' => is_readable($fp),
+                'url'      => url('storage/campaigns/' . $file),
+            ];
+        }
+    }
+
+    return response()->json($info, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+});
+
 
 Route::get('/system/reset-conversation/{id}', function($id) {
     $conversation = \App\Models\Conversation::findOrFail($id);
