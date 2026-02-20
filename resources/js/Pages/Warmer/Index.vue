@@ -45,7 +45,7 @@ const togglePool = (id) => {
                         </div>
                         <h3 class="text-2xl font-black text-slate-900 mb-4">Premium Feature Locked</h3>
                         <p class="text-slate-500 font-medium mb-8">
-                            The "WhatsApp Warmer" protection suite is exclusively available for <span class="text-[#780116] font-bold">Basic, Pro, and Business</span> plans. Protect your numbers with our advanced Human-Stagger AI.
+                            The "WhatsApp Warmer" protection suite is exclusively available for <span class="text-[#780116] font-bold">Basic, Pro, Business, and Lifetime</span> plans. Protect your numbers with our advanced Human-Stagger AI.
                         </p>
                         <a :href="route('subscription.show')" class="inline-block px-8 py-4 bg-[#780116] text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-[#c32f27] transition shadow-xl shadow-red-200">
                             Upgrade Now

@@ -24,6 +24,7 @@ class WhatsappNumber extends Model
     protected $casts = [
         'phone_info' => 'array',
         'ai_reply_enabled' => 'boolean',
+        'is_warmer_pool_enabled' => 'boolean',
         'warmer_last_chatted_at' => 'datetime',
     ];
 
