@@ -1,4 +1,5 @@
-name: Deploy to cPanel (SSH Only)
+# Deploys to DigitalOcean droplet via SSH
+name: Deploy to DigitalOcean
 
 on:
   push:
@@ -10,130 +11,74 @@ permissions:
   contents: read
 
 jobs:
-  web-deploy:
-    name: 🎉 Deploy via SSH
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
     steps:
 
-      - name: 🚀 Deploy & Configure via SSH
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          command_timeout: 30m
+          command_timeout: 15m
           script: |
             set -e
-            cd ${{ secrets.REMOTE_TARGET }} || { echo "❌ Failed to cd to target directory"; exit 1; }
+            cd /var/www/sendora
 
             echo "======================================"
-            echo "🚀 DEPLOYMENT STARTED"
+            echo "DEPLOYMENT STARTED - $(date)"
             echo "======================================"
-            echo "Target: ${{ secrets.REMOTE_TARGET }}"
-            echo "Time: $(date)"
-            echo ""
 
             # 1. Pull latest code
-            echo "📥 Step 1: Pulling latest code..."
-            if [ -d .git ]; then
-              git fetch origin main || git fetch --all || { echo "❌ Git fetch failed"; exit 1; }
-              git reset --hard origin/main || git reset --hard FETCH_HEAD || { echo "❌ Git reset failed"; exit 1; }
-              echo "✅ Code updated: $(git log -1 --oneline)"
-            else
-              echo "❌ ERROR: Not a git repository!"
-              echo "Please initialize git in your cPanel directory:"
-              echo "  cd ${{ secrets.REMOTE_TARGET }}"
-              echo "  git init"
-              echo "  git remote add origin git@github.com:chillocreative/sendora.git"
-              echo "  git fetch origin main"
-              echo "  git checkout -b main origin/main"
-              exit 1
-            fi
-            echo ""
+            echo "--- Pulling latest code ---"
+            git fetch origin main
+            git reset --hard origin/main
+            echo "Code updated: $(git log -1 --oneline)"
 
-            # 2. Install Composer dependencies
-            echo "📦 Step 2: Installing Composer dependencies..."
-            if command -v composer &> /dev/null; then
-              composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -5 || echo "⚠️ Composer had issues"
-              echo "✅ Composer dependencies installed"
-            else
-              echo "⚠️ Composer not found, skipping PHP dependencies"
-            fi
-            echo ""
+            # 2. Install PHP dependencies
+            echo "--- Installing Composer dependencies ---"
+            composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -5
 
-            # 3. Find Node.js
-            echo "🔍 Step 3: Locating Node.js..."
-            NODE_BIN=""
-            NPM_BIN=""
+            # 3. Install frontend dependencies and build
+            echo "--- Building frontend assets ---"
+            npm install --legacy-peer-deps 2>&1 | tail -10
+            npm run build 2>&1 | tail -10
 
-            # Search for node and npm
-            for base_path in /opt/alt/alt-nodejs*/root/usr/bin /usr/local/bin /usr/bin ~/.nvm/versions/node/*/bin; do
-              for node_path in $base_path; do
-                if [ -f "$node_path/node" ]; then
-                  NODE_BIN="$node_path/node"
-                  NPM_BIN="$node_path/npm"
-                  export PATH="$node_path:$PATH"
-                  break 2
-                fi
-              done
-            done
+            # 4. Run migrations
+            echo "--- Running migrations ---"
+            php artisan migrate --force 2>&1 | tail -5
 
-            if [ -n "$NODE_BIN" ]; then
-              echo "✅ Found Node.js: $($NODE_BIN --version)"
-              echo "✅ Found NPM: $($NPM_BIN --version)"
-            else
-              echo "❌ Node.js not found!"
-              echo "Please install Node.js in cPanel or update the PATH"
-              exit 1
-            fi
-            echo ""
+            # 5. Clear and rebuild caches
+            echo "--- Optimizing Laravel ---"
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
 
-            # 4. Build frontend assets
-            echo "🔨 Step 4: Building frontend assets..."
-            $NPM_BIN install --legacy-peer-deps 2>&1 | tail -10 || echo "⚠️ npm install had issues"
-            $NPM_BIN run build 2>&1 | tail -10 || { echo "❌ Build failed"; exit 1; }
-            echo "✅ Assets built successfully"
-            echo ""
-
-            # 5. Laravel optimizations
-            echo "⚙️ Step 5: Running Laravel optimizations..."
-            php artisan optimize:clear 2>&1 | head -5 || echo "⚠️ Cache clear had issues"
-            php artisan config:cache || echo "⚠️ Config cache had issues"
-            php artisan route:cache || echo "⚠️ Route cache had issues"
-            php artisan view:cache || echo "⚠️ View cache had issues"
-            php artisan queue:restart || echo "⚠️ Queue restart had issues"
-            echo "✅ Laravel optimized"
-            echo ""
-
-            # 6. Run migrations
-            echo "🗄️ Step 6: Running database migrations..."
-            php artisan migrate --force 2>&1 | tail -5 || echo "⚠️ Migration had issues"
-            echo "✅ Migrations completed"
-            echo ""
-
-            # 7. Storage link
-            echo "🔗 Step 7: Creating storage symlink..."
+            # 6. Ensure storage link exists
             if [ ! -L public/storage ]; then
-              php artisan storage:link || echo "⚠️ Storage link failed"
-              echo "✅ Storage link created"
-            else
-              echo "✅ Storage link already exists"
+              php artisan storage:link
             fi
-            echo ""
 
-            # 8. Configure WhatsApp Server
-            echo "📱 Step 8: Configuring WhatsApp server..."
-            mkdir -p whatsapp-server-temp
-            cat > whatsapp-server-temp/.env << 'ENVEOF'
+            # 7. Configure WhatsApp server
+            echo "--- Configuring WhatsApp server ---"
+            cat > whatsapp-server-temp/.env << 'EOF'
             PORT=3005
             API_BASE_URL=https://sendora.cc
-            ENVEOF
-            echo "✅ WhatsApp .env configured"
-            echo ""
+            EOF
 
-            # 9. Update database settings
-            echo "💾 Step 9: Updating database settings..."
+            # Install WhatsApp server deps if needed
+            cd whatsapp-server-temp
+            if [ ! -d node_modules ] || [ package.json -nt node_modules ]; then
+              npm install --no-audit --no-fund 2>&1 | tail -5
+            fi
+            cd /var/www/sendora
+
+            # 8. Update database settings
+            echo "--- Updating database settings ---"
             php -r "
             require __DIR__.'/vendor/autoload.php';
             \$app = require_once __DIR__.'/bootstrap/app.php';
@@ -141,80 +86,25 @@ jobs:
             \App\Models\Setting::updateOrCreate(['key' => 'wa_server_url'], ['value' => 'http://127.0.0.1:3005']);
             \App\Models\Setting::updateOrCreate(['key' => 'app_url'], ['value' => 'https://sendora.cc']);
             echo 'Settings updated';
-            " || echo "⚠️ Settings update failed"
-            echo "✅ Step 9 done"
-            echo ""
+            " || echo "Settings update failed (non-critical)"
 
-            # 10. Setup Laravel cron job + Node.js keepalive cron
-            echo "⏰ Step 10: Configuring cron jobs..."
-            PHP_BIN=$(which php 2>/dev/null || echo "/usr/bin/php")
-            APP_DIR="${{ secrets.REMOTE_TARGET }}"
+            # 9. Restart services via systemd
+            echo "--- Restarting services ---"
+            sudo systemctl restart sendora-wa
+            sudo systemctl restart sendora-queue
 
-            LARAVEL_CRON="* * * * * $PHP_BIN $APP_DIR/artisan schedule:run >> /dev/null 2>&1"
-            # Use nohup + & so cron finishes immediately. nohup protects node from SIGHUP when cron's shell exits.
-            # If node crashes, next minute's cron detects it missing via pgrep and restarts it.
-            WA_KEEPALIVE_CRON="* * * * * pgrep -f 'node.*server\.js' > /dev/null 2>&1 || (cd $APP_DIR/whatsapp-server-temp && nohup $NODE_BIN server.js >> $APP_DIR/storage/logs/whatsapp-server.log 2>&1 &)"
-
-            (
-              crontab -l 2>/dev/null \
-                | grep -v "artisan schedule:run" \
-                | grep -v "node.*server\.js"
-              echo "$LARAVEL_CRON"
-              echo "$WA_KEEPALIVE_CRON"
-            ) | crontab -
-
-            echo "✅ Laravel cron: $LARAVEL_CRON"
-            echo "✅ WA keepalive: $WA_KEEPALIVE_CRON"
-            echo ""
-
-            # 11. Setup & start WhatsApp server
-            echo "🔄 Step 11: Setting up WhatsApp server..."
-
-            cd whatsapp-server-temp
-            if [ -d node_modules ]; then
-              echo "✅ node_modules already exists, skipping npm install"
+            # 10. Health check
+            echo "--- Health check ---"
+            sleep 3
+            if curl -s --max-time 5 http://127.0.0.1:3005/health > /dev/null 2>&1; then
+              echo "WhatsApp server: healthy"
             else
-              $NPM_BIN install --no-audit --no-fund --prefer-offline 2>&1 | tail -5 || echo "⚠️ WhatsApp npm install had issues"
+              echo "WhatsApp server: waiting for startup..."
+              sleep 5
+              curl -s --max-time 5 http://127.0.0.1:3005/health > /dev/null 2>&1 && echo "WhatsApp server: healthy" || echo "WARNING: WhatsApp server not responding (systemd will keep restarting)"
             fi
 
-            # Stop existing process cleanly
-            kill $(pgrep -f "node.*server\.js" 2>/dev/null) 2>/dev/null || echo "No existing node processes"
-            sleep 2
-
-            # Start Node.js server with nohup (backgrounds immediately, survives shell exit)
-            echo "Starting Node.js server with nohup..."
-            nohup $NODE_BIN server.js >> ${{ secrets.REMOTE_TARGET }}/storage/logs/whatsapp-server.log 2>&1 &
-            disown
-            WA_PID=$!
-            echo "Node.js started with PID: $WA_PID"
-
-            # Health check: wait up to 15 seconds for server to respond
-            echo "Waiting for health check on http://127.0.0.1:3005/health ..."
-            WA_STARTED=false
-            for i in $(seq 1 15); do
-              if curl -s --max-time 2 http://127.0.0.1:3005/health > /dev/null 2>&1; then
-                WA_STARTED=true
-                break
-              fi
-              sleep 1
-            done
-
-            if [ "$WA_STARTED" = true ]; then
-              echo "✅ WhatsApp server is running and healthy (PID: $WA_PID)"
-            else
-              echo "⚠️ WhatsApp server health check failed after 15s - keepalive cron will retry within 1 minute"
-            fi
-
-            cd ${{ secrets.REMOTE_TARGET }}
-            echo ""
-
             echo "======================================"
-            echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY!"
-            echo "======================================"
+            echo "DEPLOYMENT COMPLETED - $(date)"
             echo "Commit: ${{ github.sha }}"
-            echo "Deployed: $(date)"
             echo "======================================"
-
-
-
-
