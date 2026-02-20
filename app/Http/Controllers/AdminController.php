@@ -223,15 +223,23 @@ class AdminController extends Controller
     public function updatePlan(Request $request, $id)
     {
         $plan = SubscriptionPlan::findOrFail($id);
-        
+
         $request->validate([
             'name' => 'required|string',
             'monthly_price' => 'required|numeric',
             'yearly_price' => 'required|numeric',
             'limits' => 'nullable|array',
+            'is_active' => 'nullable|boolean',
         ]);
 
-        $plan->update($request->all());
+        $data = $request->only(['name', 'monthly_price', 'yearly_price', 'limits']);
+
+        // Only allow toggling is_active for the lifetime plan
+        if ($plan->is_lifetime && $request->has('is_active')) {
+            $data['is_active'] = $request->boolean('is_active');
+        }
+
+        $plan->update($data);
 
         return back()->with('success', 'Plan updated successfully.');
     }

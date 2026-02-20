@@ -26,7 +26,7 @@ class SubscriptionController extends Controller
 
         return Inertia::render('Subscription/Show', [
             'subscription' => $subscription,
-            'plans' => SubscriptionPlan::all(),
+            'plans' => SubscriptionPlan::where('is_active', true)->get(),
             'currency' => Setting::where('key', 'currency')->value('value') ?? 'MYR',
         ]);
     }
@@ -34,9 +34,16 @@ class SubscriptionController extends Controller
     public function cancel(Request $request)
     {
         $user = auth()->user();
-        $subscription = $user->activeSubscription()->first();
+        $subscription = $user->activeSubscription()->with('plan')->first();
 
         if ($subscription) {
+            // Lifetime subscriptions cannot be cancelled
+            if ($subscription->plan && $subscription->plan->is_lifetime) {
+                return back()->with('flash', [
+                    'banner' => 'Lifetime access cannot be cancelled — it is permanent.',
+                    'bannerStyle' => 'danger',
+                ]);
+            }
             $subscription->update([
                 'cancelled_at' => now(),
             ]);

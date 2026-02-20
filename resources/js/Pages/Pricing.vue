@@ -47,19 +47,20 @@ const isDowngrade = (plan) => {
     return Number(plan.monthly_price) < Number(currentPlan.monthly_price);
 };
 
-const selectPlan = (plan) => {
+const selectPlan = (plan, forceCycle = null) => {
     if (props.currentPlanId === plan.id) return;
     if (isDowngrade(plan)) return;
 
+    const cycle = plan.is_lifetime ? 'lifetime' : (forceCycle ?? billingCycle.value);
+
     if (user.value) {
         form.plan_id = plan.id;
-        form.billing_cycle = billingCycle.value;
+        form.billing_cycle = cycle;
         form.post(route('payments.initiate'));
     } else {
-        // Redirect to register with query params
-        window.location.href = route('register', { 
-            plan_id: plan.id, 
-            billing_cycle: billingCycle.value 
+        window.location.href = route('register', {
+            plan_id: plan.id,
+            billing_cycle: cycle,
         });
     }
 };
@@ -196,7 +197,7 @@ const selectPlan = (plan) => {
                 <!-- Pricing Cards -->
                 <!-- Main Paid Plans -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-20">
-                    <div v-for="plan in plans.filter(p => !['Starter', 'Free'].includes(p.name))" :key="plan.id" 
+                    <div v-for="plan in plans.filter(p => !['Starter', 'Free'].includes(p.name) && !p.is_lifetime)" :key="plan.id"
                          class="relative group rounded-[3.5rem] border border-slate-100 p-12 flex flex-col transition-all duration-500 hover:shadow-[0_48px_80px_-16px_rgba(120,1,22,0.12)] hover:-translate-y-4"
                          :class="{
                             'ring-2 ring-[#780116] ring-offset-8': plan.name === 'Pro',
@@ -271,6 +272,61 @@ const selectPlan = (plan) => {
                                 }}
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Lifetime Plan (Horizontal) -->
+                <div v-for="plan in plans.filter(p => p.is_lifetime)" :key="plan.id"
+                     class="max-w-7xl mx-auto mb-12 bg-gradient-to-r from-amber-50 via-white to-amber-50 rounded-[3rem] p-8 sm:p-12 border-2 border-amber-200 shadow-xl shadow-amber-100/60 flex flex-col lg:flex-row items-center justify-between gap-10 relative overflow-hidden group">
+
+                    <div class="absolute -right-20 -top-20 w-96 h-96 bg-amber-400/10 rounded-full blur-[80px] group-hover:bg-amber-400/20 transition-colors duration-700"></div>
+
+                    <div class="relative z-10 flex-1 text-center lg:text-left">
+                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400 text-amber-900 text-[10px] font-black uppercase tracking-widest mb-6 shadow-lg shadow-amber-200">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            Limited Offer — One-Time Payment
+                        </div>
+                        <h4 class="text-4xl font-black text-slate-900 mb-4 tracking-tight">{{ plan.name }} Access</h4>
+                        <p class="text-slate-500 font-medium max-w-md leading-relaxed text-lg">
+                            Pay once. Use forever. Get Pro-level features with no recurring charges, ever.
+                        </p>
+                    </div>
+
+                    <div class="relative z-10 flex flex-col md:flex-row items-center gap-12 lg:gap-16">
+                        <div class="text-center">
+                            <div class="flex items-baseline justify-center">
+                                <span class="text-xl font-bold text-amber-500 mr-1">{{ currency }}</span>
+                                <span class="text-6xl font-black text-slate-900">{{ Number(plan.monthly_price).toFixed(2) }}</span>
+                            </div>
+                            <p class="mt-2 text-[10px] font-black text-amber-700 uppercase tracking-widest bg-amber-100 px-3 py-1 rounded-full inline-block">One-Time · No Renewals</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-y-4">
+                            <div class="flex items-center gap-4 text-slate-700 font-bold text-lg">
+                                <div class="size-6 rounded-full bg-amber-400 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-200">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                                <span>{{ plan.limits.whatsapp_nos }} WhatsApp Numbers</span>
+                            </div>
+                            <div class="flex flex-col gap-1 ml-10">
+                                <div class="text-slate-500 text-sm font-bold flex items-center gap-2">
+                                    <div class="w-1 h-4 bg-amber-400 rounded-full"></div>
+                                    {{ plan.limits.messages }} Messages / month
+                                </div>
+                                <div class="text-slate-400 text-xs font-bold pl-3 flex items-center gap-2">
+                                    <div class="w-1 h-3 bg-slate-200 rounded-full"></div>
+                                    {{ plan.limits.contacts }} Contacts Allowed
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            @click="selectPlan(plan)"
+                            :disabled="currentPlanId === plan.id"
+                            class="px-12 py-6 bg-amber-400 text-amber-900 rounded-[2rem] font-black text-sm tracking-widest uppercase hover:bg-amber-500 transition-all shadow-2xl shadow-amber-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:scale-100"
+                        >
+                            {{ currentPlanId === plan.id ? 'Already Active' : 'Get Lifetime Access' }}
+                        </button>
                     </div>
                 </div>
 

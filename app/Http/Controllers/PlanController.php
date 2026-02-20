@@ -8,7 +8,7 @@ class PlanController extends Controller
 {
     public function index()
     {
-        $plans = \App\Models\SubscriptionPlan::all();
+        $plans = \App\Models\SubscriptionPlan::where('is_active', true)->get();
         $currency = \App\Models\Setting::where('key', 'currency')->value('value') ?? 'USD';
         
         $currentPlanId = null;

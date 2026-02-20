@@ -11,8 +11,12 @@ class SubscriptionPlan extends Model
         'monthly_price',
         'yearly_price',
         'limits',
+        'is_lifetime',
+        'is_active',
     ];
 
     protected $casts = [
         'limits' => 'array',
+        'is_lifetime' => 'boolean',
+        'is_active' => 'boolean',
     ];}

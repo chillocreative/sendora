@@ -60,6 +60,17 @@ const editPlan = (plan) => {
     }));
 };
 
+const toggleLifetimeActive = (plan) => {
+    const toggleForm = useForm({
+        name: plan.name,
+        monthly_price: plan.monthly_price,
+        yearly_price: plan.yearly_price,
+        limits: plan.limits,
+        is_active: !plan.is_active,
+    });
+    toggleForm.put(route('admin.plans.update', plan.id));
+};
+
 const updatePlan = () => {
     form.put(route('admin.plans.update', editingPlan.value.id), {
         onSuccess: () => {
@@ -98,20 +109,38 @@ const closeEdit = () => {
                 </div>
 
                 <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div v-for="plan in plans" :key="plan.id" 
+                    <div v-for="plan in plans" :key="plan.id"
                          class="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 overflow-hidden border border-slate-100 flex flex-col transition-all hover:-translate-y-2 duration-500"
-                         :class="{'ring-2 ring-[#780116] ring-offset-4': plan.name === 'Pro'}">
-                        
+                         :class="{
+                            'ring-2 ring-[#780116] ring-offset-4': plan.name === 'Pro',
+                            'ring-2 ring-amber-400 ring-offset-4': plan.is_lifetime,
+                         }">
+
                         <div class="p-10 flex-1">
                             <div class="flex justify-between items-start mb-6">
                                 <h3 class="text-2xl font-black text-slate-900 leading-none">{{ plan.name }}</h3>
-                                <div v-if="plan.name === 'Pro'" class="px-4 py-1.5 bg-[#780116] text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-red-200">Recommended</div>
+                                <div v-if="plan.is_lifetime" class="px-4 py-1.5 bg-amber-400 text-amber-900 text-[9px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-amber-200">Lifetime</div>
+                                <div v-else-if="plan.name === 'Pro'" class="px-4 py-1.5 bg-[#780116] text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-red-200">Recommended</div>
+                            </div>
+
+                            <!-- Lifetime is_active toggle -->
+                            <div v-if="plan.is_lifetime" class="mb-6 flex items-center gap-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                                <button
+                                    @click="toggleLifetimeActive(plan)"
+                                    class="relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-300 focus:outline-none"
+                                    :class="plan.is_active ? 'bg-amber-400' : 'bg-slate-200'"
+                                >
+                                    <span class="inline-block w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-300" :class="plan.is_active ? 'translate-x-6' : 'translate-x-1'"></span>
+                                </button>
+                                <span class="text-xs font-black uppercase tracking-widest" :class="plan.is_active ? 'text-amber-700' : 'text-slate-400'">
+                                    {{ plan.is_active ? 'Enabled — Visible on Pricing page' : 'Disabled — Hidden from Pricing page' }}
+                                </span>
                             </div>
 
                             <div class="flex items-baseline text-slate-900">
                                 <span class="text-sm font-bold mr-1 text-slate-400">{{ currency }}</span>
                                 <span class="text-5xl font-black tracking-tighter">{{ plan.monthly_price }}</span>
-                                <span class="ml-1 text-slate-400 font-bold text-sm">/mo</span>
+                                <span class="ml-1 text-slate-400 font-bold text-sm">{{ plan.is_lifetime ? 'one-time' : '/mo' }}</span>
                             </div>
                             
                             <div class="mt-10 space-y-4">

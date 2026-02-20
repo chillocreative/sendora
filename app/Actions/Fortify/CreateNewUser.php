@@ -45,13 +45,24 @@ class CreateNewUser implements CreatesNewUsers
                     if ($plan) {
                         $planName = $plan->name;
                         $isFree = $plan->monthly_price <= 0;
-                        $cycle = $input['billing_cycle'] ?? 'monthly';
+                        $cycle = $plan->is_lifetime ? 'lifetime' : ($input['billing_cycle'] ?? 'monthly');
+
+                        if ($isFree) {
+                            $endsAt = null;
+                            $status = 'active';
+                        } elseif ($plan->is_lifetime) {
+                            $endsAt = null; // Permanent access on payment
+                            $status = 'waiting_for_payment';
+                        } else {
+                            $endsAt = $cycle === 'yearly' ? now()->addYear() : now()->addMonth();
+                            $status = 'waiting_for_payment';
+                        }
 
                         \App\Models\UserSubscription::create([
                             'user_id' => $user->id,
                             'subscription_plan_id' => $plan->id,
-                            'ends_at' => $isFree ? null : ($cycle === 'yearly' ? now()->addYear() : now()->addMonth()),
-                            'status' => $isFree ? 'active' : 'waiting_for_payment',
+                            'ends_at' => $endsAt,
+                            'status' => $status,
                         ]);
 
                         if (!$isFree) {
