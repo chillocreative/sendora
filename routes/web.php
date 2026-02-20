@@ -26,55 +26,6 @@ Route::get('/system/force-clear', function() {
     return 'System Cache Cleared via Web Route';
 });
 
-Route::get('/system/last-error', function() {
-    $logFile = storage_path('logs/laravel.log');
-    if (!file_exists($logFile)) return 'No log file found';
-    $lines = file($logFile);
-    $lastLines = array_slice($lines, -80);
-    return '<pre>' . htmlspecialchars(implode('', $lastLines)) . '</pre>';
-});
-
-Route::get('/system/debug-500', function() {
-    try {
-        // Check manifest
-        $manifest = public_path('build/manifest.json');
-        $result = "Manifest exists: " . (file_exists($manifest) ? 'YES' : 'NO') . "\n";
-        if (file_exists($manifest)) {
-            $json = json_decode(file_get_contents($manifest), true);
-            $result .= "Manifest entries: " . count($json) . "\n";
-            $result .= "Has app.js: " . (isset($json['resources/js/app.js']) ? 'YES' : 'NO') . "\n";
-            $result .= "Has Welcome: " . (isset($json['resources/js/Pages/Welcome.vue']) ? 'YES' : 'NO') . "\n";
-            // Check if actual asset files exist
-            if (isset($json['resources/js/app.js'])) {
-                $appFile = public_path('build/' . $json['resources/js/app.js']['file']);
-                $result .= "app.js asset exists: " . (file_exists($appFile) ? 'YES' : 'NO') . " (" . $json['resources/js/app.js']['file'] . ")\n";
-            }
-        }
-
-        // Check build dir
-        $buildDir = public_path('build/assets');
-        $result .= "Build assets dir exists: " . (is_dir($buildDir) ? 'YES' : 'NO') . "\n";
-        if (is_dir($buildDir)) {
-            $files = scandir($buildDir);
-            $result .= "Asset files count: " . (count($files) - 2) . "\n";
-        }
-
-        // Try rendering Inertia
-        $result .= "\n--- Attempting Inertia render ---\n";
-        $response = \Inertia\Inertia::render('Welcome', [
-            'canLogin' => true,
-            'canRegister' => true,
-            'laravelVersion' => '12',
-            'phpVersion' => PHP_VERSION,
-        ]);
-        $rendered = $response->toResponse(request());
-        $result .= "Inertia render: SUCCESS (status " . $rendered->getStatusCode() . ")\n";
-
-        return '<pre>' . htmlspecialchars($result) . '</pre>';
-    } catch (\Throwable $e) {
-        return '<pre>ERROR: ' . htmlspecialchars($e->getMessage()) . "\n\nFile: " . $e->getFile() . ':' . $e->getLine() . "\n\n" . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-    }
-});
 
 Route::get('/system/reset-conversation/{id}', function($id) {
     $conversation = \App\Models\Conversation::findOrFail($id);
