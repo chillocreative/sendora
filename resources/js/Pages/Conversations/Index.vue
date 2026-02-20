@@ -36,7 +36,7 @@ watch([status, whatsappNumberId], applyFilters);
 const statusBadge = (s) => {
     switch (s) {
         case 'active': return { label: 'AI Active', class: 'bg-green-50 text-green-600 border-green-100' };
-        case 'escalated': return { label: 'Human', class: 'bg-orange-50 text-orange-600 border-orange-100' };
+        case 'paused': return { label: 'Paused', class: 'bg-yellow-50 text-yellow-600 border-yellow-100' };
         case 'closed': return { label: 'Closed', class: 'bg-slate-100 text-slate-400 border-slate-200' };
         default: return { label: s, class: 'bg-slate-100 text-slate-400 border-slate-200' };
     }
@@ -80,7 +80,7 @@ const timeAgo = (date) => {
                             <select v-model="status" class="px-5 py-3 bg-slate-50 border-slate-100 rounded-2xl font-bold text-sm focus:bg-white focus:ring-4 focus:ring-red-50 focus:border-[#780116] transition-all outline-none">
                                 <option value="">All Statuses</option>
                                 <option value="active">AI Active</option>
-                                <option value="escalated">Human Takeover</option>
+                                <option value="paused">Paused</option>
                                 <option value="closed">Closed</option>
                             </select>
                             <select v-model="whatsappNumberId" class="px-5 py-3 bg-slate-50 border-slate-100 rounded-2xl font-bold text-sm focus:bg-white focus:ring-4 focus:ring-red-50 focus:border-[#780116] transition-all outline-none">
@@ -113,7 +113,7 @@ const timeAgo = (date) => {
                                     </td>
                                     <td class="px-8 py-6 text-center">
                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border" :class="statusBadge(conv.status).class">
-                                            <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="conv.status === 'active' ? 'bg-green-400 animate-pulse' : conv.status === 'escalated' ? 'bg-orange-400 animate-pulse' : 'bg-slate-300'"></span>
+                                            <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="conv.status === 'active' ? 'bg-green-400 animate-pulse' : conv.status === 'paused' ? 'bg-yellow-400' : 'bg-slate-300'"></span>
                                             {{ statusBadge(conv.status).label }}
                                         </span>
                                     </td>

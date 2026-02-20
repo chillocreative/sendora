@@ -320,7 +320,6 @@ Route::middleware([
         Route::get('/conversations', [\App\Http\Controllers\ConversationController::class, 'index'])->name('conversations.index');
         Route::get('/conversations/{id}', [\App\Http\Controllers\ConversationController::class, 'show'])->name('conversations.show');
         Route::put('/conversations/{id}/mode', [\App\Http\Controllers\ConversationController::class, 'toggleMode'])->name('conversations.toggle-mode');
-        Route::post('/conversations/{id}/reply', [\App\Http\Controllers\ConversationController::class, 'sendReply'])->name('conversations.reply');
     });
 
     Route::post('/subscription/cancel-plan', [\App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('subscription.cancel');

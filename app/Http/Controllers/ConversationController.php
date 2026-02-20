@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
-use App\Models\ConversationMessage;
-use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -46,76 +44,19 @@ class ConversationController extends Controller
     }
 
     /**
-     * Toggle conversation between AI-handled and human-handled.
+     * Toggle conversation between AI-active and paused states.
+     * Users can only pause or resume the AI — no human takeover.
      */
     public function toggleMode(Request $request, $id)
     {
         $conversation = Conversation::where('user_id', auth()->id())->findOrFail($id);
 
         $request->validate([
-            'status' => 'required|in:active,escalated,closed',
+            'status' => 'required|in:active,paused,closed',
         ]);
 
-        $updateData = ['status' => $request->status];
+        $conversation->update(['status' => $request->status]);
 
-        if ($request->status === 'escalated') {
-            $updateData['escalation_reason'] = 'Manual takeover by user';
-            $updateData['escalated_at'] = now();
-        } elseif ($request->status === 'active') {
-            $updateData['escalation_reason'] = null;
-            $updateData['escalated_at'] = null;
-        }
-
-        $conversation->update($updateData);
-
-        return back()->with('success', 'Conversation mode updated.');
-    }
-
-    /**
-     * Send a manual reply as a human operator.
-     */
-    public function sendReply(Request $request, $id)
-    {
-        $conversation = Conversation::where('user_id', auth()->id())
-            ->with('whatsappNumber')
-            ->findOrFail($id);
-
-        $request->validate([
-            'message' => 'required|string|max:4096',
-        ]);
-
-        if (!$conversation->isWithin24HourWindow()) {
-            return back()->with('error', 'Cannot reply: customer has not messaged in the last 24 hours.');
-        }
-
-        $whatsappNumber = $conversation->whatsappNumber;
-
-        if (!$whatsappNumber || $whatsappNumber->status !== 'connected') {
-            return back()->with('error', 'WhatsApp number is not connected.');
-        }
-
-        $whatsappService = new WhatsappService();
-        $sendResult = $whatsappService->sendMessage(
-            $whatsappNumber,
-            $conversation->contact_jid ?? $conversation->contact_phone,
-            $request->message
-        );
-
-        $waMessageId = null;
-        if ($sendResult && $sendResult->successful()) {
-            $waMessageId = $sendResult->json('message_id');
-        }
-
-        ConversationMessage::create([
-            'conversation_id' => $conversation->id,
-            'direction' => 'outbound',
-            'sender_type' => 'human',
-            'body' => $request->message,
-            'wa_message_id' => $waMessageId,
-        ]);
-
-        $conversation->increment('message_count');
-
-        return back()->with('success', 'Message sent.');
+        return back()->with('success', 'Conversation updated.');
     }
 }

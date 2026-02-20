@@ -69,8 +69,8 @@ class Conversation extends Model
         return $query->where('status', 'active');
     }
 
-    public function scopeEscalated($query)
+    public function scopePaused($query)
     {
-        return $query->where('status', 'escalated');
+        return $query->where('status', 'paused');
     }
 }

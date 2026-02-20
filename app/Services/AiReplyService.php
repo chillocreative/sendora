@@ -37,7 +37,6 @@ class AiReplyService
         $playbook = $whatsappNumber->playbook;
 
         if (!$playbook || !$playbook->is_active) {
-            // Fallback: find the user's first active playbook and auto-assign
             $fallbackPlaybook = Playbook::where('user_id', $whatsappNumber->user_id)
                 ->where('is_active', true)
                 ->first();
@@ -46,9 +45,7 @@ class AiReplyService
                 Log::info('AI fallback playbook assigned', [
                     'whatsapp_number_id' => $whatsappNumber->id,
                     'playbook_id' => $fallbackPlaybook->id,
-                    'playbook_name' => $fallbackPlaybook->name,
                 ]);
-
                 $whatsappNumber->update([
                     'playbook_id' => $fallbackPlaybook->id,
                     'ai_reply_enabled' => true,
@@ -61,7 +58,7 @@ class AiReplyService
         }
 
         // Auto-enable AI reply if playbook is assigned but AI was off
-        if (!$whatsappNumber->ai_reply_enabled && $playbook) {
+        if (!$whatsappNumber->ai_reply_enabled) {
             $whatsappNumber->update(['ai_reply_enabled' => true]);
         }
 
@@ -97,7 +94,7 @@ class AiReplyService
             ]
         );
 
-        // Update JID on existing conversations (in case format changed)
+        // Update JID on existing conversations
         if (!$conversation->wasRecentlyCreated && $conversation->contact_jid !== $contactPhone) {
             $conversation->update(['contact_jid' => $contactPhone]);
         }
@@ -123,56 +120,29 @@ class AiReplyService
         $conversation->update(['last_customer_message_at' => now()]);
 
         // -- Step 3: Check conversation status --
-        if ($conversation->status === 'escalated') {
-            return ['replied' => false, 'reason' => 'conversation_escalated', 'conversation_id' => $conversation->id];
+        if ($conversation->status === 'paused') {
+            return ['replied' => false, 'reason' => 'conversation_paused', 'conversation_id' => $conversation->id];
         }
 
         // Reactivate closed conversations when customer messages again
         if ($conversation->status === 'closed') {
-            $conversation->update([
-                'status' => 'active',
-                'escalation_reason' => null,
-                'escalated_at' => null,
-            ]);
+            $conversation->update(['status' => 'active']);
         }
 
-        // -- Pre-call loop enforcement: auto-escalate WITHOUT calling OpenAI --
-        $preCheckHistory = $conversation->latestMessages(8);
-        $recentAiMsgs = $this->getRecentAiMessages($preCheckHistory, 3);
+        // Fetch conversation history for context injection
+        $history = $conversation->latestMessages(8);
+        $recentAiMsgs = $this->getRecentAiMessages($history, 3);
+
         if ($this->detectLoop($recentAiMsgs)) {
-            Log::warning('loop_auto_escalated', [
+            Log::warning('Loop detected — context reset will be injected into prompt', [
                 'conversation_id' => $conversation->id,
-                'recent_ai_messages' => $recentAiMsgs,
             ]);
-
-            $handoffMessage = 'Baik Tuan/Puan, biar saya sambungkan dengan team kami untuk bantu dengan lebih lanjut ya 😊';
-
-            $conversation->update([
-                'status' => 'escalated',
-                'escalation_reason' => 'Auto-escalated: AI loop detected',
-                'escalated_at' => now(),
-            ]);
-
-            ConversationMessage::create([
-                'conversation_id' => $conversation->id,
-                'direction' => 'outbound',
-                'sender_type' => 'ai',
-                'body' => $handoffMessage,
-                'escalation_reason' => 'Auto-escalated: AI loop detected',
-            ]);
-
-            $this->whatsapp->sendMessage($whatsappNumber, $contactPhone, $handoffMessage);
-
-            $conversation->increment('message_count');
-            $conversation->update(['last_ai_reply_at' => now()]);
-
-            return ['replied' => true, 'reason' => 'loop_auto_escalated', 'conversation_id' => $conversation->id];
         }
 
         // -- Step 4: Build prompt --
         $messages = $this->buildPrompt($playbook, $conversation);
 
-        // -- Step 5: Call OpenAI (with JSON mode for reliable parsing) --
+        // -- Step 5: Call OpenAI --
         $result = $this->openAi->chatCompletion(
             $messages,
             $playbook->model ?? 'gpt-4o',
@@ -189,7 +159,6 @@ class AiReplyService
             return ['replied' => false, 'reason' => 'openai_error: ' . $result['error'], 'conversation_id' => $conversation->id];
         }
 
-        // Handle null/empty content from OpenAI
         if (empty($result['content'])) {
             Log::error('AI Reply returned empty content', ['conversation_id' => $conversation->id]);
             return ['replied' => false, 'reason' => 'openai_empty_response', 'conversation_id' => $conversation->id];
@@ -198,99 +167,19 @@ class AiReplyService
         // -- Step 6: Parse response --
         $parsed = $this->parseAiResponse($result['content']);
 
-        // -- Post-call duplicate detection: catch first-time repeats --
-        $lastAiMsg = $this->getLastAiMessage($preCheckHistory);
-        $shouldEscalateDuplicate = false;
-        $duplicateReason = '';
-
-        if ($lastAiMsg !== null && !$parsed['escalate']) {
-            // Check 1: Text similarity (lowered threshold for paraphrased repeats)
+        // Quality check: log high similarity (informational only — AI always replies)
+        $lastAiMsg = $this->getLastAiMessage($history);
+        if ($lastAiMsg !== null) {
             similar_text(strtolower($parsed['reply']), strtolower($lastAiMsg), $similarity);
-            if ($similarity > 55) {
-                $shouldEscalateDuplicate = true;
-                $duplicateReason = 'text_similarity_' . round($similarity) . '%';
+            if ($similarity > 80) {
+                Log::warning('High similarity in AI reply — possible repetition', [
+                    'conversation_id' => $conversation->id,
+                    'similarity' => round($similarity) . '%',
+                ]);
             }
         }
 
-        // Check 2: Topic-based duplicate — AI re-asking a question the customer already answered
-        if (!$shouldEscalateDuplicate && !$parsed['escalate']) {
-            $answeredTopics = $this->getAnsweredTopics($preCheckHistory);
-            $newReplyTopics = $this->extractQuestionTopics($parsed['reply']);
-            $repeatedTopics = array_intersect($newReplyTopics, $answeredTopics);
-
-            if (!empty($repeatedTopics)) {
-                $shouldEscalateDuplicate = true;
-                $duplicateReason = 'repeated_topic_' . implode(',', $repeatedTopics);
-            }
-        }
-
-        if ($shouldEscalateDuplicate) {
-            Log::warning('Post-call duplicate detected', [
-                'conversation_id' => $conversation->id,
-                'reason' => $duplicateReason,
-                'ai_reply' => substr($parsed['reply'], 0, 200),
-                'last_ai_msg' => substr($lastAiMsg ?? '', 0, 200),
-            ]);
-
-            $handoffMessage = 'Baik Tuan/Puan, biar saya sambungkan dengan team kami untuk bantu dengan lebih lanjut ya 😊';
-
-            $conversation->update([
-                'status' => 'escalated',
-                'escalation_reason' => 'Auto-escalated: duplicate AI reply detected (' . $duplicateReason . ')',
-                'escalated_at' => now(),
-            ]);
-
-            ConversationMessage::create([
-                'conversation_id' => $conversation->id,
-                'direction' => 'outbound',
-                'sender_type' => 'ai',
-                'body' => $handoffMessage,
-                'escalation_reason' => 'Auto-escalated: duplicate AI reply detected',
-                'prompt_tokens' => $result['usage']['prompt_tokens'] ?? null,
-                'completion_tokens' => $result['usage']['completion_tokens'] ?? null,
-                'total_tokens' => $result['usage']['total_tokens'] ?? null,
-                'latency_ms' => $result['latency_ms'],
-            ]);
-
-            $this->whatsapp->sendMessage($whatsappNumber, $contactPhone, $handoffMessage);
-
-            $conversation->increment('message_count');
-            $conversation->update(['last_ai_reply_at' => now()]);
-
-            return ['replied' => true, 'reason' => 'post_call_duplicate_escalated', 'conversation_id' => $conversation->id];
-        }
-
-        // -- Step 7: Handle escalation --
-        if ($parsed['escalate']) {
-            $conversation->update([
-                'status' => 'escalated',
-                'escalation_reason' => $parsed['escalation_reason'],
-                'escalated_at' => now(),
-            ]);
-
-            ConversationMessage::create([
-                'conversation_id' => $conversation->id,
-                'direction' => 'outbound',
-                'sender_type' => 'ai',
-                'body' => $parsed['reply'],
-                'confidence_score' => $parsed['confidence'],
-                'reasoning_source' => $parsed['reasoning_source'],
-                'escalation_reason' => $parsed['escalation_reason'],
-                'prompt_tokens' => $result['usage']['prompt_tokens'] ?? null,
-                'completion_tokens' => $result['usage']['completion_tokens'] ?? null,
-                'total_tokens' => $result['usage']['total_tokens'] ?? null,
-                'latency_ms' => $result['latency_ms'],
-            ]);
-
-            // Send the handoff message if the AI produced one (use original JID for @lid support)
-            if (!empty($parsed['reply'])) {
-                $this->whatsapp->sendMessage($whatsappNumber, $contactPhone, $parsed['reply']);
-            }
-
-            return ['replied' => true, 'reason' => 'escalated: ' . $parsed['escalation_reason'], 'conversation_id' => $conversation->id];
-        }
-
-        // -- Step 8: Send AI reply (use original JID to preserve @lid format) --
+        // -- Step 7: Send AI reply (AI always handles everything — no escalation) --
         $sendResult = $this->whatsapp->sendMessage($whatsappNumber, $contactPhone, $parsed['reply']);
 
         $outboundWaMessageId = null;
@@ -336,7 +225,6 @@ class AiReplyService
     {
         $systemPrompt = $this->buildSystemPrompt($playbook);
 
-        // Limit to last 8 messages to avoid repetition loops
         $history = $conversation->latestMessages(8);
 
         Log::debug('AI buildPrompt', [
@@ -348,36 +236,30 @@ class AiReplyService
             ['role' => 'system', 'content' => $systemPrompt],
         ];
 
-        // LOOP DETECTION: Check if AI is repeating itself
+        // Loop detection: inject a context reset if AI is repeating itself
         $recentAiMessages = $this->getRecentAiMessages($history, 3);
         $isLooping = $this->detectLoop($recentAiMessages);
 
-        Log::info('Loop check', [
-            'recent_messages' => count($recentAiMessages),
-            'is_looping' => $isLooping,
-            'messages' => $recentAiMessages,
-        ]);
-
-        // Extract questions already asked and information provided
+        // Extract questions already asked and information already provided
         $askedQuestions = $this->extractAskedQuestions($history);
         $customerInfo = $this->extractCustomerInfo($history);
 
-        // Add explicit reminder about what has been discussed
         if (!empty($askedQuestions) || !empty($customerInfo) || $isLooping) {
             $reminder = "🚨 ANTI-REPETITION CHECK 🚨\n\n";
 
             if ($isLooping) {
-                $reminder .= "🔴🔴🔴 CRITICAL LOOP DETECTED! 🔴🔴🔴\n";
-                $reminder .= "YOU ARE REPEATING THE SAME QUESTION!\n";
-                $reminder .= "THE CUSTOMER ALREADY ANSWERED OR YOU ALREADY ASKED THIS!\n\n";
-                $reminder .= "YOU MUST ESCALATE NOW:\n";
-                $reminder .= "Set escalate: true\n";
-                $reminder .= "Say: 'Baik Tuan/Puan, biar saya sambungkan dengan team kami untuk bantu dengan lebih lanjut ya 😊'\n\n";
-                $reminder .= "DO NOT ASK ANOTHER QUESTION. ESCALATE IMMEDIATELY.\n\n";
+                $reminder .= "🔴🔴🔴 LOOP DETECTED — CHANGE YOUR APPROACH NOW! 🔴🔴🔴\n";
+                $reminder .= "YOU HAVE BEEN ASKING THE SAME QUESTION REPEATEDLY!\n";
+                $reminder .= "THE CUSTOMER ALREADY RESPONDED — STOP REPEATING YOURSELF!\n\n";
+                $reminder .= "YOU MUST DO ONE OF THESE RIGHT NOW:\n";
+                $reminder .= "  1. Acknowledge what the customer said and MOVE TO THE NEXT STEP in the playbook\n";
+                $reminder .= "  2. Ask a completely DIFFERENT question to progress the conversation forward\n";
+                $reminder .= "  3. Provide helpful information and invite the customer to share what they need\n\n";
+                $reminder .= "DO NOT REPEAT YOURSELF. DO NOT ASK THE SAME QUESTION. MOVE FORWARD!\n\n";
             }
 
             if (!empty($askedQuestions)) {
-                $reminder .= "❌ FORBIDDEN - DO NOT ASK THESE AGAIN:\n";
+                $reminder .= "❌ FORBIDDEN — DO NOT ASK THESE AGAIN:\n";
                 foreach ($askedQuestions as $q) {
                     $reminder .= "   ✗ {$q}\n";
                 }
@@ -397,12 +279,11 @@ class AiReplyService
             $messages[] = ['role' => 'system', 'content' => $reminder];
         }
 
-        // Add conversation history in natural format so AI understands context properly
+        // Add conversation history
         foreach ($history as $msg) {
             if ($msg->direction === 'inbound') {
                 $messages[] = ['role' => 'user', 'content' => $msg->body];
             } else {
-                // Use plain text for AI's previous replies so OpenAI understands the conversation flow
                 $messages[] = ['role' => 'assistant', 'content' => $msg->body];
             }
         }
@@ -411,7 +292,7 @@ class AiReplyService
     }
 
     /**
-     * Get recent AI messages for loop detection
+     * Get recent AI messages for loop detection.
      */
     protected function getRecentAiMessages($history, int $count = 3): array
     {
@@ -439,7 +320,7 @@ class AiReplyService
     }
 
     /**
-     * Detect if AI is stuck in a loop (asking same/similar questions)
+     * Detect if AI is stuck in a loop (asking same/similar questions repeatedly).
      */
     protected function detectLoop($recentMessages): bool
     {
@@ -447,26 +328,24 @@ class AiReplyService
             return false;
         }
 
-        // Check if last 2 messages are identical or very similar
         $last = strtolower($recentMessages[count($recentMessages) - 1]);
         $secondLast = strtolower($recentMessages[count($recentMessages) - 2]);
 
         if ($last === $secondLast) {
-            Log::warning('Loop detected: Exact duplicate message');
+            Log::warning('Loop detected: exact duplicate message');
             return true;
         }
 
         similar_text($last, $secondLast, $percent);
         if ($percent > 55) {
-            Log::warning('Loop detected: Messages are ' . round($percent) . '% similar');
+            Log::warning('Loop detected: messages are ' . round($percent) . '% similar');
             return true;
         }
 
-        // Topic-based loop detection: if 2+ messages ask about the same topic
+        // Topic-based loop: 2+ messages asking about the same topic
         $allTopics = [];
         foreach ($recentMessages as $msg) {
-            $topics = $this->extractQuestionTopics($msg);
-            foreach ($topics as $topic) {
+            foreach ($this->extractQuestionTopics($msg) as $topic) {
                 $allTopics[] = $topic;
             }
         }
@@ -475,7 +354,7 @@ class AiReplyService
             $topicCounts = array_count_values($allTopics);
             foreach ($topicCounts as $topic => $count) {
                 if ($count >= 2) {
-                    Log::warning('Loop detected: Repeated topic - ' . $topic);
+                    Log::warning('Loop detected: repeated topic — ' . $topic);
                     return true;
                 }
             }
@@ -535,7 +414,7 @@ class AiReplyService
     }
 
     /**
-     * Extract questions AI has already asked
+     * Extract questions AI has already asked.
      */
     protected function extractAskedQuestions($history): array
     {
@@ -552,8 +431,7 @@ class AiReplyService
         $seenTopics = [];
         foreach ($history as $msg) {
             if ($msg->direction === 'outbound') {
-                $topics = $this->extractQuestionTopics($msg->body);
-                foreach ($topics as $topic) {
+                foreach ($this->extractQuestionTopics($msg->body) as $topic) {
                     if (!isset($seenTopics[$topic]) && isset($topicLabels[$topic])) {
                         $questions[] = $topicLabels[$topic];
                         $seenTopics[$topic] = true;
@@ -566,8 +444,7 @@ class AiReplyService
     }
 
     /**
-     * Extract information that customer has already provided (context-aware).
-     * Pairs each user message with the preceding AI question to understand what was answered.
+     * Extract information the customer has already provided (context-aware).
      */
     protected function extractCustomerInfo($history): array
     {
@@ -590,8 +467,6 @@ class AiReplyService
                 $text = $msg->body;
                 $textLower = strtolower($text);
 
-                // Context-aware: if the previous AI message asked about a topic,
-                // treat this user message as the answer to that topic
                 foreach ($lastAiTopics as $topic) {
                     $infoKey = $topicToInfoKey[$topic] ?? null;
                     if ($infoKey && !isset($info[$infoKey])) {
@@ -600,7 +475,6 @@ class AiReplyService
                 }
                 $lastAiTopics = [];
 
-                // Self-contained detection as fallback for messages that contain obvious info
                 if (preg_match('/bisnes|business|jual|sell|kedai|shop|produk|product|kuih|cake|makanan|food/i', $textLower)) {
                     if (!isset($info['Business/Product'])) {
                         $info['Business/Product'] = $text;
@@ -623,7 +497,6 @@ class AiReplyService
      */
     protected function buildSystemPrompt(Playbook $playbook): string
     {
-        // Defense-in-depth: sanitize again at injection time
         $sanitizedContent = PlaybookSanitizer::sanitize($playbook->content);
 
         return <<<PROMPT
@@ -644,8 +517,8 @@ You MUST respond in the following JSON format only. Do NOT include any text outs
 }
 
 ⚠️ CRITICAL RESPONSE LENGTH RULES:
-- Keep replies SHORT - maximum 2-3 short sentences
-- This is WhatsApp, not email - be concise!
+- Keep replies SHORT — maximum 2-3 short sentences
+- This is WhatsApp, not email — be concise!
 - One question per message maximum
 - Avoid long explanations
 - Get to the point quickly
@@ -686,20 +559,14 @@ EXAMPLES OF CORRECT BEHAVIOR:
    - 0.9-1.0: Answer directly addressed in the playbook
    - 0.7-0.9: Answer can be inferred from playbook context
    - 0.5-0.7: Answer requires minor extrapolation
-   - Below 0.5: Must escalate
+   - Below 0.5: Ask a clarifying question to better understand the customer's need
 3. "reasoning_source" is the specific section title or area of the playbook you used to craft this response.
-4. Set "escalate" to true when:
-   - The customer explicitly asks to speak to a human, agent, or manager
-   - The topic is outside the playbook scope
-   - You detect a forbidden topic or action from the playbook
-   - Your confidence would be below 0.5
-   - The customer appears frustrated after 3+ exchanges without resolution
-   - Budget threshold exceeded (per playbook escalation rules)
-5. When escalating, "reply" should contain a polite handoff message (e.g. "Terima kasih, saya sambungkan anda dengan team kami sebentar ya.").
-6. "escalation_reason" should explain why you are escalating (only when escalate=true).
-7. Never make up information not in the playbook.
+4. "escalate" should always be false. You handle ALL situations yourself. You are always available to the customer.
+5. If a customer asks to speak to a human, acknowledge them warmly and continue helping: empathize and redirect the conversation naturally. Never stop helping.
+6. "escalation_reason" should always be null.
+7. Never make up information not in the playbook. If unsure, ask the customer a clarifying question.
 8. Never share pricing, promotions, or policies not explicitly stated in the playbook.
-9. If unsure, escalate rather than guess.
+9. If you are unsure about something, ask the customer for clarification to better serve them. Keep the conversation going.
 10. Keep replies WhatsApp-appropriate: short paragraphs, no markdown formatting, no bullet points unless the customer asked for a list.
 11. This is a multi-turn conversation. NEVER repeat greetings or questions you've already asked. Read the full conversation history and respond contextually.
 PROMPT;
@@ -720,7 +587,6 @@ PROMPT;
 
         $cleaned = trim($rawContent);
 
-        // Strip markdown code fences if present
         if (str_starts_with($cleaned, '```')) {
             $cleaned = preg_replace('/^```(?:json)?\n?/', '', $cleaned);
             $cleaned = preg_replace('/\n?```$/', '', $cleaned);
@@ -743,28 +609,24 @@ PROMPT;
             'reply' => $parsed['reply'],
             'confidence' => (float) ($parsed['confidence'] ?? 0.5),
             'reasoning_source' => $parsed['reasoning_source'] ?? 'not_specified',
-            'escalate' => (bool) ($parsed['escalate'] ?? false),
-            'escalation_reason' => $parsed['escalation_reason'] ?? null,
+            'escalate' => false, // Always false — AI never escalates
+            'escalation_reason' => null,
         ];
     }
 
     /**
      * Clean phone number: strip WhatsApp JID suffix and non-digit chars.
-     * Handles @lid JIDs by using them as-is (they are opaque identifiers).
      */
     protected function cleanPhone(string $phone): string
     {
-        // @lid JIDs are opaque identifiers - store the numeric part before @lid as the key
         if (str_contains($phone, '@lid')) {
             $phone = str_replace('@lid', '', $phone);
-            // Strip :device suffix (e.g. "84155605983354:55" → "84155605983354")
             $phone = preg_replace('/:.*$/', '', $phone);
             return $phone;
         }
 
         $phone = str_replace('@s.whatsapp.net', '', $phone);
         $phone = str_replace('@g.us', '', $phone);
-        // Strip :device suffix if present
         $phone = preg_replace('/:.*$/', '', $phone);
         $phone = preg_replace('/[^0-9]/', '', $phone);
         return $phone;
