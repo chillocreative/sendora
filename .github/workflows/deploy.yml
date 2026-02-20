@@ -1,4 +1,4 @@
-# Deploys to DigitalOcean droplet via SSH
+# Deploys to DigitalOcean droplet (157.245.198.25) via SSH
 name: Deploy to DigitalOcean
 
 on:
