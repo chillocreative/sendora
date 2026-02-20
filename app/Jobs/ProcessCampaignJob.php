@@ -102,9 +102,14 @@ class ProcessCampaignJob implements ShouldQueue
             $mediaUrl = null;
             if ($campaign->media_path) {
                 $path = $campaign->media_path;
-                $mediaUrl = str_starts_with($path, 'http')
-                    ? $path
-                    : $appUrl . '/storage/' . ltrim($path, '/');
+                if (str_starts_with($path, 'http')) {
+                    $mediaUrl = $path;
+                } else {
+                    // URL-encode each path segment so filenames with spaces or special
+                    // characters produce a valid HTTP URL that Node.js can download.
+                    $segments = array_map('rawurlencode', explode('/', ltrim($path, '/')));
+                    $mediaUrl = $appUrl . '/storage/' . implode('/', $segments);
+                }
             }
             
             $mediaType = $campaign->message_type;

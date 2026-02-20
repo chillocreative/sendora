@@ -86,7 +86,10 @@ class CampaignController extends Controller
 
             if ($request->hasFile('media')) {
                 $file = $request->file('media');
-                $filename = time() . '_' . $file->getClientOriginalName();
+                // Sanitize filename: replace spaces and special chars with underscores
+                // so the resulting URL never has characters that break HTTP downloads.
+                $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientOriginalName());
+                $filename = time() . '_' . $safeName;
                 $mediaPath = $file->storeAs('campaigns', $filename, 'public');
 
                 $mime = $file->getMimeType();
@@ -204,7 +207,8 @@ class CampaignController extends Controller
 
             if ($request->hasFile('media')) {
                 $file = $request->file('media');
-                $filename = time() . '_' . $file->getClientOriginalName();
+                $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientOriginalName());
+                $filename = time() . '_' . $safeName;
                 $mediaPath = $file->storeAs('campaigns', $filename, 'public');
 
                 $mime = $file->getMimeType();
