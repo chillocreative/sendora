@@ -121,11 +121,20 @@ const bulkDelete = () => {
     }
 };
 
+const deletingAll = ref(false);
+
 const deleteAll = () => {
-    if (confirm('DANGER: Are you sure you want to delete ALL contacts? This cannot be undone.')) {
-        bulkDeleteForm.ids = props.contacts.data.map(c => c.id); // For simple demo, usually backend clear
-        // But let's use the bulk delete with all IDs if user wants delete all visible or all in DB
-        // For simplicity, let's just use the selected array which user can use to select all
+    if (confirm(`Are you sure you want to delete ALL ${props.count} contacts? This cannot be undone.`)) {
+        deletingAll.value = true;
+        router.delete(route('contacts.destroy-all'), {
+            onSuccess: () => {
+                selected.value = [];
+                deletingAll.value = false;
+            },
+            onError: () => {
+                deletingAll.value = false;
+            },
+        });
     }
 };
 
@@ -195,6 +204,10 @@ const closeContactModal = () => {
                         </div>
                         
                         <div class="flex items-center gap-3 w-full md:w-auto">
+                            <button v-if="count > 0" @click="deleteAll" :disabled="deletingAll" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-red-200 text-red-500 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-red-50 hover:border-red-300 transition disabled:opacity-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                {{ deletingAll ? 'Deleting...' : 'Delete All' }}
+                            </button>
                             <button @click="showImportModal = true" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                                 Import

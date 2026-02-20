@@ -283,6 +283,7 @@ Route::middleware([
     Route::delete('/contacts/{id}', [\App\Http\Controllers\ContactController::class, 'destroy'])->name('contacts.destroy');
     Route::post('/contacts/import', [\App\Http\Controllers\ContactController::class, 'import'])->name('contacts.import');
     Route::post('/contacts/bulk-delete', [\App\Http\Controllers\ContactController::class, 'bulkDelete'])->name('contacts.bulk-delete');
+    Route::delete('/contacts-delete-all', [\App\Http\Controllers\ContactController::class, 'destroyAll'])->name('contacts.destroy-all');
     
     Route::get('/campaigns', [\App\Http\Controllers\CampaignController::class, 'index'])->name('campaigns.index');
     Route::get('/campaigns/create', [\App\Http\Controllers\CampaignController::class, 'create'])->name('campaigns.create');

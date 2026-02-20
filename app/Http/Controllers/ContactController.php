@@ -96,6 +96,14 @@ class ContactController extends Controller
         return back()->with('success', count($request->ids) . ' contacts deleted successfully.');
     }
 
+    public function destroyAll()
+    {
+        $user = auth()->user();
+        $deleted = Contact::where('user_id', $user->id)->delete();
+
+        return back()->with('success', $deleted . ' contacts deleted successfully.');
+    }
+
     public function import(Request $request)
     {
         $request->validate([
