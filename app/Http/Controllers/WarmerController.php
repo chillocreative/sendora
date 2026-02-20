@@ -11,7 +11,7 @@ class WarmerController extends Controller
     {
         $user = auth()->user();
         $plan = $user->current_plan;
-        $isEligible = in_array($plan->name, ['Basic', 'Pro', 'Business']);
+        $isEligible = in_array($plan->name, ['Basic', 'Pro', 'Business', 'Lifetime']);
 
         $numbers = $user->whatsappNumbers()->where('status', 'connected')->get();
 
@@ -28,7 +28,7 @@ class WarmerController extends Controller
         $user = auth()->user();
         $plan = $user->current_plan;
         
-        if (!in_array($plan->name, ['Basic', 'Pro', 'Business'])) {
+        if (!in_array($plan->name, ['Basic', 'Pro', 'Business', 'Lifetime'])) {
             return back()->withErrors(['message' => 'Your plan does not support this feature.']);
         }
 

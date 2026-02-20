@@ -18,7 +18,7 @@ class CampaignController extends Controller
         $user = auth()->user();
         $planName = $user->current_plan?->name;
         // All plans including Starter can create campaigns to test the system.
-        $canCreate = in_array($planName, ['Starter', 'Basic', 'Pro', 'Business']);
+        $canCreate = in_array($planName, ['Starter', 'Basic', 'Pro', 'Business', 'Lifetime']);
 
         $campaigns = Campaign::where('user_id', $user->id)
             ->withCount([
