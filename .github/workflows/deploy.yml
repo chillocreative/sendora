@@ -26,7 +26,7 @@ jobs:
       - name: Deploy via SSH
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} 'bash -s' << 'DEPLOY_SCRIPT'
-          set -e
+          set -eo pipefail
           cd /var/www/sendora
 
           echo "======================================"
