@@ -277,6 +277,16 @@ Route::middleware([
     Route::post('/test-message', [\App\Http\Controllers\TestMessageController::class, 'send'])->name('test-message.send');
 
 
+    // Contact Books
+    Route::get('/contact-books', [\App\Http\Controllers\ContactBookController::class, 'index'])->name('contact-books.index');
+    Route::post('/contact-books', [\App\Http\Controllers\ContactBookController::class, 'store'])->name('contact-books.store');
+    Route::get('/contact-books/{id}', [\App\Http\Controllers\ContactBookController::class, 'show'])->name('contact-books.show');
+    Route::put('/contact-books/{id}', [\App\Http\Controllers\ContactBookController::class, 'update'])->name('contact-books.update');
+    Route::delete('/contact-books/{id}', [\App\Http\Controllers\ContactBookController::class, 'destroy'])->name('contact-books.destroy');
+    Route::post('/contact-books/{id}/add-contacts', [\App\Http\Controllers\ContactBookController::class, 'addContacts'])->name('contact-books.add-contacts');
+    Route::post('/contact-books/{id}/remove-contacts', [\App\Http\Controllers\ContactBookController::class, 'removeContacts'])->name('contact-books.remove-contacts');
+    Route::delete('/contact-books/{id}/delete-all-contacts', [\App\Http\Controllers\ContactBookController::class, 'destroyAllContacts'])->name('contact-books.destroy-all-contacts');
+
     Route::get('/contacts', [\App\Http\Controllers\ContactController::class, 'index'])->name('contacts.index');
     Route::post('/contacts', [\App\Http\Controllers\ContactController::class, 'store'])->name('contacts.store');
     Route::put('/contacts/{id}', [\App\Http\Controllers\ContactController::class, 'update'])->name('contacts.update');

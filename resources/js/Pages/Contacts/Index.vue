@@ -11,13 +11,16 @@ const props = defineProps({
     contacts: Object,
     limit: Number,
     count: Number,
+    contactBooks: Array,
 });
 
 const showImportModal = ref(false);
 const showContactModal = ref(false);
+const showAddToBookModal = ref(false);
 const isEditing = ref(false);
 const editingId = ref(null);
 const selected = ref([]);
+const selectedBookId = ref('');
 
 const contactForm = useForm({
     name: '',
@@ -26,6 +29,11 @@ const contactForm = useForm({
 
 const importForm = useForm({
     file: null,
+    contact_book_id: '',
+});
+
+const addToBookForm = useForm({
+    contact_ids: [],
 });
 
 const bulkDeleteForm = useForm({
@@ -138,6 +146,20 @@ const deleteAll = () => {
     }
 };
 
+const addToBook = () => {
+    if (!selectedBookId.value || selected.value.length === 0) return;
+    addToBookForm.contact_ids = selected.value;
+    router.post(route('contact-books.add-contacts', selectedBookId.value), {
+        contact_ids: selected.value,
+    }, {
+        onSuccess: () => {
+            showAddToBookModal.value = false;
+            selected.value = [];
+            selectedBookId.value = '';
+        },
+    });
+};
+
 const closeImportModal = () => {
     showImportModal.value = false;
     importForm.reset();
@@ -171,7 +193,15 @@ const closeContactModal = () => {
                             <button @click="selected = []" class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition">Deselect All</button>
                         </div>
                         <div class="flex items-center gap-4">
-                            <button 
+                            <button
+                                v-if="contactBooks && contactBooks.length > 0"
+                                @click="showAddToBookModal = true"
+                                class="flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                Add to Book
+                            </button>
+                            <button
                                 @click="bulkDelete"
                                 :disabled="bulkDeleteForm.processing"
                                 class="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
@@ -339,6 +369,14 @@ const closeContactModal = () => {
                         </a>
                     </div>
                     
+                    <div v-if="contactBooks && contactBooks.length > 0" class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Import into Book (Optional)</label>
+                        <select v-model="importForm.contact_book_id" class="w-full px-5 py-4 bg-slate-50 border-slate-100 focus:bg-white focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 rounded-2xl text-sm font-bold transition-all">
+                            <option value="">No book (just import contacts)</option>
+                            <option v-for="book in contactBooks" :key="book.id" :value="book.id">{{ book.name }} ({{ book.contacts_count }} contacts)</option>
+                        </select>
+                    </div>
+
                     <div class="border-2 border-dashed border-slate-100 rounded-3xl p-10 text-center hover:bg-slate-50 transition-all cursor-pointer group" @click="$refs.fileInput.click()">
                         <input type="file" ref="fileInput" class="hidden" accept=".csv,.txt,.xlsx" @change="handleFileChange">
                         <div v-if="importForm.file" class="flex flex-col items-center">
@@ -361,6 +399,27 @@ const closeContactModal = () => {
                 <button class="ml-2 px-6 py-2 bg-[#780116] text-white rounded-xl text-sm font-bold hover:bg-[#c32f27] disabled:opacity-50 transition shadow-lg shadow-red-100" @click="importContacts" :disabled="importForm.processing || !importForm.file">
                     {{ importForm.processing ? 'Importing...' : 'Import Now' }}
                 </button>
+            </template>
+        </DialogModal>
+        <!-- Add to Book Modal -->
+        <DialogModal :show="showAddToBookModal" @close="showAddToBookModal = false; selectedBookId = ''">
+            <template #title>Add {{ selected.length }} Contacts to Book</template>
+            <template #content>
+                <div class="space-y-6 pt-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Select Book</label>
+                        <select v-model="selectedBookId" class="w-full px-5 py-4 bg-slate-50 border-slate-100 focus:bg-white focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 rounded-2xl text-sm font-bold transition-all">
+                            <option value="" disabled>Choose a contact book</option>
+                            <option v-for="book in contactBooks" :key="book.id" :value="book.id">{{ book.name }} ({{ book.contacts_count }} contacts)</option>
+                        </select>
+                    </div>
+                </div>
+            </template>
+            <template #footer>
+                <SecondaryButton @click="showAddToBookModal = false; selectedBookId = ''">Cancel</SecondaryButton>
+                <PrimaryButton class="ml-2 bg-slate-900!" @click="addToBook" :disabled="!selectedBookId">
+                    Add to Book
+                </PrimaryButton>
             </template>
         </DialogModal>
     </AppLayout>

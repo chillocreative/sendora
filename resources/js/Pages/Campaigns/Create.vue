@@ -9,6 +9,7 @@ import InputError from '@/Components/InputError.vue';
 const props = defineProps({
     contacts: Array,
     whatsappNumbers: Array,
+    contactBooks: Array,
     campaign: Object,
     selectedContactIds: Array,
     isEditing: Boolean,
@@ -27,9 +28,33 @@ const form = useForm({
     media: null,
     scheduled_at: props.campaign?.scheduled_at ? props.campaign.scheduled_at.slice(0, 16) : '',
     contact_ids: props.selectedContactIds || [],
+    contact_book_ids: [],
     is_drip: props.campaign?.is_drip || false,
     drip_delay_minutes: props.campaign?.drip_delay_minutes || 1,
 });
+
+const showIndividualContacts = ref(false);
+
+const estimatedRecipients = computed(() => {
+    let count = form.contact_ids.length;
+    if (props.contactBooks) {
+        props.contactBooks.forEach(book => {
+            if (form.contact_book_ids.includes(book.id)) {
+                count += book.contacts_count;
+            }
+        });
+    }
+    return count;
+});
+
+const toggleBook = (bookId) => {
+    const index = form.contact_book_ids.indexOf(bookId);
+    if (index > -1) {
+        form.contact_book_ids.splice(index, 1);
+    } else {
+        form.contact_book_ids.push(bookId);
+    }
+};
 
 // Link Preview Logic
 const detectedLink = computed(() => {
@@ -189,32 +214,65 @@ const submit = () => {
                                     </div>
 
                                     <div>
-                                        <div class="flex items-center justify-between mb-4">
-                                            <InputLabel value="Recipients" class="text-xs uppercase tracking-widest font-black text-slate-400" />
-                                            <button type="button" @click="toggleSelectAll" class="text-[10px] font-black uppercase tracking-widest text-[#780116] hover:text-[#c32f27] bg-red-50 px-3 py-1.5 rounded-lg transition">
-                                                {{ form.contact_ids.length === contacts.length ? 'Deselect All' : 'Select All' }}
-                                            </button>
-                                        </div>
-                                        
-                                        <div class="bg-slate-50 rounded-[2rem] p-6 border border-slate-100 h-[380px] overflow-y-auto">
-                                            <div class="space-y-2">
-                                                <div v-for="contact in contacts" :key="contact.id" 
+                                        <InputLabel value="Recipients" class="text-xs uppercase tracking-widest font-black text-slate-400 mb-4" />
+
+                                        <!-- Contact Books Selection -->
+                                        <div v-if="contactBooks && contactBooks.length > 0" class="mb-4">
+                                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 mb-2 block">Select Contact Books</label>
+                                            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
+                                                <div v-for="book in contactBooks" :key="book.id"
                                                      class="flex items-center p-3 bg-white rounded-xl border border-slate-100 hover:border-[#780116]/20 transition group cursor-pointer"
-                                                     @click="form.contact_ids.includes(contact.id) ? form.contact_ids = form.contact_ids.filter(id => id !== contact.id) : form.contact_ids.push(contact.id)">
-                                                    
+                                                     @click="toggleBook(book.id)">
                                                     <div class="size-5 rounded border-2 flex items-center justify-center transition-all shrink-0"
-                                                         :class="form.contact_ids.includes(contact.id) ? 'bg-[#780116] border-[#780116] shadow-lg shadow-red-100' : 'bg-white border-slate-200 group-hover:border-[#780116]/30'">
-                                                        <svg v-if="form.contact_ids.includes(contact.id)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/></svg>
+                                                         :class="form.contact_book_ids.includes(book.id) ? 'bg-[#780116] border-[#780116] shadow-lg shadow-red-100' : 'bg-white border-slate-200 group-hover:border-[#780116]/30'">
+                                                        <svg v-if="form.contact_book_ids.includes(book.id)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/></svg>
                                                     </div>
-                                                    
                                                     <div class="ml-3 flex-1 min-w-0">
-                                                        <p class="text-xs font-black text-slate-900 truncate">{{ contact.name }}</p>
-                                                        <p class="text-[10px] text-slate-400 font-medium">{{ contact.phone }}</p>
+                                                        <p class="text-xs font-black text-slate-900 truncate">{{ book.name }}</p>
+                                                        <p class="text-[10px] text-slate-400 font-medium">{{ book.contacts_count }} contacts</p>
                                                     </div>
+                                                    <svg class="w-4 h-4 text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                                                 </div>
                                             </div>
-                                            <div v-if="contacts.length === 0" class="py-12 text-center">
-                                                <p class="text-sm font-bold text-slate-400">No contacts found.</p>
+                                        </div>
+
+                                        <!-- Estimated recipients count -->
+                                        <div v-if="form.contact_book_ids.length > 0 || form.contact_ids.length > 0" class="mb-4 px-4 py-3 bg-[#780116]/5 rounded-xl border border-[#780116]/10">
+                                            <p class="text-xs font-black text-[#780116]">~{{ estimatedRecipients }} estimated recipients (duplicates auto-removed)</p>
+                                        </div>
+
+                                        <!-- Individual Contacts (expandable) -->
+                                        <div>
+                                            <button type="button" @click="showIndividualContacts = !showIndividualContacts" class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition mb-3">
+                                                <svg class="w-3 h-3 transition-transform" :class="showIndividualContacts ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"/></svg>
+                                                Individual Contacts ({{ contacts.length }})
+                                            </button>
+
+                                            <div v-if="showIndividualContacts">
+                                                <div class="flex items-center justify-end mb-2">
+                                                    <button type="button" @click="toggleSelectAll" class="text-[10px] font-black uppercase tracking-widest text-[#780116] hover:text-[#c32f27] bg-red-50 px-3 py-1.5 rounded-lg transition">
+                                                        {{ form.contact_ids.length === contacts.length ? 'Deselect All' : 'Select All' }}
+                                                    </button>
+                                                </div>
+                                                <div class="bg-slate-50 rounded-[2rem] p-6 border border-slate-100 h-[300px] overflow-y-auto">
+                                                    <div class="space-y-2">
+                                                        <div v-for="contact in contacts" :key="contact.id"
+                                                             class="flex items-center p-3 bg-white rounded-xl border border-slate-100 hover:border-[#780116]/20 transition group cursor-pointer"
+                                                             @click="form.contact_ids.includes(contact.id) ? form.contact_ids = form.contact_ids.filter(id => id !== contact.id) : form.contact_ids.push(contact.id)">
+                                                            <div class="size-5 rounded border-2 flex items-center justify-center transition-all shrink-0"
+                                                                 :class="form.contact_ids.includes(contact.id) ? 'bg-[#780116] border-[#780116] shadow-lg shadow-red-100' : 'bg-white border-slate-200 group-hover:border-[#780116]/30'">
+                                                                <svg v-if="form.contact_ids.includes(contact.id)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/></svg>
+                                                            </div>
+                                                            <div class="ml-3 flex-1 min-w-0">
+                                                                <p class="text-xs font-black text-slate-900 truncate">{{ contact.name }}</p>
+                                                                <p class="text-[10px] text-slate-400 font-medium">{{ contact.phone }}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div v-if="contacts.length === 0" class="py-12 text-center">
+                                                        <p class="text-sm font-bold text-slate-400">No contacts found.</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <InputError :message="form.errors.contact_ids" class="mt-4" />
@@ -285,7 +343,7 @@ const submit = () => {
                                                     <span class="text-sm font-bold text-white/80">minutes</span>
                                                 </div>
                                                 <p class="text-[10px] text-white/50 mt-3">
-                                                    Est. time: {{ Math.round(form.contact_ids.length * form.drip_delay_minutes) }} min for {{ form.contact_ids.length }} contacts
+                                                    Est. time: {{ Math.round(estimatedRecipients * form.drip_delay_minutes) }} min for {{ estimatedRecipients }} contacts
                                                 </p>
                                             </div>
                                         </div>

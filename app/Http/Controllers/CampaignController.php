@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\Campaign;
 use App\Models\CampaignMessage;
 use App\Models\Contact;
+use App\Models\ContactBook;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\ProcessCampaignJob;
 
@@ -43,10 +44,12 @@ class CampaignController extends Controller
         $user = auth()->user();
         $contacts = Contact::where('user_id', $user->id)->get();
         $whatsappNumbers = $user->whatsappNumbers()->where('status', 'connected')->get();
-        
+        $contactBooks = ContactBook::where('user_id', $user->id)->withCount('contacts')->get();
+
         return Inertia::render('Campaigns/Create', [
             'contacts' => $contacts,
             'whatsappNumbers' => $whatsappNumbers,
+            'contactBooks' => $contactBooks,
         ]);
     }
 
@@ -58,16 +61,26 @@ class CampaignController extends Controller
             'body' => 'nullable|string',
             'media' => 'nullable|file|max:20480', // 20MB
             'scheduled_at' => 'nullable|date|after:now',
-            'contact_ids' => 'required|array',
+            'contact_ids' => 'nullable|array',
             'contact_ids.*' => 'exists:contacts,id',
+            'contact_book_ids' => 'nullable|array',
+            'contact_book_ids.*' => 'exists:contact_books,id',
             'is_drip' => 'boolean',
             'drip_delay_minutes' => 'nullable|integer|min:1|max:1440',
         ]);
 
         $user = auth()->user();
 
+        // Require at least one of contact_ids or contact_book_ids
+        $contactIds = collect($request->contact_ids ?? []);
+        $bookIds = collect($request->contact_book_ids ?? []);
+
+        if ($contactIds->isEmpty() && $bookIds->isEmpty()) {
+            return back()->withErrors(['contact_ids' => 'Please select at least one contact or contact book.']);
+        }
+
         // Transaction to ensure campaign + messages created atomically
-        $campaign = DB::transaction(function () use ($request, $user) {
+        $campaign = DB::transaction(function () use ($request, $user, $contactIds, $bookIds) {
             $mediaPath = null;
             $type = 'text';
 
@@ -96,8 +109,23 @@ class CampaignController extends Controller
                 'drip_delay_minutes' => $request->is_drip ? ($request->drip_delay_minutes ?? 1) : null,
             ]);
 
+            // Resolve contacts from books
+            $bookContactIds = collect();
+            if ($bookIds->isNotEmpty()) {
+                $bookContactIds = ContactBook::where('user_id', $user->id)
+                    ->whereIn('id', $bookIds)
+                    ->with('contacts')
+                    ->get()
+                    ->pluck('contacts')
+                    ->flatten()
+                    ->pluck('id');
+            }
+
+            // Merge and deduplicate contact IDs
+            $allContactIds = $contactIds->merge($bookContactIds)->unique()->values();
+
             // Send to selected contacts
-            $contacts = Contact::whereIn('id', $request->contact_ids)
+            $contacts = Contact::whereIn('id', $allContactIds)
                 ->where('user_id', $user->id)
                 ->get();
 
@@ -134,12 +162,14 @@ class CampaignController extends Controller
         $contacts = Contact::where('user_id', $user->id)->get();
         $whatsappNumbers = $user->whatsappNumbers()->where('status', 'connected')->get();
         $selectedContactIds = CampaignMessage::where('campaign_id', $id)->pluck('contact_id');
+        $contactBooks = ContactBook::where('user_id', $user->id)->withCount('contacts')->get();
 
         return Inertia::render('Campaigns/Create', [
             'campaign' => $campaign,
             'contacts' => $contacts,
             'whatsappNumbers' => $whatsappNumbers,
             'selectedContactIds' => $selectedContactIds,
+            'contactBooks' => $contactBooks,
             'isEditing' => true,
         ]);
     }
@@ -155,11 +185,20 @@ class CampaignController extends Controller
             'body' => 'nullable|string',
             'media' => 'nullable|file|max:20480',
             'scheduled_at' => 'nullable|date|after:now',
-            'contact_ids' => 'required|array',
+            'contact_ids' => 'nullable|array',
             'contact_ids.*' => 'exists:contacts,id',
+            'contact_book_ids' => 'nullable|array',
+            'contact_book_ids.*' => 'exists:contact_books,id',
         ]);
 
-        DB::transaction(function () use ($request, $campaign, $user) {
+        $contactIds = collect($request->contact_ids ?? []);
+        $bookIds = collect($request->contact_book_ids ?? []);
+
+        if ($contactIds->isEmpty() && $bookIds->isEmpty()) {
+            return back()->withErrors(['contact_ids' => 'Please select at least one contact or contact book.']);
+        }
+
+        DB::transaction(function () use ($request, $campaign, $user, $contactIds, $bookIds) {
             $mediaPath = $campaign->media_path;
             $type = $campaign->message_type;
 
@@ -167,7 +206,7 @@ class CampaignController extends Controller
                 $file = $request->file('media');
                 $filename = time() . '_' . $file->getClientOriginalName();
                 $mediaPath = $file->storeAs('campaigns', $filename, 'public');
-                
+
                 $mime = $file->getMimeType();
                 if (str_starts_with($mime, 'image/')) $type = 'image';
                 elseif (str_starts_with($mime, 'video/')) $type = 'video';
@@ -182,14 +221,27 @@ class CampaignController extends Controller
                 'body' => $request->body,
                 'media_path' => $mediaPath,
                 'scheduled_at' => $request->scheduled_at,
-                // Do not update status if it was already processing/completed
             ]);
 
             // For simplicity, we recreate messages only if campaign is still pending/scheduled
             if (in_array($campaign->status, ['pending', 'scheduled'])) {
                 CampaignMessage::where('campaign_id', $campaign->id)->delete();
-                
-                $contacts = Contact::whereIn('id', $request->contact_ids)
+
+                // Resolve contacts from books
+                $bookContactIds = collect();
+                if ($bookIds->isNotEmpty()) {
+                    $bookContactIds = ContactBook::where('user_id', $user->id)
+                        ->whereIn('id', $bookIds)
+                        ->with('contacts')
+                        ->get()
+                        ->pluck('contacts')
+                        ->flatten()
+                        ->pluck('id');
+                }
+
+                $allContactIds = $contactIds->merge($bookContactIds)->unique()->values();
+
+                $contacts = Contact::whereIn('id', $allContactIds)
                     ->where('user_id', $user->id)
                     ->get();
 

@@ -101,6 +101,11 @@ class User extends Authenticatable
         return $this->hasMany(Contact::class);
     }
 
+    public function contactBooks()
+    {
+        return $this->hasMany(ContactBook::class);
+    }
+
     public function campaigns()
     {
         return $this->hasMany(Campaign::class);
