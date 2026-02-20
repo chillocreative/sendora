@@ -214,12 +214,9 @@ const showMobileMenu = ref(false);
             <div class="max-w-7xl mx-auto px-4">
                 <div class="grid md:grid-cols-2 gap-10 sm:gap-16 items-center">
                     <div>
-                        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-100 rounded-full mb-6">
-                            <span class="text-[10px] font-black text-red-600 uppercase tracking-widest">The Problem</span>
-                        </div>
                         <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-6 leading-tight tracking-tight">Manual WhatsApp<br/>Is Killing Your Productivity</h2>
                         <p class="text-slate-500 text-base sm:text-lg leading-relaxed mb-8">
-                            You're copy-pasting messages one by one, sending the same answers all day, and missing leads that messaged at 2am. Your team is a human broadcast machine — and it doesn't scale.
+                            You're copy-pasting messages one by one, sending the same answers all day, and missing leads that messaged at 2am. Your team is a human broadcast machine and it doesn't scale.
                         </p>
                         <ul class="space-y-4">
                             <li class="flex items-start gap-3">
