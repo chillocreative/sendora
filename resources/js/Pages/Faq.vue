@@ -18,7 +18,7 @@ const faqs = ref([
     },
     {
         question: "Is my WhatsApp number safe from being banned?",
-        answer: "Safety is our top priority. Sendora uses 'Human-Stagger' technology to simulate natural typing and sending patterns with variable time delays. Additionally, our AI Warmer Pool helps you build a strong reputation before sending large campaigns, significantly reducing the risk of bans.",
+        answer: "Safety is our top priority. Sendora uses 'Human-Stagger' technology to simulate natural typing and sending patterns with variable time delays. Additionally, our AI Warmer Pool helps you build a strong reputation before sending large campaigns. Sendora also automatically inserts Interval Pauses — random breaks of 1–7 minutes after every few messages — further mimicking human behaviour and significantly reducing the risk of bans.",
         open: false
     },
     {
@@ -37,8 +37,13 @@ const faqs = ref([
         open: false
     },
     {
-        question: "What are Auto-Replies and how do they work?",
-        answer: "Auto-Replies let you automatically respond to incoming WhatsApp messages based on keywords. You can choose between two match types: 'Contains' (triggers when the keyword appears anywhere in the message) or 'Exact' (triggers only when the message exactly matches the keyword). Perfect for handling FAQs, business hours inquiries, or quick responses!",
+        question: "What is AI Customer Support and how does it work?",
+        answer: "AI Customer Support lets each WhatsApp number have its own AI Playbook — a document containing your business SOPs, pricing, FAQs, and objection-handling scripts. When a customer messages you first, Sendora's AI reads the Playbook and replies automatically on your behalf, 24/7. You stay in control: pause or resume AI for any individual conversation at any time, and review the full AI reply audit trail in the conversation log.",
+        open: false
+    },
+    {
+        question: "What is an AI Playbook?",
+        answer: "An AI Playbook is a document you write for each WhatsApp number. It contains your business's SOPs — pricing, FAQs, objection handling, greetings, and anything else your team would normally say to a customer. When a customer messages you first, Sendora's AI reads the Playbook and replies on your behalf, 24/7. You stay in control: pause AI for any conversation, review every AI reply in the audit log, and update the Playbook anytime.",
         open: false
     },
     {
@@ -53,12 +58,12 @@ const faqs = ref([
     },
     {
         question: "Can I schedule campaigns?",
-        answer: "Yes! Sendora supports scheduled campaigns. You can set a specific date and time for your campaign to be sent. You can also enable drip campaigns with delay intervals between messages to avoid spam detection and maintain natural sending patterns.",
+        answer: "Yes! Sendora supports scheduled campaigns. You can set a specific date and time for your campaign to be sent. You can also enable drip campaigns with delay intervals between messages to avoid spam detection and maintain natural sending patterns. Sendora also automatically inserts random batch pauses (1–7 minutes) after every few messages during sending, to further mimic human behaviour and reduce ban risk.",
         open: false
     },
     {
         question: "How does contact management work?",
-        answer: "Sendora provides a comprehensive contact management system. Import contacts individually or in bulk, organize them with tags, search by name or phone number, and track all communication history. Your Business plan supports up to 10,000 contacts with full API access for integration with your CRM.",
+        answer: "Sendora provides a comprehensive contact management system. Import contacts individually or in bulk, organise them with tags, and search by name or phone number. You can also organise contacts into named Contact Books for easy targeting — send a campaign to one or multiple Contact Books in a single click.",
         open: false
     },
     {
@@ -68,7 +73,7 @@ const faqs = ref([
     },
     {
         question: "How does the pricing work?",
-        answer: "We offer a Business plan with comprehensive features including 5 WhatsApp numbers, 10,000 contacts, 20,000 messages per month, and full API access. You can pay monthly or yearly. No hidden per-message costs, no Meta API fees, and no surprise charges.",
+        answer: "Sendora offers multiple monthly and yearly tiers — Basic, Pro, and Business — each with increasing limits on WhatsApp numbers, contacts, and features. We also offer a Lifetime plan: a one-time payment that gives you Pro-level features forever with no recurring charges. Annual plans save 20% compared to monthly billing. There are no hidden per-message costs and no Meta API fees.",
         open: false
     },
     {
@@ -78,7 +83,7 @@ const faqs = ref([
     },
     {
         question: "How do I connect my WhatsApp number?",
-        answer: "Simply go to WhatsApp Manager, click 'Add Number', and scan the QR code that appears with your WhatsApp mobile app (like connecting to WhatsApp Web). Your number will be connected instantly and you can start sending messages. You can connect up to 5 numbers on the Business plan.",
+        answer: "Simply go to WhatsApp Manager, click 'Add Number', and scan the QR code that appears with your WhatsApp mobile app (like connecting to WhatsApp Web). Your number will be connected instantly and you can start sending messages. The number of WhatsApp numbers you can connect depends on your plan.",
         open: false
     },
     {
