@@ -25,7 +25,7 @@ class ProcessCampaignJob implements ShouldQueue
      * The number of seconds the job can run before timing out.
      * Campaigns with many contacts and sleep delays can take hours.
      */
-    public $timeout = 7200;
+    public $timeout = 86400; // 24 hours — covers large campaigns with batch pauses
 
     /**
      * The number of times the job may be attempted.
@@ -87,6 +87,10 @@ class ProcessCampaignJob implements ShouldQueue
 
         // Determine delay between messages (drip sequence)
         $delaySeconds = $campaign->is_drip ? ($campaign->drip_delay_minutes * 60) : 0.5;
+
+        // Interval Pause state — tracks messages sent since last long pause (non-drip only)
+        $sentSinceLastPause = 0;
+        $nextPauseAt = collect([3, 5, 7, 9])->random();
 
         foreach ($messages as $index => $message) {
             // Check if campaign was cancelled in the meantime
@@ -165,6 +169,28 @@ class ProcessCampaignJob implements ShouldQueue
                         $randomDelay = rand(2, 6);
                     }
                     sleep($randomDelay);
+                }
+            }
+
+            // Interval Pause: after every N messages (randomly 3/5/7/9), pause for
+            // M minutes (randomly 1/3/5/7) to mimic human behaviour and reduce ban risk.
+            // Only applies to regular campaigns — drip campaigns use their own delay.
+            if (!$campaign->is_drip) {
+                $sentSinceLastPause++;
+                if ($sentSinceLastPause >= $nextPauseAt && $index < $messages->count() - 1) {
+                    $pauseMinutes = collect([1, 3, 5, 7])->random();
+                    Log::info("Campaign {$campaign->id}: interval pause {$pauseMinutes} min after {$sentSinceLastPause} messages (batch #{$nextPauseAt}).");
+                    // Sleep in 30-second chunks so cancellation is detected promptly
+                    $chunks = $pauseMinutes * 2;
+                    for ($c = 0; $c < $chunks; $c++) {
+                        sleep(30);
+                        $campaign->refresh();
+                        if ($campaign->status === 'cancelled') {
+                            return;
+                        }
+                    }
+                    $sentSinceLastPause = 0;
+                    $nextPauseAt = collect([3, 5, 7, 9])->random();
                 }
             }
         }
