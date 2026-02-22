@@ -26,7 +26,7 @@ const featureNames = {
     'scheduling': 'Message Scheduling',
     'pdf_support': 'PDF Support',
     'link_preview': 'Link Previews',
-    'auto_reply': 'Auto Replies',
+    'auto_reply': 'AI Customer Support',
     'message_preview': 'Message Previews',
     'multi_user': 'Multi-User Support',
     'webhooks': 'Webhook Integration',
@@ -233,19 +233,19 @@ const selectPlan = (plan, forceCycle = null) => {
                                     <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
                                         <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                     </span>
-                                    <span>{{ plan.limits.whatsapp_nos }} System Nodes</span>
+                                    <span>{{ plan.limits.whatsapp_nos }} WhatsApp Number</span>
                                 </li>
                                 <li class="flex items-center text-sm font-bold" :class="plan.name === 'Business' ? 'text-white/80' : 'text-slate-600'">
                                     <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
                                         <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                     </span>
-                                    <span>{{ plan.limits.contacts }} Directory Slots</span>
+                                    <span>{{ plan.limits.contacts }} Contacts</span>
                                 </li>
                                 <li class="flex items-center text-sm font-bold" :class="plan.name === 'Business' ? 'text-white/80' : 'text-slate-600'">
                                     <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
                                         <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                     </span>
-                                    <span>{{ plan.limits.messages }} Monthly Throughput</span>
+                                    <span>{{ plan.limits.messages }} Messages</span>
                                 </li>
                                 <li v-for="feature in getActiveFeatures(plan)" :key="feature" class="flex items-center text-sm font-bold" :class="plan.name === 'Business' ? 'text-white/80' : 'text-slate-600'">
                                     <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
