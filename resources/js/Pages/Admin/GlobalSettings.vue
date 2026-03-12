@@ -22,8 +22,6 @@ const form = useForm({
     mail_encryption: props.settings.mail_encryption || 'tls',
     mail_from_address: props.settings.mail_from_address || 'hello@sendora.com',
     mail_from_name: props.settings.mail_from_name || 'Sendora',
-    warmer_min_delay: props.settings.warmer_min_delay || 15,
-    warmer_max_delay: props.settings.warmer_max_delay || 30,
     openai_api_key: props.settings.openai_api_key || '',
     deepseek_api_key: props.settings.deepseek_api_key || '',
     openai_default_model: props.settings.openai_default_model || 'gpt-4o',
@@ -89,7 +87,7 @@ const submit = () => {
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                                 <div class="md:col-span-2">
-                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">OpenAI API Key (For AI Replies & Warmer)</label>
+                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">OpenAI API Key (For AI Replies & Sendora Commands)</label>
                                     <input v-model="form.openai_api_key" type="password" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none" placeholder="sk-...">
                                 </div>
                                 <div class="md:col-span-2">
@@ -114,17 +112,9 @@ const submit = () => {
                                         </label>
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Warmer Min Delay (Seconds)</label>
-                                    <input v-model="form.warmer_min_delay" type="number" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none" placeholder="15">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Warmer Max Delay (Seconds)</label>
-                                    <input v-model="form.warmer_max_delay" type="number" class="w-full px-5 py-3.5 bg-slate-50 border-slate-100 rounded-2xl font-bold focus:bg-white focus:ring-4 focus:ring-green-50 focus:border-green-500 transition-all outline-none" placeholder="30">
-                                </div>
                             </div>
                             <p class="text-[10px] text-slate-400 font-bold mt-4 uppercase tracking-wider ml-1 relative z-10">
-                                Controls AI-powered auto-replies, warmer conversations, and the Human-Stagger delay logic.
+                                Controls AI-powered auto-replies, /sendora command parsing, and the Human-Stagger delay logic.
                             </p>
                         </div>
 

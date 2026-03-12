@@ -20,17 +20,7 @@ Route::middleware(['auth:sanctum', 'api.access'])->prefix('v1')->group(function 
     // Profile & Usage
     Route::get('/profile', [ApiController::class, 'profile']);
     Route::get('/usage', [ApiController::class, 'usage']);
-    
-    // Contacts
-    Route::get('/contacts', [ApiController::class, 'contacts']);
-    Route::post('/contacts', [ApiController::class, 'storeContact']);
-    
+
     // Devices
     Route::get('/devices', [ApiController::class, 'devices']);
-    
-    // Messaging
-    Route::post('/messages/send', [ApiController::class, 'sendMessage']);
-    
-    // Campaigns
-    Route::get('/campaigns', [ApiController::class, 'campaigns']);
 });

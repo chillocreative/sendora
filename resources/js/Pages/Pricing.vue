@@ -19,16 +19,9 @@ const form = useForm({
 });
 
 const featureNames = {
-    'text_support': 'Text Messages',
-    'image_support': 'Image Support',
-    'file_support': 'File Attachments',
-    'scheduling': 'Message Scheduling',
-    'pdf_support': 'PDF Support',
-    'link_preview': 'Link Previews',
-    'auto_reply': 'AI Customer Support',
-    'message_preview': 'Message Previews',
-    'multi_user': 'Multi-User Support',
-    'webhooks': 'Webhook Integration',
+    'google_calendar': 'Google Calendar Sync',
+    'ai_command_parsing': 'AI Command Parsing (/sendora)',
+    'auto_reply': 'AI Playbooks',
     'api_access': 'API Access',
 };
 
@@ -37,6 +30,10 @@ const getActiveFeatures = (plan) => {
     return Object.keys(features)
         .filter(key => features[key])
         .map(key => featureNames[key] || key);
+};
+
+const formatReminders = (value) => {
+    return value === 0 ? 'Unlimited' : value;
 };
 
 const isDowngrade = (plan) => {
@@ -159,14 +156,14 @@ const selectPlan = (plan) => {
                 <!-- Copywriting Section -->
                 <div class="text-center mb-24 px-4">
                     <h1 class="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 mb-6 sm:mb-8 tracking-tight max-w-4xl mx-auto leading-[1.1]">
-                        Scale Your Customer <br class="hidden sm:block"/>
-                        <span class="text-[#780116]">Engagement Effortlessly.</span>
+                        Never Miss a <br class="hidden sm:block"/>
+                        <span class="text-[#780116]">Reminder Again.</span>
                     </h1>
                     <p class="text-base sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-                        Stop overpaying for features you don't use. Choose a plan that grows with your business, whether you're a solopreneur or a high-volume enterprise.
+                        Choose a plan that fits your workflow. Set reminders via WhatsApp, sync with Google Calendar, and let AI handle the rest.
                     </p>
 
-                    <p class="mt-12 text-[9px] sm:text-[11px] font-black text-slate-300 uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">Secure Checkout • Instant Deployment • Enterprise Grade</p>
+                    <p class="mt-12 text-[9px] sm:text-[11px] font-black text-slate-300 uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">Secure Checkout &bull; Instant Deployment &bull; Enterprise Grade</p>
                 </div>
 
                 <!-- Pricing Cards -->
@@ -180,9 +177,9 @@ const selectPlan = (plan) => {
                             'bg-gradient-to-br from-white via-red-50/20 to-slate-50': plan.name === 'Pro',
                             'bg-gradient-to-br from-[#780116] via-[#c32f27] to-[#db7c26] text-white': plan.name === 'Business'
                          }">
-                        
+
                         <div v-if="plan.name === 'Pro'" class="absolute -top-5 left-1/2 -translate-x-1/2 px-8 py-2.5 bg-[#780116] text-white text-[10px] font-black tracking-[0.25em] rounded-full shadow-2xl shadow-red-300 whitespace-nowrap z-30 transform hover:scale-110 transition-transform">
-                            ELITE SELECTION
+                            RECOMMENDED
                         </div>
 
                         <!-- Content wrapper to ensure text stays readable over gradients -->
@@ -205,19 +202,13 @@ const selectPlan = (plan) => {
                                     <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
                                         <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                     </span>
-                                    <span>{{ plan.limits.whatsapp_nos }} WhatsApp Number</span>
+                                    <span>{{ plan.limits.whatsapp_nos }} WhatsApp {{ plan.limits.whatsapp_nos === 1 ? 'Number' : 'Numbers' }}</span>
                                 </li>
                                 <li class="flex items-center text-sm font-bold" :class="plan.name === 'Business' ? 'text-white/80' : 'text-slate-600'">
                                     <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
                                         <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                     </span>
-                                    <span>{{ plan.limits.contacts }} Contacts</span>
-                                </li>
-                                <li class="flex items-center text-sm font-bold" :class="plan.name === 'Business' ? 'text-white/80' : 'text-slate-600'">
-                                    <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
-                                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                    </span>
-                                    <span>{{ plan.limits.messages }} Messages</span>
+                                    <span>{{ formatReminders(plan.limits.reminders_per_month) }} Reminders / month</span>
                                 </li>
                                 <li v-for="feature in getActiveFeatures(plan)" :key="feature" class="flex items-center text-sm font-bold" :class="plan.name === 'Business' ? 'text-white/80' : 'text-slate-600'">
                                     <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
@@ -227,20 +218,20 @@ const selectPlan = (plan) => {
                                 </li>
                             </ul>
 
-                            <button 
+                            <button
                                 @click="selectPlan(plan)"
                                 :disabled="currentPlanId === plan.id || isDowngrade(plan)"
                                 :class="[
                                     currentPlanId === plan.id ? (plan.name === 'Business' ? 'bg-white/5 text-slate-400 cursor-not-allowed shadow-none' : 'bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100 shadow-none') :
                                     isDowngrade(plan) ? (plan.name === 'Business' ? 'bg-white/5 text-slate-400 cursor-not-allowed shadow-none' : 'bg-slate-50 text-slate-200 cursor-not-allowed border border-slate-50 shadow-none') :
-                                    (plan.name === 'Pro' ? 'bg-[#780116] text-white hover:bg-[#c32f27] shadow-xl shadow-red-300/30' : 
+                                    (plan.name === 'Pro' ? 'bg-[#780116] text-white hover:bg-[#c32f27] shadow-xl shadow-red-300/30' :
                                      (plan.name === 'Business' ? 'bg-[#f7b538] text-[#780116] hover:bg-white hover:text-[#780116] shadow-xl shadow-orange-900/40' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-200')),
                                     'w-full py-6 rounded-2xl font-black text-xs tracking-[0.2em] uppercase transition-all duration-300 transform active:scale-95'
                                 ]"
                             >
-                                {{ 
-                                    currentPlanId === plan.id ? 'Already Active' : 
-                                    isDowngrade(plan) ? 'Tier Restricted' : ('Acquire ' + plan.name) 
+                                {{
+                                    currentPlanId === plan.id ? 'Already Active' :
+                                    isDowngrade(plan) ? 'Tier Restricted' : 'Get Started'
                                 }}
                             </button>
                         </div>
@@ -270,7 +261,7 @@ const selectPlan = (plan) => {
                                 <span class="text-xl font-bold text-amber-500 mr-1">{{ currency }}</span>
                                 <span class="text-6xl font-black text-slate-900">{{ Number(plan.monthly_price).toFixed(2) }}</span>
                             </div>
-                            <p class="mt-2 text-[10px] font-black text-amber-700 uppercase tracking-widest bg-amber-100 px-3 py-1 rounded-full inline-block">One-Time · No Renewals</p>
+                            <p class="mt-2 text-[10px] font-black text-amber-700 uppercase tracking-widest bg-amber-100 px-3 py-1 rounded-full inline-block">One-Time &middot; No Renewals</p>
                         </div>
 
                         <div class="grid grid-cols-1 gap-y-4">
@@ -283,11 +274,11 @@ const selectPlan = (plan) => {
                             <div class="flex flex-col gap-1 ml-10">
                                 <div class="text-slate-500 text-sm font-bold flex items-center gap-2">
                                     <div class="w-1 h-4 bg-amber-400 rounded-full"></div>
-                                    {{ plan.limits.messages }} Messages / month
+                                    {{ formatReminders(plan.limits.reminders_per_month) }} Reminders / month
                                 </div>
-                                <div class="text-slate-400 text-xs font-bold pl-3 flex items-center gap-2">
+                                <div v-for="feature in getActiveFeatures(plan)" :key="feature" class="text-slate-400 text-xs font-bold pl-3 flex items-center gap-2">
                                     <div class="w-1 h-3 bg-slate-200 rounded-full"></div>
-                                    {{ plan.limits.contacts }} Contacts Allowed
+                                    {{ feature }}
                                 </div>
                             </div>
                         </div>
@@ -297,7 +288,7 @@ const selectPlan = (plan) => {
                             :disabled="currentPlanId === plan.id"
                             class="px-12 py-6 bg-amber-400 text-amber-900 rounded-[2rem] font-black text-sm tracking-widest uppercase hover:bg-amber-500 transition-all shadow-2xl shadow-amber-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:scale-100"
                         >
-                            {{ currentPlanId === plan.id ? 'Already Active' : 'Get Lifetime Access' }}
+                            {{ currentPlanId === plan.id ? 'Already Active' : 'Get Started' }}
                         </button>
                     </div>
                 </div>

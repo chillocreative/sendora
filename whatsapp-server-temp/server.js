@@ -259,11 +259,11 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
         // Handle incoming messages
         sock.ev.on('messages.upsert', async ({ messages }) => {
             for (const msg of messages) {
-                if (!msg.message || msg.key.fromMe) continue;
+                if (!msg.message) continue;
 
                 const from = msg.key.remoteJid;
 
-                // Comprehensive text extraction
+                // Comprehensive text extraction (must run before fromMe check for /sendora)
                 let text = '';
                 if (msg.message) {
                     text = msg.message.conversation ||
@@ -285,6 +285,9 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
                         text = m.conversation || m.extendedTextMessage?.text || '';
                     }
                 }
+
+                // Skip self-messages unless it's a /sendora command
+                if (msg.key.fromMe && !text.toLowerCase().startsWith('/sendora')) continue;
 
                 if (!text && msg.message?.buttonsResponseMessage) {
                     text = msg.message.buttonsResponseMessage.selectedButtonId;

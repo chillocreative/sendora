@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Http\Middleware\CheckSubscriptionLimits;
-use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use App\Models\Playbook;
@@ -637,8 +636,6 @@ PROMPT;
      */
     protected function resolveContactName(int $userId, string $phone): ?string
     {
-        return Contact::where('user_id', $userId)
-            ->where('phone_number', $phone)
-            ->value('name');
+        return null;
     }
 }

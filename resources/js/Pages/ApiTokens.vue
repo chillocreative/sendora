@@ -24,11 +24,9 @@ const createForm = reactive({
 
 const abilities = [
     { value: '*', label: 'Full Access', description: 'Access to all API endpoints' },
-    { value: 'contacts:read', label: 'Read Contacts', description: 'View contacts list' },
-    { value: 'contacts:write', label: 'Write Contacts', description: 'Create and update contacts' },
-    { value: 'messages:send', label: 'Send Messages', description: 'Send WhatsApp messages' },
+    { value: 'profile:read', label: 'Read Profile', description: 'View profile and subscription info' },
     { value: 'devices:read', label: 'Read Devices', description: 'View connected devices' },
-    { value: 'campaigns:read', label: 'Read Campaigns', description: 'View campaigns' },
+    { value: 'usage:read', label: 'Read Usage', description: 'View usage statistics' },
 ];
 
 const openCreateModal = () => {

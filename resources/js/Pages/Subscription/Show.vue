@@ -15,16 +15,9 @@ const form = useForm({
 });
 
 const featureNames = {
-    'text_support': 'Text Messages',
-    'image_support': 'Image Support',
-    'file_support': 'File Attachments',
-    'scheduling': 'Message Scheduling',
-    'pdf_support': 'PDF Support',
-    'link_preview': 'Link Previews',
-    'auto_reply': 'Auto Replies',
-    'message_preview': 'Message Previews',
-    'multi_user': 'Multi-User Support',
-    'webhooks': 'Webhook Integration',
+    'google_calendar': 'Google Calendar Sync',
+    'ai_command_parsing': 'AI Command Parsing (/sendora)',
+    'auto_reply': 'AI Playbooks',
     'api_access': 'API Access',
 };
 
@@ -208,11 +201,7 @@ const formatDate = (date) => {
                                 </div>
                                 <div class="flex items-center text-[13px] font-bold text-slate-600 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
                                     <div class="size-2.5 rounded-full bg-[#f7b538] mr-4 shadow-sm shadow-orange-200 shrink-0"></div>
-                                    <span>{{ plan.limits?.contacts }} Contacts allowed</span>
-                                </div>
-                                <div class="flex items-center text-[13px] font-bold text-slate-600 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                                    <div class="size-2.5 rounded-full bg-[#db7c26] mr-4 shadow-sm shadow-orange-300 shrink-0"></div>
-                                    <span>{{ plan.limits?.messages }} Messages / mo</span>
+                                    <span>{{ plan.limits?.reminders_per_month === 0 ? 'Unlimited' : plan.limits?.reminders_per_month }} Reminders / mo</span>
                                 </div>
                             </div>
                             <div class="mt-8">

@@ -15,27 +15,16 @@ class WhatsappNumber extends Model
         'phone_info',
         'playbook_id',
         'ai_reply_enabled',
-        'is_warmer_pool_enabled',
-        'warmer_daily_limit',
-        'warmer_messages_sent_today',
-        'warmer_last_chatted_at',
     ];
 
     protected $casts = [
         'phone_info' => 'array',
         'ai_reply_enabled' => 'boolean',
-        'is_warmer_pool_enabled' => 'boolean',
-        'warmer_last_chatted_at' => 'datetime',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function contacts()
-    {
-        return $this->hasMany(Contact::class);
     }
 
     public function playbook()

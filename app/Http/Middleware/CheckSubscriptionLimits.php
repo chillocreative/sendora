@@ -8,11 +8,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckSubscriptionLimits
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next, string $feature = null): Response
     {
         $user = $request->user();
@@ -38,52 +33,35 @@ class CheckSubscriptionLimits
             }
         }
 
-        if ($feature === 'contacts') {
-            if ($user->contacts()->count() >= $limits['contacts']) {
-                return back()->with('error', 'You have reached the contacts limit for your plan.');
-            }
-        }
-
-        if ($feature === 'messages') {
-            if ($subscription->messages_used_this_month >= $limits['messages']) {
-                return back()->with('error', 'You have reached the messages limit for your plan this month.');
+        if ($feature === 'reminders') {
+            $limit = $limits['reminders_per_month'] ?? 0;
+            if ($limit > 0) {
+                $usedThisMonth = $user->reminders()
+                    ->whereYear('created_at', now()->year)
+                    ->whereMonth('created_at', now()->month)
+                    ->count();
+                if ($usedThisMonth >= $limit) {
+                    return back()->with('error', "You've reached your monthly reminder limit ({$limit}). Please upgrade.");
+                }
             }
         }
 
         // Check feature flags
-        if ($feature === 'scheduling') {
-            if (!($features['scheduling'] ?? false)) {
-                return back()->with('error', 'Campaign scheduling is available on all paid plans. Please upgrade.');
+        if ($feature === 'google_calendar') {
+            if (!($features['google_calendar'] ?? false)) {
+                return back()->with('error', 'Google Calendar integration requires a paid plan. Please upgrade.');
+            }
+        }
+
+        if ($feature === 'ai_command_parsing') {
+            if (!($features['ai_command_parsing'] ?? false)) {
+                return back()->with('error', 'AI command parsing is available on Pro and Business plans. Please upgrade.');
             }
         }
 
         if ($feature === 'auto_reply') {
             if (!($features['auto_reply'] ?? false)) {
-                return back()->with('error', 'Auto-reply is available on Pro and Business plans. Please upgrade.');
-            }
-        }
-
-        if ($feature === 'message_preview') {
-            if (!($features['message_preview'] ?? false)) {
-                return back()->with('error', 'Message preview is available on Pro and Business plans. Please upgrade.');
-            }
-        }
-
-        if ($feature === 'pdf_support') {
-            if (!($features['pdf_support'] ?? false)) {
-                return back()->with('error', 'PDF support is available on Pro and Business plans. Please upgrade.');
-            }
-        }
-
-        if ($feature === 'link_preview') {
-            if (!($features['link_preview'] ?? false)) {
-                return back()->with('error', 'Link preview is available on Pro and Business plans. Please upgrade.');
-            }
-        }
-
-        if ($feature === 'webhooks') {
-            if (!($features['webhooks'] ?? false)) {
-                return back()->with('error', 'Webhooks are available on Business plan only. Please upgrade.');
+                return back()->with('error', 'AI Playbooks are available on Pro and Business plans. Please upgrade.');
             }
         }
 
@@ -96,13 +74,10 @@ class CheckSubscriptionLimits
         return $next($request);
     }
 
-    /**
-     * Helper method to check if a feature is available
-     */
     public static function hasFeature($user, string $feature): bool
     {
         $subscription = $user->activeSubscription;
-        
+
         if (!$subscription) {
             return false;
         }

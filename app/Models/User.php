@@ -31,7 +31,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'warmer_enabled',
     ];
 
     /**
@@ -91,24 +90,14 @@ class User extends Authenticatable
         return $this->hasMany(WhatsappNumber::class);
     }
 
-    public function contacts()
+    public function reminders()
     {
-        return $this->hasMany(Contact::class);
+        return $this->hasMany(Reminder::class);
     }
 
-    public function contactBooks()
+    public function googleCalendarConnection()
     {
-        return $this->hasMany(ContactBook::class);
-    }
-
-    public function campaigns()
-    {
-        return $this->hasMany(Campaign::class);
-    }
-
-    public function autoReplies()
-    {
-        return $this->hasMany(AutoReply::class);
+        return $this->hasOne(GoogleCalendarConnection::class);
     }
 
     public function playbooks()
@@ -141,7 +130,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'warmer_enabled' => 'boolean',
         ];
     }
 }

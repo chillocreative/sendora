@@ -17,49 +17,11 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/l/{messageId}', [\App\Http\Controllers\LinkController::class, 'track'])->name('link.track');
-
 // System Utility Route
 Route::get('/system/force-clear', function() {
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
     \Illuminate\Support\Facades\Artisan::call('route:clear');
     return 'System Cache Cleared via Web Route';
-});
-
-// Storage diagnostic route
-Route::get('/system/check-storage', function() {
-    $publicSymlink  = public_path('storage');
-    $storagePath    = storage_path('app/public');
-    $campaignsPath  = storage_path('app/public/campaigns');
-
-    $info = [
-        'symlink_exists'         => is_link($publicSymlink),
-        'symlink_target'         => is_link($publicSymlink) ? readlink($publicSymlink) : null,
-        'symlink_resolves'       => is_dir($publicSymlink),
-        'storage_dir_exists'     => is_dir($storagePath),
-        'storage_dir_perms'      => is_dir($storagePath) ? decoct(fileperms($storagePath) & 0777) : null,
-        'campaigns_dir_exists'   => is_dir($campaignsPath),
-        'campaigns_dir_perms'    => is_dir($campaignsPath) ? decoct(fileperms($campaignsPath) & 0777) : null,
-        'app_url_config'         => config('app.url'),
-        'app_url_setting'        => \App\Models\Setting::where('key', 'app_url')->value('value'),
-        'recent_campaign_files'  => [],
-    ];
-
-    if (is_dir($campaignsPath)) {
-        $files = array_values(array_diff(scandir($campaignsPath, SCANDIR_SORT_DESCENDING), ['.', '..']));
-        foreach (array_slice($files, 0, 5) as $file) {
-            $fp = $campaignsPath . '/' . $file;
-            $info['recent_campaign_files'][] = [
-                'name'     => $file,
-                'size'     => filesize($fp),
-                'perms'    => decoct(fileperms($fp) & 0777),
-                'readable' => is_readable($fp),
-                'url'      => url('storage/campaigns/' . $file),
-            ];
-        }
-    }
-
-    return response()->json($info, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 });
 
 
@@ -294,9 +256,6 @@ Route::middleware([
         }
     })->name('email.test');
 
-    // Export Campaign Report
-    Route::get('/reports/export', [\App\Http\Controllers\DashboardController::class, 'exportReport'])->name('reports.export');
-
     Route::get('/checkout', [PaymentController::class, 'checkout'])->name('checkout');
     Route::post('/payments/initiate', [PaymentController::class, 'initiatePayment'])->name('payments.initiate');
     Route::get('/payments/success', [PaymentController::class, 'success'])->name('payments.success');
@@ -309,38 +268,24 @@ Route::middleware([
     Route::get('/whatsapp/{id}/refresh-qr', [WhatsappNumberController::class, 'refreshQr'])->name('whatsapp.refresh-qr');
     Route::delete('/whatsapp/{id}', [WhatsappNumberController::class, 'destroy'])->name('whatsapp.destroy');
 
-    // Test Message
-    Route::get('/test-message', [\App\Http\Controllers\TestMessageController::class, 'index'])->name('test-message.index');
-    Route::post('/test-message', [\App\Http\Controllers\TestMessageController::class, 'send'])->name('test-message.send');
+    // Reminders
+    Route::get('/reminders', [\App\Http\Controllers\ReminderController::class, 'index'])->name('reminders.index');
+    Route::get('/reminders/create', [\App\Http\Controllers\ReminderController::class, 'create'])->name('reminders.create');
+    Route::post('/reminders', [\App\Http\Controllers\ReminderController::class, 'store'])->name('reminders.store');
+    Route::get('/reminders/{id}/edit', [\App\Http\Controllers\ReminderController::class, 'edit'])->name('reminders.edit');
+    Route::put('/reminders/{id}', [\App\Http\Controllers\ReminderController::class, 'update'])->name('reminders.update');
+    Route::delete('/reminders/{id}', [\App\Http\Controllers\ReminderController::class, 'destroy'])->name('reminders.destroy');
 
+    // Google Calendar
+    Route::middleware(['subscription.limit:google_calendar'])->group(function () {
+        Route::get('/google-calendar', [\App\Http\Controllers\GoogleCalendarController::class, 'index'])->name('google-calendar.index');
+        Route::get('/google-calendar/connect', [\App\Http\Controllers\GoogleCalendarController::class, 'connect'])->name('google-calendar.connect');
+        Route::get('/google-calendar/callback', [\App\Http\Controllers\GoogleCalendarController::class, 'callback'])->name('google-calendar.callback');
+        Route::post('/google-calendar/disconnect', [\App\Http\Controllers\GoogleCalendarController::class, 'disconnect'])->name('google-calendar.disconnect');
+        Route::post('/google-calendar/sync', [\App\Http\Controllers\GoogleCalendarController::class, 'sync'])->name('google-calendar.sync');
+    });
 
-    // Contact Books
-    Route::get('/contact-books', [\App\Http\Controllers\ContactBookController::class, 'index'])->name('contact-books.index');
-    Route::post('/contact-books', [\App\Http\Controllers\ContactBookController::class, 'store'])->name('contact-books.store');
-    Route::get('/contact-books/{id}', [\App\Http\Controllers\ContactBookController::class, 'show'])->name('contact-books.show');
-    Route::put('/contact-books/{id}', [\App\Http\Controllers\ContactBookController::class, 'update'])->name('contact-books.update');
-    Route::delete('/contact-books/{id}', [\App\Http\Controllers\ContactBookController::class, 'destroy'])->name('contact-books.destroy');
-    Route::post('/contact-books/{id}/add-contacts', [\App\Http\Controllers\ContactBookController::class, 'addContacts'])->name('contact-books.add-contacts');
-    Route::post('/contact-books/{id}/remove-contacts', [\App\Http\Controllers\ContactBookController::class, 'removeContacts'])->name('contact-books.remove-contacts');
-    Route::delete('/contact-books/{id}/delete-all-contacts', [\App\Http\Controllers\ContactBookController::class, 'destroyAllContacts'])->name('contact-books.destroy-all-contacts');
-
-    Route::get('/contacts', [\App\Http\Controllers\ContactController::class, 'index'])->name('contacts.index');
-    Route::post('/contacts', [\App\Http\Controllers\ContactController::class, 'store'])->name('contacts.store');
-    Route::put('/contacts/{id}', [\App\Http\Controllers\ContactController::class, 'update'])->name('contacts.update');
-    Route::delete('/contacts/{id}', [\App\Http\Controllers\ContactController::class, 'destroy'])->name('contacts.destroy');
-    Route::post('/contacts/import', [\App\Http\Controllers\ContactController::class, 'import'])->name('contacts.import');
-    Route::post('/contacts/bulk-delete', [\App\Http\Controllers\ContactController::class, 'bulkDelete'])->name('contacts.bulk-delete');
-    Route::delete('/contacts-delete-all', [\App\Http\Controllers\ContactController::class, 'destroyAll'])->name('contacts.destroy-all');
-    
-    Route::get('/campaigns', [\App\Http\Controllers\CampaignController::class, 'index'])->name('campaigns.index');
-    Route::get('/campaigns/create', [\App\Http\Controllers\CampaignController::class, 'create'])->name('campaigns.create');
-    Route::post('/campaigns', [\App\Http\Controllers\CampaignController::class, 'store'])->name('campaigns.store');
-    Route::get('/campaigns/{id}/edit', [\App\Http\Controllers\CampaignController::class, 'edit'])->name('campaigns.edit');
-    Route::post('/campaigns/{id}', [\App\Http\Controllers\CampaignController::class, 'update'])->name('campaigns.update');
-    Route::post('/campaigns/{id}/stop', [\App\Http\Controllers\CampaignController::class, 'stop'])->name('campaigns.stop');
-    Route::delete('/campaigns/{id}', [\App\Http\Controllers\CampaignController::class, 'destroy'])->name('campaigns.destroy');
-
-    // AI Playbooks & Conversations (replaces legacy auto-replies)
+    // AI Playbooks & Conversations
     Route::middleware(['subscription.limit:auto_reply'])->group(function () {
         Route::get('/playbooks', [\App\Http\Controllers\PlaybookController::class, 'index'])->name('playbooks.index');
         Route::get('/playbooks/create', [\App\Http\Controllers\PlaybookController::class, 'create'])->name('playbooks.create');
@@ -373,11 +318,6 @@ Route::middleware([
         // API Documentation
         Route::get('/api-docs', [\App\Http\Controllers\ApiTokenController::class, 'docs'])->name('api-docs');
     });
-
-    // WhatsApp Warmer Routes
-    Route::get('/warmer', [\App\Http\Controllers\WarmerController::class, 'index'])->name('warmer.index');
-    Route::post('/warmer/toggle', [\App\Http\Controllers\WarmerController::class, 'toggle'])->name('warmer.toggle');
-    Route::post('/warmer/pool/{id}', [\App\Http\Controllers\WarmerController::class, 'togglePool'])->name('warmer.pool.toggle');
 
     // Tickets
     Route::get('/tickets', [\App\Http\Controllers\TicketController::class, 'index'])->name('tickets.index');

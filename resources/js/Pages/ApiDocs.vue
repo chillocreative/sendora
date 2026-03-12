@@ -28,23 +28,14 @@ const endpoints = [
       "status": "active",
       "limits": {
         "whatsapp_nos": 5,
-        "contacts": 10000,
-        "messages": 20000,
+        "reminders_per_month": 0,
         "features": {
           "api_access": true,
           "auto_reply": true,
-          "webhooks": true,
-          "scheduling": true,
-          "multi_user": true,
-          "pdf_support": true,
-          "file_support": true,
-          "image_support": true,
-          "text_support": true,
-          "link_preview": true,
-          "message_preview": true
+          "google_calendar": true,
+          "ai_command_parsing": true
         }
-      },
-      "messages_used": 0
+      }
     }
   }
 }`
@@ -60,79 +51,14 @@ const endpoints = [
   "success": true,
   "data": {
     "devices": { "used": 1, "limit": 5 },
-    "contacts": { "used": 1, "limit": 10000 },
-    "messages": { "used": 0, "limit": 20000 },
+    "reminders": { "used": 12, "limit": 0 },
     "features": {
       "api_access": true,
-      "webhooks": true,
       "auto_reply": true,
-      "multi_user": true,
-      "scheduling": true,
-      "pdf_support": true,
-      "file_support": true,
-      "image_support": true,
-      "text_support": true,
-      "link_preview": true,
-      "message_preview": true
+      "google_calendar": true,
+      "ai_command_parsing": true
     }
   }
-}`
-    },
-    {
-        id: 'contacts-list',
-        name: 'List Contacts',
-        method: 'GET',
-        path: '/api/v1/contacts',
-        description: 'Get a paginated list of all your contacts.',
-        params: [
-            { name: 'search', type: 'string', required: false, description: 'Search by name or phone' },
-            { name: 'per_page', type: 'integer', required: false, description: 'Items per page (default: 50)' },
-            { name: 'page', type: 'integer', required: false, description: 'Page number' },
-        ],
-        response: `{
-  "success": true,
-  "data": {
-    "current_page": 1,
-    "data": [
-      {
-        "id": 9,
-        "user_id": 7,
-        "whatsapp_number_id": null,
-        "name": "John Doe",
-        "phone_number": "60123456789",
-        "country_code": "60",
-        "created_at": "2026-02-04T17:49:55.000000Z",
-        "updated_at": "2026-02-04T17:49:55.000000Z"
-      }
-    ],
-    "total": 1,
-    "per_page": 50
-  }
-}`
-    },
-    {
-        id: 'contacts-create',
-        name: 'Create Contact',
-        method: 'POST',
-        path: '/api/v1/contacts',
-        description: 'Create a new contact in your database.',
-        params: [
-            { name: 'name', type: 'string', required: true, description: 'Contact name' },
-            { name: 'phone', type: 'string', required: true, description: 'Phone number with country code (e.g., 60123456789)' },
-            { name: 'country_code', type: 'string', required: false, description: 'Country code (default: 60 for Malaysia)' },
-        ],
-        response: `{
-  "success": true,
-  "data": {
-    "id": 10,
-    "user_id": 7,
-    "name": "Jane Smith",
-    "phone_number": "60198765432",
-    "country_code": "60",
-    "created_at": "2026-02-06T02:55:00.000000Z",
-    "updated_at": "2026-02-06T02:55:00.000000Z"
-  },
-  "message": "Contact created successfully."
 }`
     },
     {
@@ -159,70 +85,6 @@ const endpoints = [
       "updated_at": "2026-02-05T18:08:40.000000Z"
     }
   ]
-}`
-    },
-    {
-        id: 'send-message',
-        name: 'Send Message',
-        method: 'POST',
-        path: '/api/v1/messages/send',
-        description: 'Send a WhatsApp message to a phone number.',
-        params: [
-            { name: 'phone', type: 'string', required: true, description: 'Recipient phone number with country code' },
-            { name: 'message', type: 'string', required: true, description: 'Message content (max 4096 chars)' },
-            { name: 'device_id', type: 'integer', required: false, description: 'Specific device ID to use (optional)' },
-        ],
-        response: `{
-  "success": true,
-  "message": "Message sent successfully.",
-  "data": {
-    "phone": "60123456789",
-    "device_id": 1
-  }
-}`
-    },
-    {
-        id: 'campaigns',
-        name: 'List Campaigns',
-        method: 'GET',
-        path: '/api/v1/campaigns',
-        description: 'Get all your campaigns with pagination.',
-        params: [
-            { name: 'per_page', type: 'integer', required: false, description: 'Items per page (default: 20)' },
-            { name: 'page', type: 'integer', required: false, description: 'Page number' },
-        ],
-        response: `{
-  "success": true,
-  "data": {
-    "current_page": 1,
-    "data": [
-      {
-        "id": 44,
-        "name": "January Promotion",
-        "user_id": 7,
-        "whatsapp_number_id": 30,
-        "message_type": "text",
-        "body": "Your campaign message",
-        "media_path": null,
-        "scheduled_at": "2026-02-05T17:23:00.000000Z",
-        "status": "completed",
-        "is_drip": false,
-        "drip_delay_minutes": null,
-        "created_at": "2026-02-05T17:22:40.000000Z",
-        "updated_at": "2026-02-05T17:23:07.000000Z",
-        "whatsapp_number": {
-          "id": 30,
-          "phone_number": "60148885659:42@s.whatsapp.net",
-          "status": "connected",
-          "phone_info": {
-            "name": "Your Business"
-          }
-        }
-      }
-    ],
-    "total": 2,
-    "per_page": 5
-  }
 }`
     },
 ];

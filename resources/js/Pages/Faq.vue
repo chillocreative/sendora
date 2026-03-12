@@ -13,82 +13,52 @@ const showMobileMenu = ref(false);
 const faqs = ref([
     {
         question: "What is Sendora?",
-        answer: "Sendora is a powerful WhatsApp engagement platform designed for businesses. It allows you to send bulk messages, manage contacts, automate customer interactions, and integrate with your applications via REST API - all directly from your web browser.",
+        answer: "Sendora is your personal WhatsApp reminder and calendar assistant. It helps you stay on top of your schedule by sending you WhatsApp notifications for upcoming events, tasks, and deadlines. Connect your Google Calendar, set reminders via the web dashboard or simple /sendora commands, and never miss an important moment again.",
         open: true
     },
     {
-        question: "Is my WhatsApp number safe from being banned?",
-        answer: "Safety is our top priority. Sendora uses 'Human-Stagger' technology to simulate natural typing and sending patterns with variable time delays. Additionally, our AI Warmer Pool helps you build a strong reputation before sending large campaigns. Sendora also automatically inserts Interval Pauses — random breaks of 1–7 minutes after every few messages — further mimicking human behaviour and significantly reducing the risk of bans.",
+        question: "How do reminders work?",
+        answer: "Setting reminders with Sendora is simple. You can create them through the web dashboard by filling in the details (title, date, time, recurrence), or by sending a /sendora command directly to your own WhatsApp number. Once set, Sendora will send you a WhatsApp notification at the scheduled time. You can configure how far in advance you want to be reminded (e.g., 5 minutes, 30 minutes, or 1 hour before).",
         open: false
     },
     {
-        question: "How does the AI Warmer Pool work?",
-        answer: "The AI Warmer Pool is a community-powered feature. When enabled, your number will automatically exchange casual, realistic messages with other numbers in the Sendora community using OpenAI. This simulates natural human interaction, building trust with WhatsApp and reducing ban risks. If you see casual messages from 'strangers' appearing in your chat, that's our AI helping you warm up!",
+        question: "How do I connect Google Calendar?",
+        answer: "Connecting Google Calendar is quick and secure. Go to your Sendora dashboard, click 'Connect Google Calendar', and sign in with your Google account via the standard OAuth flow. Once authorized, Sendora will automatically sync your calendar events every 15 minutes and send you WhatsApp reminders for upcoming events based on your notification preferences.",
         open: false
     },
     {
-        question: "Do I need the official WhatsApp Business API?",
-        answer: "No! Sendora works by scanning the QR code of your existing WhatsApp or WhatsApp Business app, just like WhatsApp Web. This means you can get started instantly without complex approvals, per-message fees, or waiting for Meta's approval process.",
+        question: "What are /sendora commands?",
+        answer: "The /sendora command is the fastest way to create reminders. Simply send a message to your own WhatsApp number starting with /sendora followed by your reminder details in natural language. For example: \"/sendora Meeting tomorrow at 3pm in my office\" or \"/sendora Call dentist on Friday at 10am\". Sendora will parse your message, create the reminder, and confirm it back to you instantly.",
         open: false
     },
     {
-        question: "Can I send media files like images or PDFs?",
-        answer: "Absolutely. Sendora supports multiple media types including images (JPG, PNG), documents (PDF), text messages, and emojis. You can attach these to your campaigns to create rich, engaging messages. All media uploads are handled securely through our platform.",
+        question: "What reminder formats are supported?",
+        answer: "Sendora supports a wide range of reminder formats to fit your schedule. You can create one-time reminders for specific dates and times, or set up recurring reminders on a daily, weekly, monthly, or yearly basis. For example, you can set a daily standup reminder at 9am, a weekly report reminder every Friday, or a monthly bill payment reminder on the 1st of each month.",
         open: false
     },
     {
-        question: "What is AI Customer Support and how does it work?",
-        answer: "AI Customer Support lets each WhatsApp number have its own AI Playbook — a document containing your business SOPs, pricing, FAQs, and objection-handling scripts. When a customer messages you first, Sendora's AI reads the Playbook and replies automatically on your behalf, 24/7. You stay in control: pause or resume AI for any individual conversation at any time, and review the full AI reply audit trail in the conversation log.",
+        question: "How does timezone handling work?",
+        answer: "Sendora uses the timezone configured in your account settings to ensure all reminders fire at the correct local time. When you first sign up, your timezone is automatically detected. You can update it anytime from your profile settings. All reminder times displayed in the dashboard and sent via WhatsApp will reflect your chosen timezone.",
         open: false
     },
     {
-        question: "What is an AI Playbook?",
-        answer: "An AI Playbook is a document you write for each WhatsApp number. It contains your business's SOPs — pricing, FAQs, objection handling, greetings, and anything else your team would normally say to a customer. When a customer messages you first, Sendora's AI reads the Playbook and replies on your behalf, 24/7. You stay in control: pause AI for any conversation, review every AI reply in the audit log, and update the Playbook anytime.",
+        question: "What plans are available?",
+        answer: "Sendora offers three plans to match your needs. The Basic plan includes up to 50 active reminders and Google Calendar sync. The Pro plan supports up to 500 active reminders and adds AI-powered natural language parsing for smarter /sendora commands. The Business plan gives you unlimited reminders, priority support, and advanced features for power users. All plans include WhatsApp notifications and the web dashboard.",
         open: false
     },
     {
-        question: "Does Sendora have an API for developers?",
-        answer: "Yes! Our Business plan includes full REST API access. You can programmatically manage contacts, send messages, check usage stats, and more. API tokens are secured with encryption and can be copied anytime from your dashboard. We provide comprehensive documentation, test scripts, and interactive API docs at /api-docs.",
+        question: "What are AI Playbooks?",
+        answer: "AI Playbooks are automated WhatsApp response scripts powered by AI. You create a Playbook document containing instructions, FAQs, or workflows, and when someone messages your connected WhatsApp number, the AI reads the Playbook and responds on your behalf. This is useful for handling common questions, providing information, or automating repetitive conversations while you focus on what matters.",
         open: false
     },
     {
-        question: "How do I manage my API tokens?",
-        answer: "Go to the API Tokens page in your dashboard. You can create new tokens with specific permissions (Full Access or granular abilities), view all your tokens, and copy the actual token anytime using the copy button. Tokens are encrypted and stored securely. If you lose a token, simply delete it and create a new one.",
+        question: "Can I cancel or edit reminders?",
+        answer: "Yes, you have full control over your reminders. From the web dashboard, you can edit any reminder's title, date, time, or recurrence pattern. You can also delete reminders you no longer need. Changes take effect immediately, so you will always receive notifications based on your latest settings.",
         open: false
     },
     {
-        question: "Can I schedule campaigns?",
-        answer: "Yes! Sendora supports scheduled campaigns. You can set a specific date and time for your campaign to be sent. You can also enable drip campaigns with delay intervals between messages to avoid spam detection and maintain natural sending patterns. Sendora also automatically inserts random batch pauses (1–7 minutes) after every few messages during sending, to further mimic human behaviour and reduce ban risk.",
-        open: false
-    },
-    {
-        question: "How does contact management work?",
-        answer: "Sendora provides a comprehensive contact management system. Import contacts individually or in bulk, organise them with tags, and search by name or phone number. You can also organise contacts into named Contact Books for easy targeting — send a campaign to one or multiple Contact Books in a single click.",
-        open: false
-    },
-    {
-        question: "Can multiple team members use one account?",
-        answer: "Yes! Our Business plan supports multi-user access, allowing your team to collaborate on campaigns, manage contacts, and track results together. Each team member can access the dashboard from their own browser with secure authentication.",
-        open: false
-    },
-    {
-        question: "How does the pricing work?",
-        answer: "Sendora offers monthly plans — Basic, Pro, and Business — each with increasing limits on WhatsApp numbers, contacts, and features. We also offer a Lifetime plan: a one-time payment that gives you Pro-level features forever with no recurring charges. There are no hidden per-message costs and no Meta API fees.",
-        open: false
-    },
-    {
-        question: "What happens if I exceed my message limit?",
-        answer: "When you reach your monthly message limit, you won't be able to send new messages until the next billing cycle or until you upgrade your plan. You can always check your usage stats in real-time from the dashboard or via the API (/api/v1/usage endpoint).",
-        open: false
-    },
-    {
-        question: "How do I connect my WhatsApp number?",
-        answer: "Simply go to WhatsApp Manager, click 'Add Number', and scan the QR code that appears with your WhatsApp mobile app (like connecting to WhatsApp Web). Your number will be connected instantly and you can start sending messages. The number of WhatsApp numbers you can connect depends on your plan.",
-        open: false
-    },
-    {
-        question: "What if I need to cancel my subscription?",
-        answer: "You are free to cancel anytime directly from your subscription dashboard. There are no lock-in contracts or cancellation fees. Your access will continue until the end of your current billing period, and you can export all your data before canceling.",
+        question: "Is my data secure?",
+        answer: "Absolutely. Security is a top priority at Sendora. Your Google Calendar tokens are encrypted at rest using industry-standard encryption. WhatsApp communication uses end-to-end encryption provided by the WhatsApp protocol. We never store your message content longer than necessary, and your personal data is never shared with third parties. You can revoke Google Calendar access at any time from your Google account settings.",
         open: false
     }
 ]);
@@ -196,7 +166,7 @@ const toggleFaq = (index) => {
                     <span class="text-[#780116]">We've Got Answers.</span>
                 </h1>
                 <p class="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
-                    Everything you need to know about blasting your sales with Sendora. Your success is our priority, so we've compiled the essentials to get you started.
+                    Everything you need to know about staying on top of your schedule with Sendora. Your personal WhatsApp reminder and Google Calendar assistant.
                 </p>
             </div>
         </section>
@@ -207,9 +177,9 @@ const toggleFaq = (index) => {
                 <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] sm:rounded-[2.5rem] p-8 sm:p-10 md:p-14 text-white shadow-2xl relative overflow-hidden mb-12 sm:mb-20">
                     <div class="absolute top-0 right-0 w-64 h-64 bg-[#780116] rounded-full blur-[100px] opacity-20 transform translate-x-1/2 -translate-y-1/2"></div>
 
-                    <h2 class="text-2xl sm:text-3xl font-black mb-4 sm:mb-6 leading-tight relative z-10">Why over 1,000+ businesses trust us?</h2>
+                    <h2 class="text-2xl sm:text-3xl font-black mb-4 sm:mb-6 leading-tight relative z-10">Why thousands of people trust Sendora?</h2>
                     <p class="text-slate-300 text-base sm:text-lg leading-relaxed mb-6 sm:mb-8 relative z-10">
-                        At Sendora, we believe that customer engagement shouldn't be complicated. In a world where emails go unread and social media algorithms hide your posts, WhatsApp remains the single most effective channel to reach your audience.
+                        Sendora turns WhatsApp into your personal reminder system. No more forgotten meetings, missed deadlines, or overlooked tasks. With Google Calendar integration and natural language commands, staying organized has never been easier.
                     </p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 relative z-10">
                         <div class="flex gap-4">
@@ -217,8 +187,8 @@ const toggleFaq = (index) => {
                                 <svg class="w-6 h-6 text-[#f7b538]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             </div>
                             <div>
-                                <h4 class="font-bold text-[#f7b538] mb-1">Instant Impact</h4>
-                                <p class="text-sm text-slate-400">98% open rates mean your message gets seen within minutes, not days.</p>
+                                <h4 class="font-bold text-[#f7b538] mb-1">Instant Reminders</h4>
+                                <p class="text-sm text-slate-400">Get WhatsApp notifications right when you need them. No app to open, no alarm to dismiss.</p>
                             </div>
                         </div>
                         <div class="flex gap-4">
@@ -226,8 +196,8 @@ const toggleFaq = (index) => {
                                 <svg class="w-6 h-6 text-[#f7b538]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                             </div>
                             <div>
-                                <h4 class="font-bold text-[#f7b538] mb-1">Simplicity First</h4>
-                                <p class="text-sm text-slate-400">No coding required. If you can use WhatsApp, you can use Sendora.</p>
+                                <h4 class="font-bold text-[#f7b538] mb-1">Effortless Setup</h4>
+                                <p class="text-sm text-slate-400">Connect Google Calendar in one click. Create reminders with simple /sendora commands.</p>
                             </div>
                         </div>
                     </div>
@@ -235,7 +205,7 @@ const toggleFaq = (index) => {
 
                 <!-- FAQ Accordion -->
                 <div class="space-y-4">
-                    <div v-for="(faq, index) in faqs" :key="index" 
+                    <div v-for="(faq, index) in faqs" :key="index"
                          class="border border-slate-100 rounded-3xl bg-white overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-slate-100"
                          :class="{'ring-2 ring-slate-50': faq.open}">
                         <button @click="toggleFaq(index)" class="w-full flex items-center justify-between p-6 md:p-8 text-left focus:outline-none group">

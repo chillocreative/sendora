@@ -14,16 +14,9 @@ const props = defineProps({
 });
 
 const featureNames = {
-    'text_support': 'Text Messages',
-    'image_support': 'Image Support',
-    'file_support': 'File Attachments',
-    'scheduling': 'Message Scheduling',
-    'pdf_support': 'PDF Support',
-    'link_preview': 'Link Previews',
-    'auto_reply': 'Auto Replies',
-    'message_preview': 'Message Previews',
-    'multi_user': 'Multi-User Support',
-    'webhooks': 'Webhook Integration',
+    'google_calendar': 'Google Calendar Sync',
+    'ai_command_parsing': 'AI Command Parsing (/sendora)',
+    'auto_reply': 'AI Playbooks',
     'api_access': 'API Access',
 };
 
@@ -40,8 +33,7 @@ const form = useForm({
     monthly_price: '',
     limits: {
         whatsapp_nos: 0,
-        contacts: 0,
-        messages: 0,
+        reminders_per_month: 0,
         features: {}
     },
 });
@@ -52,8 +44,7 @@ const editPlan = (plan) => {
     form.monthly_price = plan.monthly_price;
     form.limits = JSON.parse(JSON.stringify(plan.limits || {
         whatsapp_nos: 0,
-        contacts: 0,
-        messages: 0,
+        reminders_per_month: 0,
         features: {}
     }));
 };
@@ -149,11 +140,7 @@ const closeEdit = () => {
                                     </div>
                                     <div class="flex items-center text-[13px] font-bold text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                         <div class="size-2.5 rounded-full bg-[#f7b538] mr-4 shadow-sm shadow-orange-200"></div>
-                                        <span>{{ plan.limits?.contacts }} Contacts allowed</span>
-                                    </div>
-                                    <div class="flex items-center text-[13px] font-bold text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                        <div class="size-2.5 rounded-full bg-[#db7c26] mr-4 shadow-sm shadow-orange-300"></div>
-                                        <span>{{ plan.limits?.messages }} Messages / mo</span>
+                                        <span>{{ plan.limits?.reminders_per_month === 0 ? 'Unlimited' : plan.limits?.reminders_per_month }} Reminders / mo</span>
                                     </div>
                                 </div>
 
@@ -213,18 +200,14 @@ const closeEdit = () => {
                     <!-- Usage Limits -->
                     <div>
                         <p class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 ml-1">Usage Limits</p>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm">
                                 <InputLabel for="wa" value="WHATSAPP NOS" class="text-[9px] font-black text-slate-400 mb-2" />
                                 <TextInput id="wa" v-model="form.limits.whatsapp_nos" type="number" class="w-full text-lg font-black bg-slate-50 border-none rounded-xl" />
                             </div>
                             <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                                <InputLabel for="contacts" value="CONTACTS" class="text-[9px] font-black text-slate-400 mb-2" />
-                                <TextInput id="contacts" v-model="form.limits.contacts" type="number" class="w-full text-lg font-black bg-slate-50 border-none rounded-xl" />
-                            </div>
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                                <InputLabel for="msgs" value="MESSAGES" class="text-[9px] font-black text-slate-400 mb-2" />
-                                <TextInput id="msgs" v-model="form.limits.messages" type="number" class="w-full text-lg font-black bg-slate-50 border-none rounded-xl" />
+                                <InputLabel for="reminders" value="REMINDERS / MONTH (0 = unlimited)" class="text-[9px] font-black text-slate-400 mb-2" />
+                                <TextInput id="reminders" v-model="form.limits.reminders_per_month" type="number" class="w-full text-lg font-black bg-slate-50 border-none rounded-xl" />
                             </div>
                         </div>
                     </div>

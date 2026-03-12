@@ -2,36 +2,24 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SubscriptionPlanSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $plans = [
             [
                 'name' => 'Basic',
                 'monthly_price' => 59,
-                'yearly_price' => 590,
+                'yearly_price' => 0,
                 'limits' => [
                     'whatsapp_nos' => 1,
-                    'contacts' => 500,
-                    'messages' => 1000,
+                    'reminders_per_month' => 50,
                     'features' => [
-                        'text_support' => true,
-                        'image_support' => true,
-                        'file_support' => true,
-                        'scheduling' => true,
-                        'pdf_support' => false,
-                        'link_preview' => false,
+                        'google_calendar' => true,
+                        'ai_command_parsing' => false,
                         'auto_reply' => false,
-                        'message_preview' => false,
-                        'multi_user' => false,
-                        'webhooks' => false,
                         'api_access' => false,
                     ],
                 ],
@@ -39,22 +27,14 @@ class SubscriptionPlanSeeder extends Seeder
             [
                 'name' => 'Pro',
                 'monthly_price' => 129,
-                'yearly_price' => 1290,
+                'yearly_price' => 0,
                 'limits' => [
                     'whatsapp_nos' => 2,
-                    'contacts' => 2000,
-                    'messages' => 5000,
+                    'reminders_per_month' => 500,
                     'features' => [
-                        'text_support' => true,
-                        'image_support' => true,
-                        'file_support' => true,
-                        'scheduling' => true,
-                        'pdf_support' => true,
-                        'link_preview' => true,
+                        'google_calendar' => true,
+                        'ai_command_parsing' => true,
                         'auto_reply' => true,
-                        'message_preview' => true,
-                        'multi_user' => false,
-                        'webhooks' => false,
                         'api_access' => false,
                     ],
                 ],
@@ -62,22 +42,14 @@ class SubscriptionPlanSeeder extends Seeder
             [
                 'name' => 'Business',
                 'monthly_price' => 249,
-                'yearly_price' => 2490,
+                'yearly_price' => 0,
                 'limits' => [
                     'whatsapp_nos' => 5,
-                    'contacts' => 10000,
-                    'messages' => 20000,
+                    'reminders_per_month' => 0,
                     'features' => [
-                        'text_support' => true,
-                        'image_support' => true,
-                        'file_support' => true,
-                        'scheduling' => true,
-                        'pdf_support' => true,
-                        'link_preview' => true,
+                        'google_calendar' => true,
+                        'ai_command_parsing' => true,
                         'auto_reply' => true,
-                        'message_preview' => true,
-                        'multi_user' => true,
-                        'webhooks' => true,
                         'api_access' => true,
                     ],
                 ],
@@ -96,19 +68,11 @@ class SubscriptionPlanSeeder extends Seeder
             'is_active' => true,
             'limits' => [
                 'whatsapp_nos' => 2,
-                'contacts' => 2000,
-                'messages' => 5000,
+                'reminders_per_month' => 500,
                 'features' => [
-                    'text_support' => true,
-                    'image_support' => true,
-                    'file_support' => true,
-                    'scheduling' => true,
-                    'pdf_support' => true,
-                    'link_preview' => true,
+                    'google_calendar' => true,
+                    'ai_command_parsing' => true,
                     'auto_reply' => true,
-                    'message_preview' => true,
-                    'multi_user' => false,
-                    'webhooks' => false,
                     'api_access' => false,
                 ],
             ],

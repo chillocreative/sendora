@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessAiReplyJob;
+use App\Jobs\ProcessSendoraCommandJob;
 use Illuminate\Http\Request;
 use App\Models\WhatsappNumber;
 use Illuminate\Support\Facades\Log;
@@ -128,12 +129,26 @@ class WhatsappWebhookController extends Controller
                 return response()->json(['success' => true, 'skipped' => 'group_message']);
             }
 
+            $messageText = (string) $request->message;
+
+            // Check for /sendora command
+            if (str_starts_with(strtolower(trim($messageText)), '/sendora')) {
+                ProcessSendoraCommandJob::dispatch(
+                    (int) $request->user_id,
+                    (int) $request->phone_number,
+                    (string) $request->from,
+                    $messageText,
+                    $request->message_id ?? null
+                );
+                return response()->json(['success' => true, 'queued' => true, 'type' => 'sendora']);
+            }
+
             // Dispatch AI reply job to queue
             ProcessAiReplyJob::dispatch(
                 (int) $request->user_id,
                 (int) $request->phone_number,
                 (string) $request->from,
-                (string) $request->message,
+                $messageText,
                 $request->message_id ?? null
             );
 
@@ -145,31 +160,7 @@ class WhatsappWebhookController extends Controller
     }
     public function messageReceipt(Request $request)
     {
-        // status can be: 2 (delivered), 3 (read)
-        $waMessageId = $request->message_id;
-        $status = $request->status;
-
-        try {
-            $message = \App\Models\CampaignMessage::where('wa_message_id', $waMessageId)->first();
-
-            if ($message) {
-                if ($status == 2) { // Delivered
-                    $message->update([
-                        'status' => 'delivered',
-                        'delivered_at' => now(),
-                    ]);
-                } elseif ($status == 3) { // Read
-                    $message->update([
-                        'status' => 'read',
-                        'read_at' => now(),
-                    ]);
-                }
-            }
-
-            return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            Log::error('Message Receipt Error: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        // Acknowledge receipt — no campaign messages to track anymore
+        return response()->json(['success' => true]);
     }
 }

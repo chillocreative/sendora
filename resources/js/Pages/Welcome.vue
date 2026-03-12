@@ -14,9 +14,9 @@ const showMobileMenu = ref(false);
 </script>
 
 <template>
-    <Head title="Sendora - WhatsApp Campaign Blaster & AI Auto-Reply Platform">
-        <meta name="description" content="Sendora lets you blast WhatsApp campaigns to thousands of contacts and auto-reply with AI trained on your business. Manage contacts, track delivery, and run drip sequences — all from one dashboard." />
-        <meta name="keywords" content="WhatsApp blast, WhatsApp campaign, WhatsApp auto reply, WhatsApp AI assistant, bulk WhatsApp sender, drip campaign WhatsApp, contact book WhatsApp, WhatsApp marketing" />
+    <Head title="Sendora - Your Personal WhatsApp Reminder & Google Calendar Assistant">
+        <meta name="description" content="Sendora turns your WhatsApp into a personal reminder system synced with Google Calendar. Set reminders, manage your schedule, and run AI Playbooks — all through simple /sendora commands." />
+        <meta name="keywords" content="WhatsApp reminder, Google Calendar sync, WhatsApp calendar, personal assistant WhatsApp, AI scheduling, WhatsApp commands, reminder bot, calendar assistant" />
     </Head>
 
     <div class="min-h-screen bg-white text-slate-900 font-sans selection:bg-red-100 selection:text-[#780116] overflow-x-hidden relative">
@@ -31,7 +31,7 @@ const showMobileMenu = ref(false);
                         <div class="flex-shrink-0 flex items-center group cursor-pointer">
                             <div class="w-10 h-10 bg-[#780116] rounded-xl flex items-center justify-center shadow-lg shadow-red-200 group-hover:scale-110 transition-transform duration-300">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <span class="ml-3 text-2xl font-black tracking-tight text-slate-900">Sendora</span>
@@ -70,7 +70,7 @@ const showMobileMenu = ref(false);
                 <div class="flex items-center">
                     <div class="w-10 h-10 bg-[#780116] rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                     <span class="ml-3 text-2xl font-black tracking-tight text-slate-900">Sendora</span>
@@ -97,41 +97,41 @@ const showMobileMenu = ref(false);
         <section class="pt-32 sm:pt-40 pb-16 sm:pb-20 px-4">
             <div class="max-w-7xl mx-auto text-center">
                 <h1 class="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 mb-6 sm:mb-8 tracking-tight max-w-5xl mx-auto leading-[1.1]">
-                    Blast Campaigns.<br class="hidden sm:block"/>
-                    <span class="text-[#780116]">Let AI Handle the Replies.</span>
+                    Your Personal WhatsApp<br class="hidden sm:block"/>
+                    <span class="text-[#780116]">Reminder & Calendar Assistant.</span>
                 </h1>
 
                 <p class="text-base sm:text-xl text-slate-500 mb-10 sm:mb-12 max-w-3xl mx-auto leading-relaxed">
-                    Sendora is your WhatsApp marketing engine. Send bulk campaigns with images, videos, and documents to organised contact lists — then let AI trained on your business SOPs handle every reply, 24/7.
+                    Sendora syncs your Google Calendar with WhatsApp so you never miss a meeting, deadline, or task again. Set reminders with simple commands, let AI manage your schedule, and get timely nudges right where you already chat.
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
                     <Link :href="route('register')" class="w-full sm:w-auto bg-[#780116] text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-black flex items-center justify-center shadow-2xl shadow-red-900/40 hover:bg-[#c32f27] transition">
                         Get Started
                     </Link>
-                    <a href="https://wa.me/60148885659?text=Saya%20nak%20tahu%20pasal%20sendora" target="_blank" rel="noopener" class="w-full sm:w-auto bg-slate-900 text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-3">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        Request a Demo
-                    </a>
+                    <Link :href="route('faq')" class="w-full sm:w-auto bg-slate-900 text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Learn More
+                    </Link>
                 </div>
 
                 <!-- Feature Badges -->
                 <div class="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
                     <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
                         <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                        Bulk campaigns with media
+                        WhatsApp reminders
                     </div>
                     <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
                         <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                        AI replies 24/7
+                        Google Calendar sync
                     </div>
                     <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
                         <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                        Pause AI anytime
+                        /sendora commands
                     </div>
                     <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
                         <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                        Delivery & click tracking
+                        AI-powered scheduling
                     </div>
                 </div>
             </div>
@@ -141,67 +141,67 @@ const showMobileMenu = ref(false);
         <section class="py-16 sm:py-20 bg-slate-50 border-y border-slate-100">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-12">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Everything you need to dominate WhatsApp</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Two powerful systems working together for you</p>
                 </div>
                 <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Pillar 1: Campaigns -->
+                    <!-- Pillar 1: WhatsApp Reminders -->
                     <div class="bg-white border border-slate-100 rounded-3xl p-8 sm:p-10 shadow-sm hover:shadow-xl transition-shadow duration-300">
                         <div class="w-14 h-14 bg-[#780116] rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-red-200">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                         </div>
-                        <h3 class="text-2xl font-black text-slate-900 mb-3">WhatsApp Campaign Blaster</h3>
-                        <p class="text-slate-500 leading-relaxed mb-6">Send personalised messages to thousands of contacts at once. Organise them into Contact Books, attach images, videos, documents, and schedule or drip-send over time.</p>
+                        <h3 class="text-2xl font-black text-slate-900 mb-3">WhatsApp Reminders</h3>
+                        <p class="text-slate-500 leading-relaxed mb-6">Get timely reminders delivered straight to your WhatsApp. Never forget a meeting, deadline, or task again. Set them from your phone or dashboard -- they arrive right in your chat.</p>
                         <ul class="space-y-3">
                             <li class="flex items-center gap-3 text-sm text-slate-600 font-medium">
                                 <div class="w-5 h-5 bg-red-50 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-[#780116]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                Bulk send to Contact Books or individual contacts
+                                Reminders sent directly to your WhatsApp
                             </li>
                             <li class="flex items-center gap-3 text-sm text-slate-600 font-medium">
                                 <div class="w-5 h-5 bg-red-50 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-[#780116]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                Images, videos, audio & document attachments
+                                Set one-time or recurring reminders
                             </li>
                             <li class="flex items-center gap-3 text-sm text-slate-600 font-medium">
                                 <div class="w-5 h-5 bg-red-50 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-[#780116]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                Schedule or drip-send with variable delays
+                                Use /sendora commands right from your chat
                             </li>
                             <li class="flex items-center gap-3 text-sm text-slate-600 font-medium">
                                 <div class="w-5 h-5 bg-red-50 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-[#780116]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                Delivery, open & link click tracking
+                                Smart natural language scheduling
                             </li>
                             <li class="flex items-center gap-3 text-sm text-slate-600 font-medium">
                                 <div class="w-5 h-5 bg-red-50 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-[#780116]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                Import contacts via CSV into named Contact Books
+                                Morning briefing of your day ahead
                             </li>
                         </ul>
                     </div>
 
-                    <!-- Pillar 2: AI Auto-Reply -->
+                    <!-- Pillar 2: Google Calendar Sync -->
                     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 sm:p-10 shadow-sm hover:shadow-xl transition-shadow duration-300">
                         <div class="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6">
-                            <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </div>
-                        <h3 class="text-2xl font-black text-white mb-3">AI Auto-Reply Engine</h3>
-                        <p class="text-slate-400 leading-relaxed mb-6">Write a Playbook — your business SOPs, product details, pricing, tone — and the AI replies to every incoming WhatsApp message like a trained human agent, around the clock.</p>
+                        <h3 class="text-2xl font-black text-white mb-3">Google Calendar Sync</h3>
+                        <p class="text-slate-400 leading-relaxed mb-6">Link your Google Calendar and Sendora keeps everything in sync. New events become WhatsApp reminders automatically. Add events from WhatsApp and they appear in your calendar.</p>
                         <ul class="space-y-3">
                             <li class="flex items-center gap-3 text-sm text-slate-300 font-medium">
                                 <div class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                Markdown playbook per WhatsApp number
+                                Two-way sync with Google Calendar
                             </li>
                             <li class="flex items-center gap-3 text-sm text-slate-300 font-medium">
                                 <div class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                AI only replies after customer messages you first
+                                Auto-create reminders from calendar events
                             </li>
                             <li class="flex items-center gap-3 text-sm text-slate-300 font-medium">
                                 <div class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                Pause or resume AI per conversation anytime
+                                Add events via WhatsApp, see them in Calendar
                             </li>
                             <li class="flex items-center gap-3 text-sm text-slate-300 font-medium">
                                 <div class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                Full conversation log & AI reply audit trail
+                                Customisable reminder timing (5 min, 1 hr, 1 day before)
                             </li>
                             <li class="flex items-center gap-3 text-sm text-slate-300 font-medium">
                                 <div class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center shrink-0"><svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                                Handles all scenarios — prices, objections, FAQs
+                                Works with personal and work calendars
                             </li>
                         </ul>
                     </div>
@@ -214,42 +214,42 @@ const showMobileMenu = ref(false);
             <div class="max-w-7xl mx-auto px-4">
                 <div class="grid md:grid-cols-2 gap-10 sm:gap-16 items-center">
                     <div>
-                        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-6 leading-tight tracking-tight">Manual WhatsApp<br/>Is Killing Your Productivity</h2>
+                        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-6 leading-tight tracking-tight">Forgetting Things<br/>Is Costing You</h2>
                         <p class="text-slate-500 text-base sm:text-lg leading-relaxed mb-8">
-                            You're copy-pasting messages one by one, sending the same answers all day, and missing leads that messaged at 2am. Your team is a human broadcast machine and it doesn't scale.
+                            You set calendar events but ignore the notifications. You write to-do lists that go stale. Important tasks slip through the cracks because your reminders live in apps you don't check. WhatsApp is the one app you never ignore.
                         </p>
                         <ul class="space-y-4">
                             <li class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                <span class="text-slate-600 font-medium">Sending campaigns one contact at a time</span>
+                                <span class="text-slate-600 font-medium">Calendar notifications that get swiped away</span>
                             </li>
                             <li class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                <span class="text-slate-600 font-medium">Slow reply times lose leads to competitors</span>
+                                <span class="text-slate-600 font-medium">Missed deadlines and forgotten follow-ups</span>
                             </li>
                             <li class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                <span class="text-slate-600 font-medium">After-hours messages go unanswered until morning</span>
+                                <span class="text-slate-600 font-medium">No easy way to add events from your phone quickly</span>
                             </li>
                             <li class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                <span class="text-slate-600 font-medium">No idea which messages were delivered or read</span>
+                                <span class="text-slate-600 font-medium">Too many apps for tasks, reminders, and calendars</span>
                             </li>
                         </ul>
                     </div>
                     <div class="space-y-4">
                         <div class="p-6 sm:p-8 bg-slate-50 border border-slate-200 rounded-3xl shadow-sm">
-                            <div class="text-4xl font-black text-slate-900 mb-1">78%</div>
-                            <div class="text-sm text-slate-500 font-medium">of customers buy from the business that responds first</div>
+                            <div class="text-4xl font-black text-slate-900 mb-1">91%</div>
+                            <div class="text-sm text-slate-500 font-medium">of WhatsApp messages are read within 3 minutes</div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="p-6 bg-slate-50 border border-slate-200 rounded-3xl shadow-sm">
-                                <div class="text-3xl font-black text-red-600 mb-1">5 min</div>
-                                <div class="text-xs text-slate-500 font-medium">Optimal response window before a lead goes cold</div>
+                                <div class="text-3xl font-black text-red-600 mb-1">23%</div>
+                                <div class="text-xs text-slate-500 font-medium">of calendar alerts are dismissed without reading</div>
                             </div>
                             <div class="p-6 bg-slate-50 border border-slate-200 rounded-3xl shadow-sm">
-                                <div class="text-3xl font-black text-slate-900 mb-1">24/7</div>
-                                <div class="text-xs text-slate-500 font-medium">When your customers expect a reply</div>
+                                <div class="text-3xl font-black text-slate-900 mb-1">0</div>
+                                <div class="text-xs text-slate-500 font-medium">Missed reminders when they come via WhatsApp</div>
                             </div>
                         </div>
                     </div>
@@ -263,36 +263,30 @@ const showMobileMenu = ref(false);
             <div class="max-w-7xl mx-auto px-4 relative z-10">
                 <div class="text-center mb-16 sm:mb-24">
                     <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-4 sm:mb-6 tracking-tight">How Sendora Works</h2>
-                    <p class="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em]">From setup to first campaign or AI reply in under 15 minutes</p>
+                    <p class="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.3em]">From setup to your first reminder in under 5 minutes</p>
                 </div>
 
                 <div class="relative">
                     <!-- Connector Line (Desktop) -->
                     <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -translate-y-1/2 z-0"></div>
 
-                    <div class="grid md:grid-cols-4 gap-8 relative z-10">
+                    <div class="grid md:grid-cols-3 gap-8 relative z-10">
                         <div class="bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
                             <div class="w-16 h-16 bg-slate-900 text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-slate-900/20 group-hover:scale-110 transition-transform">1</div>
                             <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">Connect WhatsApp</h3>
-                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Scan a QR code to link your WhatsApp number. Multiple numbers supported per account.</p>
+                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Scan a QR code to link your WhatsApp number. Sendora becomes your personal assistant, ready to receive commands.</p>
                         </div>
 
                         <div class="bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
-                            <div class="w-16 h-16 bg-[#db7c26] text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-orange-600/20 group-hover:scale-110 transition-transform">2</div>
-                            <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">Import Contacts</h3>
-                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Import your leads via CSV into Contact Books. Group them by campaign, product, or region.</p>
+                            <div class="w-16 h-16 bg-[#780116] text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-red-900/20 group-hover:scale-110 transition-transform">2</div>
+                            <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">Link Google Calendar</h3>
+                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Connect your Google Calendar with one click. Existing events automatically become WhatsApp reminders. Everything stays in sync.</p>
                         </div>
 
                         <div class="bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
-                            <div class="w-16 h-16 bg-[#780116] text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-red-900/20 group-hover:scale-110 transition-transform">3</div>
-                            <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">Blast Campaigns</h3>
-                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Create a campaign with text, images, or video. Select Contact Books and send — or schedule for later.</p>
-                        </div>
-
-                        <div class="bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white text-center relative group hover:-translate-y-2 transition-all duration-500">
-                            <div class="w-16 h-16 bg-green-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-green-600/20 group-hover:scale-110 transition-transform">4</div>
-                            <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">AI Handles Replies</h3>
-                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Assign an AI Playbook to your number. Every incoming reply is handled automatically, 24/7.</p>
+                            <div class="w-16 h-16 bg-green-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-6 shadow-2xl shadow-green-600/20 group-hover:scale-110 transition-transform">3</div>
+                            <h3 class="text-lg font-black mb-3 text-slate-900 tracking-tight leading-tight">Get Reminders & Use /sendora</h3>
+                            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest leading-relaxed">Receive timely reminders on WhatsApp. Use /sendora commands to add events, check your schedule, or ask AI to organise your day.</p>
                         </div>
                     </div>
                 </div>
@@ -305,57 +299,57 @@ const showMobileMenu = ref(false);
                 <div class="text-center mb-12 sm:mb-16">
                     <h2 class="text-3xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-6 tracking-tight">Everything in One Platform</h2>
                     <p class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-                        No patchwork of tools. Campaigns, contacts, AI replies, and analytics — all built together.
+                        Reminders, calendar, AI scheduling, and smart commands -- all built together, delivered through WhatsApp.
                     </p>
                 </div>
 
                 <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
                         <div class="w-12 h-12 bg-[#780116]/40 rounded-2xl flex items-center justify-center mb-5">
-                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                         </div>
-                        <h3 class="text-lg font-black mb-2">Contact Books</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">Organise contacts into named lists — "Leads Feb", "Clients KL", "VIP Buyers". Import via CSV directly into any book. Select books when blasting campaigns.</p>
+                        <h3 class="text-lg font-black mb-2">Smart Reminders</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Set reminders using natural language. "Remind me to call John tomorrow at 3pm" just works. One-time or recurring -- daily, weekly, monthly. Delivered to your WhatsApp on the dot.</p>
                     </div>
 
                     <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
                         <div class="w-12 h-12 bg-orange-500/20 rounded-2xl flex items-center justify-center mb-5">
-                            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </div>
-                        <h3 class="text-lg font-black mb-2">Drip Campaigns</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">Set a delay between each message in a campaign. Space out your blast over hours or days to mimic natural pacing and avoid detection as bulk sender.</p>
+                        <h3 class="text-lg font-black mb-2">Google Calendar Sync</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Two-way sync keeps your Google Calendar and Sendora in lockstep. Events created anywhere show up everywhere. Reminders fire based on your calendar automatically.</p>
                     </div>
 
                     <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
                         <div class="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-5">
-                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                         </div>
-                        <h3 class="text-lg font-black mb-2">Delivery & Click Analytics</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">Track every message: sent, delivered, read, and clicked. Links in your campaigns are auto-wrapped for click tracking. Export reports from your dashboard.</p>
+                        <h3 class="text-lg font-black mb-2">/sendora Commands</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Type commands right in WhatsApp. /sendora add, /sendora list, /sendora today -- manage your entire schedule without leaving your chat. Quick, intuitive, no app switching.</p>
                     </div>
 
                     <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
                         <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-5">
-                            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
                         </div>
-                        <h3 class="text-lg font-black mb-2">AI Playbooks</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">Write your business knowledge in plain markdown. Products, pricing, FAQs, tone of voice. The AI reads your playbook and answers every customer question accordingly.</p>
+                        <h3 class="text-lg font-black mb-2">AI-Powered Scheduling</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Just tell Sendora what you need in plain language. The AI understands context, finds the right time, and schedules it. "Set up a weekly standup every Monday at 9am" -- done.</p>
                     </div>
 
                     <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
                         <div class="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-5">
-                            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
-                        <h3 class="text-lg font-black mb-2">Live Conversation Monitor</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">See all active AI conversations in real-time. Review the full message history, pause or resume AI per chat, and close conversations when done.</p>
+                        <h3 class="text-lg font-black mb-2">AI Playbooks</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Define your routines, habits, and workflows in a Playbook. The AI follows your rules to suggest schedules, send check-ins, and keep you accountable throughout the day.</p>
                     </div>
 
                     <div class="p-6 sm:p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
                         <div class="w-12 h-12 bg-[#f7b538]/20 rounded-2xl flex items-center justify-center mb-5">
-                            <svg class="w-6 h-6 text-[#f7b538]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
+                            <svg class="w-6 h-6 text-[#f7b538]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                         </div>
-                        <h3 class="text-lg font-black mb-2">WhatsApp Warmer</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">Keep your WhatsApp numbers healthy. The Warmer mode applies extended human-stagger delays between campaign messages to maintain your number's trust score.</p>
+                        <h3 class="text-lg font-black mb-2">Morning Briefing</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Start every day with a WhatsApp summary of your schedule. See meetings, tasks, and reminders at a glance. Customise the briefing time and format to suit your routine.</p>
                     </div>
                 </div>
             </div>
@@ -365,33 +359,33 @@ const showMobileMenu = ref(false);
         <section class="py-16 sm:py-24 bg-white">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="text-center mb-12 sm:mb-16">
-                    <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-4 tracking-tight">Built for WhatsApp-Driven Businesses</h2>
-                    <p class="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto">If your sales, marketing, or support runs through WhatsApp, Sendora was built for you.</p>
+                    <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-4 tracking-tight">Built for Busy People</h2>
+                    <p class="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto">If you live on WhatsApp and need to stay on top of your schedule, Sendora was built for you.</p>
                 </div>
 
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div class="p-8 bg-slate-50 border border-slate-100 rounded-3xl hover:shadow-xl transition-shadow duration-300">
                         <div class="w-14 h-14 bg-[#780116] rounded-2xl flex items-center justify-center mb-6">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         </div>
-                        <h3 class="text-xl font-black text-slate-900 mb-3">Digital Agencies</h3>
-                        <p class="text-slate-500 leading-relaxed">Manage campaigns and AI playbooks across multiple client WhatsApp numbers from a single account. Each client gets their own contacts, campaigns, and conversation history.</p>
+                        <h3 class="text-xl font-black text-slate-900 mb-3">Professionals & Freelancers</h3>
+                        <p class="text-slate-500 leading-relaxed">Juggling client calls, deadlines, and meetings. Get reminders for every commitment right in WhatsApp. Use /sendora commands between meetings to stay organised without context-switching.</p>
                     </div>
 
                     <div class="p-8 bg-slate-50 border border-slate-100 rounded-3xl hover:shadow-xl transition-shadow duration-300">
                         <div class="w-14 h-14 bg-[#db7c26] rounded-2xl flex items-center justify-center mb-6">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                         </div>
-                        <h3 class="text-xl font-black text-slate-900 mb-3">Lead-Driven Businesses</h3>
-                        <p class="text-slate-500 leading-relaxed">Real estate, education, insurance, automotive. Blast your lead list with a campaign, then let AI qualify and respond to every interested inquiry instantly.</p>
+                        <h3 class="text-xl font-black text-slate-900 mb-3">Students & Academics</h3>
+                        <p class="text-slate-500 leading-relaxed">Track assignment deadlines, exam dates, and study sessions. Set recurring reminders for revision blocks. Sendora helps you build consistent habits without another app to check.</p>
                     </div>
 
                     <div class="p-8 bg-slate-50 border border-slate-100 rounded-3xl hover:shadow-xl transition-shadow duration-300">
                         <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mb-6">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                         </div>
-                        <h3 class="text-xl font-black text-slate-900 mb-3">E-Commerce & Retail</h3>
-                        <p class="text-slate-500 leading-relaxed">Send product launches, promotions, and restock alerts to customer groups. Track delivery and clicks. AI handles "where's my order?" replies automatically.</p>
+                        <h3 class="text-xl font-black text-slate-900 mb-3">Teams & Small Businesses</h3>
+                        <p class="text-slate-500 leading-relaxed">Keep your team aligned with shared calendar reminders. Never miss a standup, client call, or project milestone. Everyone gets the nudge they need, right in WhatsApp.</p>
                     </div>
                 </div>
             </div>
@@ -400,27 +394,31 @@ const showMobileMenu = ref(false);
         <!-- 7. Final CTA -->
         <section class="py-16 sm:py-24 bg-white px-4">
             <div class="max-w-5xl mx-auto rounded-[2rem] sm:rounded-[3rem] bg-slate-900 p-8 sm:p-12 md:p-20 text-center relative overflow-hidden">
-                <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 sm:mb-6">Start Blasting Smarter Today</h2>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 sm:mb-6">Never Miss a Thing Again</h2>
                 <p class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-8 sm:mb-10">
-                    Set up your first campaign or AI Playbook in under 15 minutes.
+                    Connect your WhatsApp and Google Calendar in under 5 minutes. Your first reminder is just a /sendora command away.
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
                     <Link :href="route('register')" class="w-full sm:w-auto bg-[#780116] text-white px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold hover:bg-[#c32f27] transition shadow-2xl shadow-red-900/40">
                         Get Started
                     </Link>
-                    <a href="https://wa.me/60148885659?text=Saya%20nak%20tahu%20pasal%20sendora" target="_blank" rel="noopener" class="w-full sm:w-auto bg-white/10 text-white border border-white/20 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold hover:bg-white/20 transition flex items-center justify-center gap-3">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        WhatsApp Us for a Demo
-                    </a>
+                    <Link :href="route('faq')" class="w-full sm:w-auto bg-white/10 text-white border border-white/20 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-base sm:text-xl font-bold hover:bg-white/20 transition flex items-center justify-center gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Frequently Asked Questions
+                    </Link>
                 </div>
                 <p class="mt-6 sm:mt-8 text-slate-400 font-medium text-sm sm:text-base tracking-wide flex items-center justify-center flex-wrap gap-4">
                     <span class="flex items-center gap-1.5">
                         <svg class="w-4 h-4 text-[#f7b538]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-                        Cancel anytime
+                        Free to start
                     </span>
                     <span class="flex items-center gap-1.5">
                         <svg class="w-4 h-4 text-[#f7b538]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-                        Setup in 15 minutes
+                        Setup in 5 minutes
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-[#f7b538]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        Cancel anytime
                     </span>
                 </p>
             </div>
