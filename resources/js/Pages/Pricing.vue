@@ -9,14 +9,13 @@ const props = defineProps({
     currentPlanId: Number,
 });
 
-const billingCycle = ref('monthly');
 const showMobileMenu = ref(false);
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
 const form = useForm({
     plan_id: null,
-    billing_cycle: 'monthly',
+    billing_cycle: null,
 });
 
 const featureNames = {
@@ -47,11 +46,11 @@ const isDowngrade = (plan) => {
     return Number(plan.monthly_price) < Number(currentPlan.monthly_price);
 };
 
-const selectPlan = (plan, forceCycle = null) => {
+const selectPlan = (plan) => {
     if (props.currentPlanId === plan.id) return;
     if (isDowngrade(plan)) return;
 
-    const cycle = plan.is_lifetime ? 'lifetime' : (forceCycle ?? billingCycle.value);
+    const cycle = plan.is_lifetime ? 'lifetime' : 'monthly';
 
     if (user.value) {
         form.plan_id = plan.id;
@@ -98,13 +97,13 @@ const selectPlan = (plan, forceCycle = null) => {
                         </template>
                         <template v-else>
                             <Link :href="route('login')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Log in</Link>
-                            <Link :href="route('register')" class="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition shadow-md">Start Free</Link>
+                            <Link :href="route('register')" class="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition shadow-md">Get Started</Link>
                         </template>
                     </div>
 
                     <!-- Mobile CTA Button -->
                     <div class="flex lg:hidden items-center">
-                        <Link v-if="!user" :href="route('register')" class="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-slate-800 transition shadow-md">Start Free</Link>
+                        <Link v-if="!user" :href="route('register')" class="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-slate-800 transition shadow-md">Get Started</Link>
                         <Link v-else :href="route('dashboard')" class="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-slate-800 transition shadow-md">Dashboard</Link>
                     </div>
                 </div>
@@ -149,7 +148,7 @@ const selectPlan = (plan, forceCycle = null) => {
                         Log in
                     </Link>
                     <Link :href="route('register')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl bg-slate-900 text-white hover:bg-slate-800" @click="showMobileMenu = false">
-                        Start Free
+                        Get Started
                     </Link>
                 </template>
             </nav>
@@ -167,31 +166,7 @@ const selectPlan = (plan, forceCycle = null) => {
                         Stop overpaying for features you don't use. Choose a plan that grows with your business, whether you're a solopreneur or a high-volume enterprise.
                     </p>
 
-                    <!-- Enhanced Switcher -->
-                    <div class="mt-12 flex flex-col items-center px-4">
-                        <div class="flex items-center space-x-2 sm:space-x-4 bg-white p-2 sm:p-2.5 rounded-[1.75rem] border border-slate-100 shadow-xl shadow-slate-200/50">
-                            <button
-                                @click="billingCycle = 'monthly'"
-                                :class="billingCycle === 'monthly' ? 'bg-[#780116] text-white shadow-xl shadow-red-200' : 'text-slate-400 hover:text-slate-600'"
-                                class="px-5 sm:px-10 py-3 sm:py-5 rounded-[1.25rem] text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all duration-300 transform active:scale-95"
-                            >
-                                <span class="hidden sm:inline">Regular Billing</span>
-                                <span class="sm:hidden">Monthly</span>
-                            </button>
-                            <button
-                                @click="billingCycle = 'yearly'"
-                                :class="billingCycle === 'yearly' ? 'bg-[#780116] text-white shadow-xl shadow-red-200' : 'text-slate-400 hover:text-slate-600'"
-                                class="px-5 sm:px-10 py-3 sm:py-5 rounded-[1.25rem] text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all duration-300 flex items-center transform active:scale-95"
-                            >
-                                <span class="hidden sm:inline">Annual Plan</span>
-                                <span class="sm:hidden">Yearly</span>
-                                <span class="ml-2 sm:ml-3 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg bg-[#f7b538] text-[9px] text-[#780116] font-black tracking-normal" :class="billingCycle === 'yearly' ? 'animate-pulse' : ''">
-                                    - 20% OFF
-                                </span>
-                            </button>
-                        </div>
-                        <p class="mt-8 text-[9px] sm:text-[11px] font-black text-slate-300 uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">Secure Checkout • Instant Deployment • Enterprise Grade</p>
-                    </div>
+                    <p class="mt-12 text-[9px] sm:text-[11px] font-black text-slate-300 uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">Secure Checkout • Instant Deployment • Enterprise Grade</p>
                 </div>
 
                 <!-- Pricing Cards -->
@@ -217,14 +192,11 @@ const selectPlan = (plan, forceCycle = null) => {
                                 <div class="mb-6">
                                     <div class="flex items-baseline mb-1">
                                         <span class="text-2xl font-bold mr-2 lg:block hidden" :class="plan.name === 'Business' ? 'text-white/40' : 'text-slate-300'">{{ currency }}</span>
-                                        <span class="text-6xl font-black tracking-tighter" :class="plan.name === 'Business' ? 'text-white' : 'text-slate-900'">{{ billingCycle === 'monthly' ? Number(plan.monthly_price).toFixed(2) : (plan.yearly_price / 12).toFixed(2) }}</span>
+                                        <span class="text-6xl font-black tracking-tighter" :class="plan.name === 'Business' ? 'text-white' : 'text-slate-900'">{{ Number(plan.monthly_price).toFixed(2) }}</span>
                                     </div>
                                     <div class="font-black text-xs uppercase tracking-widest" :class="plan.name === 'Business' ? 'text-white/40' : 'text-slate-400'">
                                         per month
                                     </div>
-                                </div>
-                                <div v-if="billingCycle === 'yearly' && plan.yearly_price > 0" class="inline-block px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest" :class="plan.name === 'Business' ? 'bg-white/10 text-white' : 'bg-slate-50 text-slate-400 border border-slate-100'">
-                                    TOTAL {{ currency }} {{ Number(plan.yearly_price).toFixed(2) }} / YEAR
                                 </div>
                             </div>
 
@@ -330,65 +302,6 @@ const selectPlan = (plan, forceCycle = null) => {
                     </div>
                 </div>
 
-                <!-- Starter Plan (Horizontal) -->
-                <div v-for="plan in plans.filter(p => ['Starter', 'Free'].includes(p.name))" :key="plan.id"
-                     class="max-w-7xl mx-auto bg-gradient-to-r from-white via-slate-50 to-white rounded-[3rem] p-8 sm:p-12 border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-700 flex flex-col lg:flex-row items-center justify-between gap-10 relative overflow-hidden group">
-                    
-                    <!-- Interactive Blobs -->
-                    <div class="absolute -right-20 -top-20 w-96 h-96 bg-red-500/5 rounded-full blur-[80px] group-hover:bg-red-500/10 transition-colors duration-700 animate-pulse"></div>
-                    <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-slate-200/20 rounded-full blur-[60px] group-hover:bg-slate-300/30 transition-colors duration-700"></div>
-                    
-                    <div class="relative z-10 flex-1 text-center lg:text-left">
-                        <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest mb-6">
-                            Free forever module
-                        </div>
-                        <h4 class="text-4xl font-black text-slate-900 mb-4 tracking-tight">{{ plan.name }}</h4>
-                        <p class="text-slate-500 font-medium max-w-md leading-relaxed text-lg">
-                            Experience the core power of Sendora. Simple, elegant, and completely free for personal exploration.
-                        </p>
-                    </div>
-
-                    <div class="relative z-10 flex flex-col md:flex-row items-center gap-12 lg:gap-24">
-                        <div class="text-center">
-                            <div class="flex items-baseline justify-center">
-                                <span class="text-xl font-bold text-slate-400 mr-1">{{ currency }}</span>
-                                <span class="text-6xl font-black text-slate-900">0.00</span>
-                                <span class="ml-1 text-slate-400 font-bold text-lg">/mo</span>
-                            </div>
-                            <p class="mt-2 text-[10px] font-black text-[#780116] uppercase tracking-widest bg-red-50 px-3 py-1 rounded-full inline-block">Zero Commitments</p>
-                        </div>
-
-                        <div class="grid grid-cols-1 gap-y-4">
-                            <div class="flex items-center gap-4 text-slate-700 font-bold text-lg">
-                                <div class="size-6 rounded-full bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-lg shadow-slate-200">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                                <span>{{ plan.limits.whatsapp_nos }} WhatsApp Number</span>
-                            </div>
-                            <div class="flex flex-col gap-1 ml-10">
-                                <div class="text-slate-500 text-sm font-bold flex items-center gap-2">
-                                     <div class="w-1 h-4 bg-[#f7b538] rounded-full"></div>
-                                     {{ plan.limits.messages }} Messages / month
-                                </div>
-                                <div class="text-slate-400 text-xs font-bold pl-3 flex items-center gap-2">
-                                     <div class="w-1 h-3 bg-slate-200 rounded-full"></div>
-                                     {{ plan.limits.contacts }} Contacts Allowed
-                                </div>
-                            </div>
-                        </div>
-
-                        <button 
-                            @click="selectPlan(plan)"
-                            :disabled="currentPlanId === plan.id || isDowngrade(plan)"
-                            class="px-12 py-6 bg-slate-900 text-white rounded-[2rem] font-black text-sm tracking-widest uppercase hover:bg-slate-800 transition-all shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:scale-100"
-                        >
-                            {{ 
-                                currentPlanId === plan.id ? 'Already Active' : 
-                                isDowngrade(plan) ? 'Unavailable' : 'Start Free' 
-                            }}
-                        </button>
-                    </div>
-                </div>
             </div>
         </main>
 

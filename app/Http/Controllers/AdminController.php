@@ -42,7 +42,7 @@ class AdminController extends Controller
 
             $planId = $request->plan_id;
             if (!$planId) {
-                $planId = SubscriptionPlan::where('name', 'Starter')->value('id');
+                $planId = SubscriptionPlan::where('name', 'Basic')->value('id');
             }
 
             if ($planId) {
@@ -227,7 +227,7 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string',
             'monthly_price' => 'required|numeric',
-            'yearly_price' => 'required|numeric',
+            'yearly_price' => 'nullable|numeric',
             'limits' => 'nullable|array',
             'is_active' => 'nullable|boolean',
         ]);

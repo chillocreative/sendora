@@ -23,8 +23,6 @@ class PaymentController extends Controller
 
         if ($plan->is_lifetime) {
             $amount = $plan->monthly_price;
-        } elseif ($billingCycle === 'yearly') {
-            $amount = $plan->yearly_price;
         } else {
             $amount = $plan->monthly_price;
         }
@@ -42,7 +40,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'plan_id' => 'required|exists:subscription_plans,id',
-            'billing_cycle' => 'required|in:monthly,yearly,lifetime',
+            'billing_cycle' => 'required|in:monthly,lifetime',
         ]);
 
         $user = auth()->user();
@@ -50,8 +48,6 @@ class PaymentController extends Controller
 
         if ($plan->is_lifetime) {
             $amount = $plan->monthly_price; // one-time price stored in monthly_price
-        } elseif ($request->billing_cycle === 'yearly') {
-            $amount = $plan->yearly_price;
         } else {
             $amount = $plan->monthly_price;
         }
@@ -66,16 +62,7 @@ class PaymentController extends Controller
             ]
         );
 
-        // 1. FREE PLAN
-        if ($amount <= 0) {
-            $subscription->update([
-                'status' => 'active',
-                'ends_at' => null, 
-            ]);
-            return redirect()->route('dashboard')->with('flash.banner', 'You represent subscribed to the ' . $plan->name . ' plan!');
-        }
-
-        // 2. PAID PLAN & CHIP-IN
+        // PAID PLAN & CHIP-IN
         $brandId = \App\Models\Setting::where('key', 'chip_in_brand_id')->value('value');
         $privateKey = \App\Models\Setting::where('key', 'chip_in_private_key')->value('value');
 
@@ -182,7 +169,6 @@ class PaymentController extends Controller
                 // Calculate Expiry based on Amount vs Plan Price
                 $plan = \App\Models\SubscriptionPlan::find($transaction->subscription_plan_id);
                 $isLifetime = $plan && $plan->is_lifetime;
-                $isYearly = !$isLifetime && $plan && abs($transaction->amount - $plan->yearly_price) < 0.1;
 
                 if ($isLifetime) {
                     // Cancel any existing active subscription and set permanent access
@@ -220,7 +206,7 @@ class PaymentController extends Controller
                         $subscription->subscription_plan_id = $transaction->subscription_plan_id;
                     }
 
-                    $endsAt = $isYearly ? $startDate->copy()->addYear() : $startDate->copy()->addMonth();
+                    $endsAt = $startDate->copy()->addMonth();
 
                     $subscription->update([
                         'status' => 'active',
@@ -238,7 +224,7 @@ class PaymentController extends Controller
                         'plan_name' => $plan->name ?? 'Unknown',
                         'amount' => number_format($transaction->amount, 2),
                         'currency' => $transaction->currency,
-                        'billing_cycle' => $isLifetime ? 'Lifetime' : ($isYearly ? 'Yearly' : 'Monthly'),
+                        'billing_cycle' => $isLifetime ? 'Lifetime' : 'Monthly',
                     ]);
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::error('Failed to queue payment notification', [

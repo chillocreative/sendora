@@ -38,7 +38,6 @@ const editingPlan = ref(null);
 const form = useForm({
     name: '',
     monthly_price: '',
-    yearly_price: '',
     limits: {
         whatsapp_nos: 0,
         contacts: 0,
@@ -51,7 +50,6 @@ const editPlan = (plan) => {
     editingPlan.value = plan;
     form.name = plan.name;
     form.monthly_price = plan.monthly_price;
-    form.yearly_price = plan.yearly_price;
     form.limits = JSON.parse(JSON.stringify(plan.limits || {
         whatsapp_nos: 0,
         contacts: 0,
@@ -64,7 +62,6 @@ const toggleLifetimeActive = (plan) => {
     const toggleForm = useForm({
         name: plan.name,
         monthly_price: plan.monthly_price,
-        yearly_price: plan.yearly_price,
         limits: plan.limits,
         is_active: !plan.is_active,
     });
@@ -199,23 +196,16 @@ const closeEdit = () => {
             <template #content>
                 <div class="space-y-8 py-4">
                     <!-- General Settings -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                        <div class="col-span-2">
+                    <div class="grid grid-cols-1 gap-6 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                        <div>
                             <InputLabel for="name" value="PLAN NAME" class="text-[10px] font-black tracking-widest text-slate-400 mb-2 ml-1" />
                             <TextInput id="name" v-model="form.name" type="text" class="w-full px-5 py-3 border-slate-100 rounded-2xl font-bold bg-white" placeholder="e.g. Pro" />
                         </div>
                         <div>
-                            <InputLabel for="monthly" value="MONTHLY PRICE" class="text-[10px] font-black tracking-widest text-slate-400 mb-2 ml-1" />
+                            <InputLabel for="monthly" value="PRICE" class="text-[10px] font-black tracking-widest text-slate-400 mb-2 ml-1" />
                             <div class="relative">
                                 <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">{{ currency }}</span>
                                 <TextInput id="monthly" v-model="form.monthly_price" type="number" step="0.01" class="w-full pl-14 pr-5 py-3 border-slate-100 rounded-2xl font-bold bg-white" />
-                            </div>
-                        </div>
-                        <div>
-                            <InputLabel for="yearly" value="YEARLY PRICE" class="text-[10px] font-black tracking-widest text-slate-400 mb-2 ml-1" />
-                             <div class="relative">
-                                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">{{ currency }}</span>
-                                <TextInput id="yearly" v-model="form.yearly_price" type="number" step="0.01" class="w-full pl-14 pr-5 py-3 border-slate-100 rounded-2xl font-bold bg-white" />
                             </div>
                         </div>
                     </div>

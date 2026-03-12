@@ -72,18 +72,13 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the user's active plan OR the default Starter plan if none exists.
+     * Get the user's active plan, or null if no active subscription.
      */
     public function getCurrentPlanAttribute()
     {
         $sub = $this->activeSubscription()->with('plan')->first();
-        
-        if ($sub) {
-            return $sub->plan;
-        }
 
-        // Return the default Starter plan if no active subscription
-        return SubscriptionPlan::where('name', 'Starter')->first();
+        return $sub?->plan;
     }
 
     public function latestSubscription()

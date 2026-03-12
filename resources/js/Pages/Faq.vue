@@ -73,7 +73,7 @@ const faqs = ref([
     },
     {
         question: "How does the pricing work?",
-        answer: "Sendora offers multiple monthly and yearly tiers — Basic, Pro, and Business — each with increasing limits on WhatsApp numbers, contacts, and features. We also offer a Lifetime plan: a one-time payment that gives you Pro-level features forever with no recurring charges. Annual plans save 20% compared to monthly billing. There are no hidden per-message costs and no Meta API fees.",
+        answer: "Sendora offers monthly plans — Basic, Pro, and Business — each with increasing limits on WhatsApp numbers, contacts, and features. We also offer a Lifetime plan: a one-time payment that gives you Pro-level features forever with no recurring charges. There are no hidden per-message costs and no Meta API fees.",
         open: false
     },
     {
@@ -129,14 +129,14 @@ const toggleFaq = (index) => {
                             <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Dashboard</Link>
                             <template v-else>
                                 <Link :href="route('login')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Log in</Link>
-                                <Link v-if="canRegister" :href="route('register')" class="bg-[#780116] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-[#c32f27] transition shadow-md">Start Free</Link>
+                                <Link v-if="canRegister" :href="route('register')" class="bg-[#780116] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-[#c32f27] transition shadow-md">Get Started</Link>
                             </template>
                         </template>
                     </div>
 
                     <!-- Mobile CTA Button -->
                     <div class="flex lg:hidden items-center">
-                        <Link v-if="canLogin && !$page.props.auth.user && canRegister" :href="route('register')" class="bg-[#780116] text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-[#c32f27] transition shadow-md">Start Free</Link>
+                        <Link v-if="canLogin && !$page.props.auth.user && canRegister" :href="route('register')" class="bg-[#780116] text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-[#c32f27] transition shadow-md">Get Started</Link>
                         <Link v-else-if="canLogin && $page.props.auth.user" :href="route('dashboard')" class="bg-[#780116] text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-[#c32f27] transition shadow-md">Dashboard</Link>
                     </div>
                 </div>
@@ -180,7 +180,7 @@ const toggleFaq = (index) => {
                             Log in
                         </Link>
                         <Link v-if="canRegister" :href="route('register')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl bg-[#780116] text-white hover:bg-[#c32f27]" @click="showMobileMenu = false">
-                            Start Free
+                            Get Started
                         </Link>
                     </template>
                 </template>
@@ -262,7 +262,7 @@ const toggleFaq = (index) => {
                     Contact Support
                 </Link>
                 <Link :href="route('register')" class="w-full sm:w-auto px-6 sm:px-8 py-4 bg-[#780116] text-white font-bold rounded-2xl hover:bg-[#c32f27] shadow-xl shadow-red-100 transition">
-                    Get Started Free
+                    Get Started
                 </Link>
             </div>
         </section>

@@ -24,8 +24,7 @@ class CheckSubscriptionLimits
         $subscription = $user->activeSubscription;
 
         if (!$subscription) {
-            // Check if there's a free plan or redirect to pricing
-            return $next($request);
+            return redirect()->route('pricing')->with('error', 'Please subscribe to a plan to access this feature.');
         }
 
         $plan = $subscription->plan;

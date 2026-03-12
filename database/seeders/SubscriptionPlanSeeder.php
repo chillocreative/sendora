@@ -14,29 +14,6 @@ class SubscriptionPlanSeeder extends Seeder
     {
         $plans = [
             [
-                'name' => 'Starter',
-                'monthly_price' => 0,
-                'yearly_price' => 0,
-                'limits' => [
-                    'whatsapp_nos' => 1,
-                    'contacts' => 500,
-                    'messages' => 500,
-                    'features' => [
-                        'text_support' => true,
-                        'image_support' => false,
-                        'file_support' => false,
-                        'scheduling' => false,
-                        'pdf_support' => false,
-                        'link_preview' => false,
-                        'auto_reply' => false,
-                        'message_preview' => false,
-                        'multi_user' => false,
-                        'webhooks' => false,
-                        'api_access' => false,
-                    ],
-                ],
-            ],
-            [
                 'name' => 'Basic',
                 'monthly_price' => 59,
                 'yearly_price' => 590,

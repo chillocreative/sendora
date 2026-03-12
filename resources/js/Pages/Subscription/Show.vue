@@ -9,7 +9,6 @@ const props = defineProps({
     currency: String,
 });
 
-const billingCycle = ref('monthly');
 const form = useForm({
     plan_id: null,
     billing_cycle: 'monthly',
@@ -50,7 +49,7 @@ const selectPlan = (plan) => {
     if (isDowngrade(plan)) return;
 
     form.plan_id = plan.id;
-    form.billing_cycle = plan.is_lifetime ? 'lifetime' : billingCycle.value;
+    form.billing_cycle = plan.is_lifetime ? 'lifetime' : 'monthly';
     form.post(route('payments.initiate'));
 };
 
@@ -181,33 +180,10 @@ const formatDate = (date) => {
                     <h3 class="text-4xl font-black text-slate-900 mb-4 tracking-tight">Available Plans</h3>
                     <p class="text-slate-500 font-medium max-w-2xl mx-auto">Scale your performance with our premium features. Upgrade your subscription anytime.</p>
                 
-                    <!-- Billing Switcher -->
-                    <div class="mt-8 flex justify-center px-4">
-                        <div class="flex items-center space-x-1 sm:space-x-2 bg-white p-1.5 sm:p-2 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-100">
-                            <button
-                                @click="billingCycle = 'monthly'"
-                                :class="billingCycle === 'monthly' ? 'bg-[#780116] text-white shadow-xl shadow-red-100' : 'text-slate-400 hover:text-slate-700'"
-                                class="px-4 sm:px-10 py-3 sm:py-4 rounded-[1.25rem] text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all duration-300"
-                            >
-                                Monthly
-                            </button>
-                            <button
-                                @click="billingCycle = 'yearly'"
-                                :class="billingCycle === 'yearly' ? 'bg-[#780116] text-white shadow-xl shadow-red-100' : 'text-slate-400 hover:text-slate-700'"
-                                class="px-4 sm:px-10 py-3 sm:py-4 rounded-[1.25rem] text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all duration-300 flex items-center"
-                            >
-                                <span class="hidden sm:inline">Yearly Access</span>
-                                <span class="sm:hidden">Yearly</span>
-                                <span class="ml-2 sm:ml-3 px-1.5 sm:px-2 py-0.5 rounded-lg bg-[#f7b538] text-[9px] text-[#780116] font-black tracking-normal" :class="billingCycle === 'yearly' ? 'bg-white/20 text-white' : ''">
-                                    - 20%
-                                </span>
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-                    <div v-for="plan in plans.filter(p => !p.is_lifetime)" :key="plan.id"
+                    <div v-for="plan in plans.filter(p => !p.is_lifetime && p.monthly_price > 0)" :key="plan.id"
                          class="bg-white rounded-[2.5rem] border border-slate-100 p-8 flex flex-col transition-all duration-500 hover:shadow-2xl sm:hover:-translate-y-4"
                          :class="{'ring-2 ring-[#780116] ring-offset-4': plan.name === 'Pro'}">
 
@@ -216,14 +192,11 @@ const formatDate = (date) => {
                             <div class="mb-2">
                                 <div class="flex items-baseline justify-start mb-1">
                                     <span class="text-slate-400 font-black text-xs uppercase tracking-wider mr-1">{{ currency }}</span>
-                                    <span class="text-4xl font-black text-slate-900 tracking-tighter">{{ billingCycle === 'monthly' ? Number(plan.monthly_price).toFixed(2) : (Number(plan.yearly_price) / 12).toFixed(2) }}</span>
+                                    <span class="text-4xl font-black text-slate-900 tracking-tighter">{{ Number(plan.monthly_price).toFixed(2) }}</span>
                                 </div>
                                 <div class="text-slate-400 font-black text-[9px] uppercase tracking-[0.15em]">
                                     per month
                                 </div>
-                            </div>
-                            <div v-if="billingCycle === 'yearly' && plan.yearly_price > 0" class="text-[9px] font-black text-[#780116] uppercase tracking-widest bg-red-50 inline-block px-2 py-0.5 rounded-lg">
-                                Billed Annually
                             </div>
                         </div>
 
