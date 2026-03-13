@@ -2,16 +2,17 @@
 
 namespace App\Services;
 
+use App\Mail\ReminderEmailNotification;
 use App\Models\Reminder;
 use App\Models\ReminderLog;
 use App\Models\User;
-use App\Models\WhatsappNumber;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ReminderService
 {
     protected WhatsappService $whatsapp;
+
     protected GoogleCalendarService $calendarService;
 
     public function __construct(WhatsappService $whatsapp, GoogleCalendarService $calendarService)
@@ -43,7 +44,7 @@ class ReminderService
         ]);
 
         // Sync to Google Calendar if requested and connected
-        if (!empty($data['add_to_calendar'])) {
+        if (! empty($data['add_to_calendar'])) {
             $conn = $user->googleCalendarConnection;
             if ($conn) {
                 $googleEventId = $this->calendarService->createEvent($conn, [
@@ -68,6 +69,12 @@ class ReminderService
             'action' => 'created',
             'details' => "Reminder created via {$reminder->source}",
         ]);
+
+        // Send email notification on creation
+        if (! empty($data['notify_email'])) {
+            $reminder->update(['notify_email' => $data['notify_email']]);
+            Mail::to($data['notify_email'])->queue(new ReminderEmailNotification($reminder, 'created'));
+        }
 
         return $reminder;
     }
@@ -97,6 +104,42 @@ class ReminderService
         return true;
     }
 
+    public function updateReminder(Reminder $reminder, array $data): Reminder
+    {
+        // Recalculate reminder_at if event_at or minutes_before changed
+        if (isset($data['event_at']) || isset($data['minutes_before'])) {
+            $eventAt = Carbon::parse($data['event_at'] ?? $reminder->event_at ?? $reminder->reminder_at);
+            $minutesBefore = (int) ($data['minutes_before'] ?? $reminder->minutes_before ?? 15);
+            $data['reminder_at'] = $eventAt->copy()->subMinutes($minutesBefore);
+            $data['event_at'] = $eventAt;
+            $data['minutes_before'] = $minutesBefore;
+        }
+
+        $reminder->update($data);
+
+        // Sync to Google Calendar if linked
+        if ($reminder->google_event_id && $reminder->google_calendar_connection_id) {
+            $conn = $reminder->googleCalendarConnection;
+            if ($conn) {
+                $this->calendarService->updateEvent($conn, $reminder->google_event_id, [
+                    'title' => $reminder->title,
+                    'description' => $reminder->description,
+                    'location' => $reminder->location,
+                    'event_at' => $reminder->event_at ?? $reminder->reminder_at,
+                    'minutes_before' => $reminder->minutes_before,
+                ]);
+            }
+        }
+
+        ReminderLog::create([
+            'reminder_id' => $reminder->id,
+            'action' => 'updated',
+            'details' => 'Reminder updated: '.implode(', ', array_keys($data)),
+        ]);
+
+        return $reminder->refresh();
+    }
+
     public function sendReminder(Reminder $reminder): bool
     {
         $reminder->loadMissing(['user', 'whatsappNumber']);
@@ -104,7 +147,7 @@ class ReminderService
         $waNumber = $reminder->whatsappNumber
             ?? $reminder->user->whatsappNumbers()->where('status', 'connected')->first();
 
-        if (!$waNumber || $waNumber->status !== 'connected') {
+        if (! $waNumber || $waNumber->status !== 'connected') {
             $reminder->update([
                 'status' => 'failed',
                 'error_message' => 'No connected WhatsApp number available',
@@ -114,6 +157,7 @@ class ReminderService
                 'action' => 'failed',
                 'details' => 'No connected WhatsApp number',
             ]);
+
             return false;
         }
 
@@ -135,6 +179,11 @@ class ReminderService
                 'action' => 'sent',
                 'details' => "Sent via WA #{$waNumber->id}",
             ]);
+
+            // Send email notification when reminder fires
+            if ($reminder->notify_email) {
+                Mail::to($reminder->notify_email)->queue(new ReminderEmailNotification($reminder, 'due'));
+            }
 
             // Generate next occurrence if recurring
             if ($reminder->recurrence_rule) {
@@ -164,14 +213,14 @@ class ReminderService
         $lines[] = "\xF0\x9F\x94\x94 *{$reminder->title}*";
 
         $dateTime = $reminder->event_at ?? $reminder->reminder_at;
-        $lines[] = "\xF0\x9F\x93\x85 " . $dateTime->format('l, d M Y \a\t g:i A');
+        $lines[] = "\xF0\x9F\x93\x85 ".$dateTime->format('l, d M Y \a\t g:i A');
 
         if ($reminder->location) {
-            $lines[] = "\xF0\x9F\x93\x8D " . $reminder->location;
+            $lines[] = "\xF0\x9F\x93\x8D ".$reminder->location;
         }
 
         if ($reminder->description) {
-            $lines[] = "\xF0\x9F\x93\x9D " . $reminder->description;
+            $lines[] = "\xF0\x9F\x93\x9D ".$reminder->description;
         }
 
         return implode("\n", $lines);
@@ -190,7 +239,7 @@ class ReminderService
             default => null,
         };
 
-        if (!$nextDate) {
+        if (! $nextDate) {
             return null;
         }
 

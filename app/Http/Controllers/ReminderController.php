@@ -113,10 +113,7 @@ class ReminderController extends Controller
             'whatsapp_number_id' => 'nullable|exists:whatsapp_numbers,id',
         ]);
 
-        $eventAt = \Carbon\Carbon::parse($validated['event_at']);
-        $validated['reminder_at'] = $eventAt->copy()->subMinutes($validated['minutes_before']);
-
-        $reminder->update($validated);
+        $this->reminderService->updateReminder($reminder, $validated);
 
         return redirect()->route('reminders.index')
             ->with('success', 'Reminder updated!');

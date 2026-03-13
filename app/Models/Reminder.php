@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
 
 class Reminder extends Model
 {
@@ -26,6 +26,7 @@ class Reminder extends Model
         'wa_message_id',
         'error_message',
         'source',
+        'notify_email',
     ];
 
     protected function casts(): array

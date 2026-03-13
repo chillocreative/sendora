@@ -15,7 +15,7 @@ class GoogleCalendarService
 {
     protected function getClient(): GoogleClient
     {
-        $client = new GoogleClient();
+        $client = new GoogleClient;
         $client->setClientId(config('google.client_id'));
         $client->setClientSecret(config('google.client_secret'));
         $client->setRedirectUri(config('google.redirect_uri'));
@@ -37,7 +37,7 @@ class GoogleCalendarService
         $token = $client->fetchAccessTokenWithAuthCode($code);
 
         if (isset($token['error'])) {
-            throw new \RuntimeException('Google OAuth error: ' . ($token['error_description'] ?? $token['error']));
+            throw new \RuntimeException('Google OAuth error: '.($token['error_description'] ?? $token['error']));
         }
 
         if (empty($token['refresh_token'])) {
@@ -71,7 +71,7 @@ class GoogleCalendarService
 
             if (isset($newToken['error'])) {
                 Log::error('Google token refresh failed', ['error' => $newToken['error_description'] ?? $newToken['error']]);
-                throw new \RuntimeException('Failed to refresh Google token: ' . ($newToken['error_description'] ?? $newToken['error']));
+                throw new \RuntimeException('Failed to refresh Google token: '.($newToken['error_description'] ?? $newToken['error']));
             }
 
             $conn->update([
@@ -130,11 +130,12 @@ class GoogleCalendarService
                             ->where('user_id', $conn->user_id)
                             ->where('status', 'pending')
                             ->update(['status' => 'cancelled']);
+
                         continue;
                     }
 
                     $startDateTime = $event->getStart()->getDateTime()
-                        ?? $event->getStart()->getDate() . 'T09:00:00';
+                        ?? $event->getStart()->getDate().'T09:00:00';
 
                     $eventAt = \Carbon\Carbon::parse($startDateTime);
 
@@ -212,7 +213,7 @@ class GoogleCalendarService
             $birthdays = [];
             foreach ($events->getItems() as $event) {
                 $dateStr = $event->getStart()->getDate();
-                if (!$dateStr) {
+                if (! $dateStr) {
                     continue;
                 }
                 $birthdays[] = [
@@ -256,10 +257,76 @@ class GoogleCalendarService
 
         try {
             $created = $calendar->events->insert($conn->calendar_id, $event);
+
             return $created->getId();
         } catch (\Exception $e) {
             Log::error('Google Calendar create event error', ['error' => $e->getMessage()]);
+
             return null;
+        }
+    }
+
+    public function updateEvent(GoogleCalendarConnection $conn, string $googleEventId, array $data): bool
+    {
+        try {
+            $client = $this->refreshTokenIfNeeded($conn);
+            $calendar = new GoogleCalendar($client);
+
+            $event = $calendar->events->get($conn->calendar_id, $googleEventId);
+
+            if (isset($data['title'])) {
+                $event->setSummary($data['title']);
+            }
+            if (array_key_exists('description', $data)) {
+                $event->setDescription($data['description']);
+            }
+            if (array_key_exists('location', $data)) {
+                $event->setLocation($data['location']);
+            }
+            if (isset($data['event_at'])) {
+                $tz = config('app.timezone', 'Asia/Kuala_Lumpur');
+                $eventAt = \Carbon\Carbon::parse($data['event_at']);
+                $event->setStart(new \Google\Service\Calendar\EventDateTime([
+                    'dateTime' => $eventAt->toRfc3339String(),
+                    'timeZone' => $tz,
+                ]));
+                $event->setEnd(new \Google\Service\Calendar\EventDateTime([
+                    'dateTime' => $eventAt->copy()->addHour()->toRfc3339String(),
+                    'timeZone' => $tz,
+                ]));
+            }
+            if (isset($data['minutes_before'])) {
+                $event->setReminders(new \Google\Service\Calendar\EventReminders([
+                    'useDefault' => false,
+                    'overrides' => [
+                        new \Google\Service\Calendar\EventReminder([
+                            'method' => 'popup',
+                            'minutes' => $data['minutes_before'],
+                        ]),
+                    ],
+                ]));
+            }
+
+            $calendar->events->update($conn->calendar_id, $googleEventId, $event);
+
+            return true;
+        } catch (\Google\Service\Exception $e) {
+            if (in_array($e->getCode(), [404, 410])) {
+                return false;
+            }
+            Log::error('Google Calendar update event error', [
+                'event_id' => $googleEventId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Google Calendar update event error', [
+                'event_id' => $googleEventId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
         }
     }
 
