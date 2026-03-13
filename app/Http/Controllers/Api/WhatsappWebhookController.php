@@ -136,8 +136,9 @@ class WhatsappWebhookController extends Controller
 
             $messageText = (string) ($request->message ?? '');
 
-            // Self-sent media → auto-extract event
-            if ($request->media_base64 && $this->isSelfMessage($request, $whatsappNumber)) {
+            // Self-sent media with /sendora caption → extract event
+            if ($request->media_base64 && $this->isSelfMessage($request, $whatsappNumber)
+                && str_starts_with(strtolower(trim($messageText)), '/sendora')) {
                 ProcessMediaReminderJob::dispatch(
                     (int) $request->user_id,
                     (int) $request->phone_number,
