@@ -222,6 +222,36 @@ class GoogleCalendarService
         }
     }
 
+    public function deleteEvent(GoogleCalendarConnection $conn, string $googleEventId): bool
+    {
+        try {
+            $client = $this->refreshTokenIfNeeded($conn);
+            $calendar = new GoogleCalendar($client);
+            $calendar->events->delete($conn->calendar_id, $googleEventId);
+
+            return true;
+        } catch (\Google\Service\Exception $e) {
+            // 404/410 = event already deleted, treat as success
+            if (in_array($e->getCode(), [404, 410])) {
+                return true;
+            }
+
+            Log::error('Google Calendar delete event error', [
+                'event_id' => $googleEventId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Google Calendar delete event error', [
+                'event_id' => $googleEventId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
     public function disconnect(GoogleCalendarConnection $conn): void
     {
         try {

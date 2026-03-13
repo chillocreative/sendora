@@ -127,7 +127,7 @@ class ReminderController extends Controller
         $reminder = Reminder::where('user_id', auth()->id())->findOrFail($id);
 
         if ($reminder->status === 'pending') {
-            $reminder->update(['status' => 'cancelled']);
+            $this->reminderService->cancelReminder($reminder);
         } else {
             $reminder->delete();
         }

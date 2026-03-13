@@ -41,16 +41,20 @@ class ProcessSendoraCommandJob implements ShouldQueue
             return;
         }
 
-        // Check if user's plan supports AI command parsing
-        $plan = $user->current_plan;
-        $features = $plan?->limits['features'] ?? [];
-        if (!($features['ai_command_parsing'] ?? false)) {
-            $whatsappService->sendMessage(
-                $waNumber,
-                $this->contactPhone,
-                "\xE2\x9D\x8C AI command parsing is not available on your current plan. Please upgrade to use /sendora commands."
-            );
-            return;
+        $commandType = $commandService->detectCommandType($this->messageText);
+
+        // Only enforce AI feature flag for commands that use AI (create, cancel)
+        if (in_array($commandType, ['create', 'cancel'])) {
+            $plan = $user->current_plan;
+            $features = $plan?->limits['features'] ?? [];
+            if (!($features['ai_command_parsing'] ?? false)) {
+                $whatsappService->sendMessage(
+                    $waNumber,
+                    $this->contactPhone,
+                    "\xE2\x9D\x8C AI command parsing is not available on your current plan. Please upgrade to use /sendora commands."
+                );
+                return;
+            }
         }
 
         $reply = $commandService->executeCommand($user, $waNumber, $this->messageText);

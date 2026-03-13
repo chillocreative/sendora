@@ -72,6 +72,31 @@ class ReminderService
         return $reminder;
     }
 
+    public function cancelReminder(Reminder $reminder): bool
+    {
+        if ($reminder->status !== 'pending') {
+            return false;
+        }
+
+        // Delete from Google Calendar if linked
+        if ($reminder->google_event_id && $reminder->google_calendar_connection_id) {
+            $conn = $reminder->googleCalendarConnection;
+            if ($conn) {
+                $this->calendarService->deleteEvent($conn, $reminder->google_event_id);
+            }
+        }
+
+        $reminder->update(['status' => 'cancelled']);
+
+        ReminderLog::create([
+            'reminder_id' => $reminder->id,
+            'action' => 'cancelled',
+            'details' => 'Reminder cancelled',
+        ]);
+
+        return true;
+    }
+
     public function sendReminder(Reminder $reminder): bool
     {
         $reminder->loadMissing(['user', 'whatsappNumber']);
