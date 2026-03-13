@@ -94,20 +94,60 @@ class ProcessMediaReminderJob implements ShouldQueue
             return;
         }
 
-        $eventAt = $result['date'].' '.($result['time'] ?? '09:00');
+        $events = $result['events'] ?? [];
+        $addToCalendar = $user->googleCalendarConnection !== null;
+        $reminders = [];
 
-        $reminder = $reminderService->createReminder($user, [
-            'title' => $result['title'],
-            'description' => $result['description'] ?? null,
-            'event_at' => $eventAt,
-            'minutes_before' => 15,
-            'location' => $result['location'] ?? null,
-            'whatsapp_number_id' => $waNumber->id,
-            'source' => 'whatsapp_media',
-            'add_to_calendar' => $user->googleCalendarConnection !== null,
-        ]);
+        foreach ($events as $event) {
+            $eventAt = $event['date'].' '.($event['time'] ?? '09:00');
 
-        $reply = $commandService->formatConfirmation($reminder);
+            $reminders[] = $reminderService->createReminder($user, [
+                'title' => $event['title'],
+                'description' => $event['description'] ?? null,
+                'event_at' => $eventAt,
+                'minutes_before' => 15,
+                'location' => $event['location'] ?? null,
+                'whatsapp_number_id' => $waNumber->id,
+                'source' => 'whatsapp_media',
+                'add_to_calendar' => $addToCalendar,
+            ]);
+        }
+
+        if (count($reminders) === 1) {
+            $reply = $commandService->formatConfirmation($reminders[0]);
+        } else {
+            $reply = $this->formatMultiEventConfirmation($reminders);
+        }
+
         $whatsappService->sendMessage($waNumber, $this->contactPhone, $reply);
+    }
+
+    protected function formatMultiEventConfirmation(array $reminders): string
+    {
+        $count = count($reminders);
+        $lines = [];
+        $lines[] = "\xE2\x9C\x85 *{$count} Reminders Set!*";
+        $lines[] = '';
+
+        foreach ($reminders as $i => $reminder) {
+            $dateTime = $reminder->event_at ?? $reminder->reminder_at;
+            $num = $i + 1;
+            $lines[] = "*{$num}. {$reminder->title}*";
+            $lines[] = "\xF0\x9F\x93\x85 ".$dateTime->format('l, d M Y \a\t g:i A');
+
+            if ($reminder->location) {
+                $lines[] = "\xF0\x9F\x93\x8D ".$reminder->location;
+            }
+
+            if ($reminder->google_event_id) {
+                $lines[] = "\xF0\x9F\x93\x86 Added to Google Calendar";
+            }
+
+            $lines[] = '';
+        }
+
+        $lines[] = "\xE2\x8F\xB0 Reminders: 15 min before each event";
+
+        return implode("\n", $lines);
     }
 }

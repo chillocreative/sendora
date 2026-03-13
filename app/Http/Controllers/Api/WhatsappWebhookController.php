@@ -146,7 +146,7 @@ class WhatsappWebhookController extends Controller
                     $request->media_base64,
                     $request->media_mimetype ?? 'application/octet-stream',
                     $request->media_filename,
-                    $messageText ?: null,
+                    $this->cleanSendoraCaption($messageText),
                     $request->message_id ?? null
                 );
 
@@ -188,6 +188,13 @@ class WhatsappWebhookController extends Controller
         $fromPhone = preg_replace('/@.*$/', '', $request->from);
 
         return $fromPhone === $whatsappNumber->phone_number;
+    }
+
+    protected function cleanSendoraCaption(string $text): ?string
+    {
+        $cleaned = preg_replace('/^\/sendora\s*/i', '', trim($text));
+
+        return $cleaned !== '' ? $cleaned : null;
     }
 
     public function messageReceipt(Request $request)

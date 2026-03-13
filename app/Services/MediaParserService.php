@@ -70,7 +70,7 @@ class MediaParserService
             messages: [
                 [
                     'role' => 'system',
-                    'content' => "You are an event detail extractor. Today is {$today}, timezone: {$timezone}. Extract event details from the image provided. Return a JSON object with:\n- title: event name/title (string)\n- date: YYYY-MM-DD format\n- time: HH:MM format (24h), or null if not found\n- location: venue/place or null\n- description: brief description or null\n- has_event: boolean - true if this image contains event information, false if not\n\nIf the image does not contain any event, meeting, appointment, or schedule information, set has_event to false and leave other fields null.\n\nRespond ONLY with valid JSON.",
+                    'content' => "You are an event detail extractor. Today is {$today}, timezone: {$timezone}. Extract ALL event details from the image provided. An image may contain multiple events (e.g. a schedule, timetable, or poster with several sessions).\n\nReturn a JSON object with:\n- has_event: boolean - true if this image contains event information, false if not\n- events: array of event objects, each with:\n  - title: event name/title (string)\n  - date: YYYY-MM-DD format\n  - time: HH:MM format (24h), or null if not found\n  - location: venue/place or null\n  - description: brief description or null\n\nIf the image does not contain any event, meeting, appointment, or schedule information, set has_event to false and events to an empty array.\n\nRespond ONLY with valid JSON.",
                 ],
                 [
                     'role' => 'user',
@@ -79,7 +79,7 @@ class MediaParserService
             ],
             model: 'gpt-4o',
             temperature: 0.1,
-            maxTokens: 500,
+            maxTokens: 2000,
             jsonMode: true,
         );
 
@@ -91,17 +91,7 @@ class MediaParserService
 
         $parsed = json_decode($result['content'], true);
 
-        if (! $parsed || empty($parsed['has_event']) || empty($parsed['title']) || empty($parsed['date'])) {
-            return null;
-        }
-
-        return [
-            'title' => $parsed['title'],
-            'date' => $parsed['date'],
-            'time' => $parsed['time'] ?? '09:00',
-            'location' => $parsed['location'] ?? null,
-            'description' => $parsed['description'] ?? null,
-        ];
+        return $this->normalizeEventResult($parsed);
     }
 
     protected function extractEventFromDocument(string $base64, string $mimetype, ?string $filename, ?string $caption): ?array
@@ -157,7 +147,7 @@ class MediaParserService
             messages: [
                 [
                     'role' => 'system',
-                    'content' => "You are an event detail extractor. Today is {$today}, timezone: {$timezone}. Extract event details from the document text provided. Return a JSON object with:\n- title: event name/title (string)\n- date: YYYY-MM-DD format\n- time: HH:MM format (24h), or null if not found\n- location: venue/place or null\n- description: brief description or null\n- has_event: boolean - true if text contains event information, false if not\n\nIf the text does not contain any event, meeting, appointment, or schedule information, set has_event to false and leave other fields null.\n\nRespond ONLY with valid JSON.",
+                    'content' => "You are an event detail extractor. Today is {$today}, timezone: {$timezone}. Extract ALL event details from the document text provided. A document may contain multiple events (e.g. a schedule, timetable, or agenda with several sessions).\n\nReturn a JSON object with:\n- has_event: boolean - true if text contains event information, false if not\n- events: array of event objects, each with:\n  - title: event name/title (string)\n  - date: YYYY-MM-DD format\n  - time: HH:MM format (24h), or null if not found\n  - location: venue/place or null\n  - description: brief description or null\n\nIf the text does not contain any event, meeting, appointment, or schedule information, set has_event to false and events to an empty array.\n\nRespond ONLY with valid JSON.",
                 ],
                 [
                     'role' => 'user',
@@ -166,7 +156,7 @@ class MediaParserService
             ],
             model: 'gpt-4o',
             temperature: 0.1,
-            maxTokens: 500,
+            maxTokens: 2000,
             jsonMode: true,
         );
 
@@ -178,17 +168,48 @@ class MediaParserService
 
         $parsed = json_decode($result['content'], true);
 
-        if (! $parsed || empty($parsed['has_event']) || empty($parsed['title']) || empty($parsed['date'])) {
+        return $this->normalizeEventResult($parsed);
+    }
+
+    protected function normalizeEventResult(?array $parsed): ?array
+    {
+        if (! $parsed || empty($parsed['has_event'])) {
             return null;
         }
 
-        return [
-            'title' => $parsed['title'],
-            'date' => $parsed['date'],
-            'time' => $parsed['time'] ?? '09:00',
-            'location' => $parsed['location'] ?? null,
-            'description' => $parsed['description'] ?? null,
-        ];
+        // Multi-event format: {has_event: true, events: [...]}
+        if (! empty($parsed['events']) && is_array($parsed['events'])) {
+            $events = array_filter($parsed['events'], fn ($e) => ! empty($e['title']) && ! empty($e['date']));
+
+            if (empty($events)) {
+                return null;
+            }
+
+            return [
+                'events' => array_map(fn ($e) => [
+                    'title' => $e['title'],
+                    'date' => $e['date'],
+                    'time' => $e['time'] ?? '09:00',
+                    'location' => $e['location'] ?? null,
+                    'description' => $e['description'] ?? null,
+                ], array_values($events)),
+            ];
+        }
+
+        // Legacy single-event fallback: {has_event: true, title: ..., date: ...}
+        if (! empty($parsed['title']) && ! empty($parsed['date'])) {
+            return [
+                'events' => [[
+                    'title' => $parsed['title'],
+                    'date' => $parsed['date'],
+                    'time' => $parsed['time'] ?? '09:00',
+                    'location' => $parsed['location'] ?? null,
+                    'description' => $parsed['description'] ?? null,
+                ]],
+            ];
+        }
+
+        return null;
     }
 
     protected function extractTextFromPdf(string $filePath): string
