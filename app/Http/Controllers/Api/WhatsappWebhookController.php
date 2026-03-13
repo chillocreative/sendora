@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessAiReplyJob;
+use App\Jobs\ProcessMediaReminderJob;
 use App\Jobs\ProcessSendoraCommandJob;
-use Illuminate\Http\Request;
 use App\Models\WhatsappNumber;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class WhatsappWebhookController extends Controller
@@ -17,7 +18,7 @@ class WhatsappWebhookController extends Controller
             'user_id' => $request->user_id,
             'phone_number' => $request->phone_number,
             'status' => $request->status,
-            'has_qr' => !empty($request->qr_code),
+            'has_qr' => ! empty($request->qr_code),
         ]);
 
         try {
@@ -39,7 +40,7 @@ class WhatsappWebhookController extends Controller
 
                 // KILL ROGUE SESSION: Tell the node server to stop this connection
                 try {
-                    $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value') 
+                    $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value')
                                    ?? env('WA_SERVER_URL', 'http://127.0.0.1:3005');
                     $waServerUrl = rtrim($waServerUrl, '/');
                     \Illuminate\Support\Facades\Http::post("{$waServerUrl}/disconnect", [
@@ -53,7 +54,8 @@ class WhatsappWebhookController extends Controller
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            Log::error('QR Update Error: ' . $e->getMessage());
+            Log::error('QR Update Error: '.$e->getMessage());
+
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -92,7 +94,8 @@ class WhatsappWebhookController extends Controller
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            Log::error('Status Update Error: ' . $e->getMessage());
+            Log::error('Status Update Error: '.$e->getMessage());
+
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -103,10 +106,11 @@ class WhatsappWebhookController extends Controller
             'user_id' => $request->user_id,
             'from' => $request->from,
             'message' => substr($request->message ?? '', 0, 100),
+            'has_media' => ! empty($request->media_base64),
         ]);
 
         try {
-            if (empty($request->user_id) || empty($request->from) || empty($request->message)) {
+            if (empty($request->user_id) || empty($request->from) || (empty($request->message) && empty($request->media_base64))) {
                 return response()->json(['success' => false, 'error' => 'Missing required fields'], 422);
             }
 
@@ -116,11 +120,12 @@ class WhatsappWebhookController extends Controller
                 ->where('status', 'connected')
                 ->first();
 
-            if (!$whatsappNumber) {
+            if (! $whatsappNumber) {
                 Log::warning('Incoming message for unknown/disconnected number', [
                     'user_id' => $request->user_id,
                     'phone_number' => $request->phone_number,
                 ]);
+
                 return response()->json(['success' => false, 'error' => 'Number not found or disconnected'], 404);
             }
 
@@ -129,7 +134,23 @@ class WhatsappWebhookController extends Controller
                 return response()->json(['success' => true, 'skipped' => 'group_message']);
             }
 
-            $messageText = (string) $request->message;
+            $messageText = (string) ($request->message ?? '');
+
+            // Self-sent media → auto-extract event
+            if ($request->media_base64 && $this->isSelfMessage($request, $whatsappNumber)) {
+                ProcessMediaReminderJob::dispatch(
+                    (int) $request->user_id,
+                    (int) $request->phone_number,
+                    (string) $request->from,
+                    $request->media_base64,
+                    $request->media_mimetype ?? 'application/octet-stream',
+                    $request->media_filename,
+                    $messageText ?: null,
+                    $request->message_id ?? null
+                );
+
+                return response()->json(['success' => true, 'queued' => true, 'type' => 'media_reminder']);
+            }
 
             // Check for /sendora command
             if (str_starts_with(strtolower(trim($messageText)), '/sendora')) {
@@ -140,6 +161,7 @@ class WhatsappWebhookController extends Controller
                     $messageText,
                     $request->message_id ?? null
                 );
+
                 return response()->json(['success' => true, 'queued' => true, 'type' => 'sendora']);
             }
 
@@ -154,10 +176,19 @@ class WhatsappWebhookController extends Controller
 
             return response()->json(['success' => true, 'queued' => true]);
         } catch (\Exception $e) {
-            Log::error('Incoming Message Error: ' . $e->getMessage());
+            Log::error('Incoming Message Error: '.$e->getMessage());
+
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    protected function isSelfMessage(Request $request, WhatsappNumber $whatsappNumber): bool
+    {
+        $fromPhone = preg_replace('/@.*$/', '', $request->from);
+
+        return $fromPhone === $whatsappNumber->phone_number;
+    }
+
     public function messageReceipt(Request $request)
     {
         // Acknowledge receipt — no campaign messages to track anymore

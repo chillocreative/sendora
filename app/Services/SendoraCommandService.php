@@ -552,7 +552,7 @@ Respond ONLY with valid JSON, no other text.",
         return $parsed;
     }
 
-    protected function formatConfirmation($reminder): string
+    public function formatConfirmation($reminder): string
     {
         $dateTime = $reminder->event_at ?? $reminder->reminder_at;
         $lines = [];

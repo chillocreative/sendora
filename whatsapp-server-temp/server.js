@@ -7,7 +7,8 @@ const {
     DisconnectReason,
     fetchLatestBaileysVersion,
     makeCacheableSignalKeyStore,
-    getUrlInfo
+    getUrlInfo,
+    downloadMediaMessage,
 } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode');
 const pino = require('pino');
@@ -74,6 +75,15 @@ function safeLog(msg, data = null) {
 }
 
 safeLog('Server initializing...');
+
+function getMediaMessage(msg) {
+    const m = msg.message;
+    if (!m) return null;
+    if (m.imageMessage) return { msg: m.imageMessage, type: 'image' };
+    if (m.documentMessage) return { msg: m.documentMessage, type: 'document' };
+    if (m.videoMessage) return { msg: m.videoMessage, type: 'video' };
+    return null;
+}
 
 async function connectToWhatsApp(userId, whatsappNumberId) {
     const key = `${userId}_${whatsappNumberId}`;
@@ -286,8 +296,11 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
                     }
                 }
 
-                // Skip self-messages unless it's a /sendora command
-                if (msg.key.fromMe && !text.toLowerCase().startsWith('/sendora')) continue;
+                // Detect media in message
+                const mediaInfo = getMediaMessage(msg);
+
+                // Skip self-messages unless it's a /sendora command or has media
+                if (msg.key.fromMe && !text.toLowerCase().startsWith('/sendora') && !mediaInfo) continue;
 
                 if (!text && msg.message?.buttonsResponseMessage) {
                     text = msg.message.buttonsResponseMessage.selectedButtonId;
@@ -298,14 +311,31 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
                 }
 
                 console.log(`[${key}] Raw Message Structure:`, JSON.stringify(msg.message).substring(0, 200));
-                console.log(`[${key}] Extracted Text: "${text}"`);
+                console.log(`[${key}] Extracted Text: "${text}", hasMedia: ${!!mediaInfo}`);
 
                 connectionData.lastActivity = new Date();
 
-                // Skip if no text and no specific interaction
-                if (!text && !msg.message?.buttonsResponseMessage && !msg.message?.listResponseMessage) {
+                // Skip if no text, no media, and no specific interaction
+                if (!text && !mediaInfo && !msg.message?.buttonsResponseMessage && !msg.message?.listResponseMessage) {
                     console.log(`[${key}] Skipping empty message`);
                     continue;
+                }
+
+                // Download media for self-messages
+                let mediaBase64 = null;
+                let mediaMimetype = null;
+                let mediaFilename = null;
+
+                if (mediaInfo && msg.key.fromMe) {
+                    try {
+                        const buffer = await downloadMediaMessage(msg, 'buffer', {});
+                        mediaBase64 = buffer.toString('base64');
+                        mediaMimetype = mediaInfo.msg.mimetype || 'application/octet-stream';
+                        mediaFilename = mediaInfo.msg.fileName || `media_${Date.now()}`;
+                        console.log(`[${key}] Downloaded media: ${mediaMimetype}, ${buffer.length} bytes`);
+                    } catch (err) {
+                        console.error(`[${key}] Media download failed: ${err.message}`);
+                    }
                 }
 
                 // Notify backend for auto-reply processing
@@ -316,7 +346,10 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
                         from,
                         message: text,
                         message_id: msg.key.id,
-                    });
+                        media_base64: mediaBase64,
+                        media_mimetype: mediaMimetype,
+                        media_filename: mediaFilename,
+                    }, { timeout: 30000, maxBodyLength: 50 * 1024 * 1024 });
                 } catch (error) {
                     console.error(`[${key}] Failed to process message: ${error.message}${error.response ? ' - ' + JSON.stringify(error.response.data) : ''}`);
                 }
