@@ -64,6 +64,8 @@ class ReminderService
             }
         }
 
+        $reminder->refresh();
+
         ReminderLog::create([
             'reminder_id' => $reminder->id,
             'action' => 'created',
