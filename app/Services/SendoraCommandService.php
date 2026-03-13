@@ -2,20 +2,24 @@
 
 namespace App\Services;
 
+use App\Models\GoogleCalendarConnection;
 use App\Models\Reminder;
 use App\Models\User;
 use App\Models\WhatsappNumber;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class SendoraCommandService
 {
     protected OpenAiService $openAi;
     protected ReminderService $reminderService;
+    protected GoogleCalendarService $calendarService;
 
-    public function __construct(OpenAiService $openAi, ReminderService $reminderService)
+    public function __construct(OpenAiService $openAi, ReminderService $reminderService, GoogleCalendarService $calendarService)
     {
         $this->openAi = $openAi;
         $this->reminderService = $reminderService;
+        $this->calendarService = $calendarService;
     }
 
     public function detectCommandType(string $text): string
@@ -66,7 +70,7 @@ class SendoraCommandService
             . "  _Example: /sendora cancel tomorrow's meeting_\n"
             . "\n"
             . "\xE2\x96\xB8 /sendora list\n"
-            . "  Show upcoming reminders\n"
+            . "  Show your week ahead (events, reminders & birthdays)\n"
             . "\n"
             . "\xE2\x96\xB8 /sendorahelp\n"
             . "  Show this help message";
@@ -74,28 +78,115 @@ class SendoraCommandService
 
     protected function executeList(User $user): string
     {
+        $days = 7;
+        $startDate = now();
+        $endDate = now()->addDays($days);
+
+        // Fetch pending reminders for the next 7 days (any source)
         $reminders = Reminder::where('user_id', $user->id)
             ->where('status', 'pending')
-            ->where('reminder_at', '>', now())
-            ->orderBy('reminder_at')
-            ->limit(10)
+            ->whereRaw("COALESCE(event_at, reminder_at) > ?", [$startDate])
+            ->whereRaw("COALESCE(event_at, reminder_at) <= ?", [$endDate])
+            ->orderByRaw("COALESCE(event_at, reminder_at)")
+            ->limit(30)
             ->get();
 
-        if ($reminders->isEmpty()) {
-            return "\xF0\x9F\x93\xAD No upcoming reminders.";
+        // Fetch birthdays if Google Calendar is connected
+        $birthdays = [];
+        $calConn = $user->googleCalendarConnection;
+
+        if ($calConn) {
+            $birthdays = $this->calendarService->getUpcomingBirthdays($calConn, $days);
         }
 
-        $lines = ["\xF0\x9F\x93\x8B *Upcoming Reminders*\n"];
-
-        foreach ($reminders as $i => $reminder) {
-            $num = $i + 1;
-            $dateTime = $reminder->event_at ?? $reminder->reminder_at;
-            $lines[] = "{$num}. *{$reminder->title}*";
-            $lines[] = "   \xF0\x9F\x93\x85 " . $dateTime->format('D, d M Y g:i A');
-            if ($reminder->location) {
-                $lines[] = "   \xF0\x9F\x93\x8D {$reminder->location}";
+        if ($reminders->isEmpty() && empty($birthdays)) {
+            $msg = "\xF0\x9F\x93\xAD Nothing scheduled for the next 7 days.";
+            if (!$calConn) {
+                $msg .= "\n\n_Connect Google Calendar to see events & birthdays._";
             }
+
+            return $msg;
+        }
+
+        return $this->formatWeekView($reminders, $birthdays, $startDate, $endDate, $calConn);
+    }
+
+    protected function formatWeekView(Collection $reminders, array $birthdays, $startDate, $endDate, ?GoogleCalendarConnection $calConn): string
+    {
+        $startLabel = $startDate->format('d M');
+        $endLabel = $endDate->format('d M');
+        $lines = ["\xF0\x9F\x93\x8B *Your Week Ahead* ({$startLabel} - {$endLabel})\n"];
+
+        // Group reminders by date
+        $remindersByDate = $reminders->groupBy(function ($r) {
+            $dt = $r->event_at ?? $r->reminder_at;
+
+            return $dt->format('Y-m-d');
+        });
+
+        // Group birthdays by date
+        $birthdaysByDate = [];
+        foreach ($birthdays as $b) {
+            $key = $b['date']->format('Y-m-d');
+            $birthdaysByDate[$key][] = $b;
+        }
+
+        // Collect all dates that have items
+        $allDates = collect(array_unique(array_merge(
+            $remindersByDate->keys()->toArray(),
+            array_keys($birthdaysByDate),
+        )))->sort()->values();
+
+        $emptyDays = [];
+        $period = new \DatePeriod(
+            $startDate->copy()->startOfDay()->toDateTimeImmutable(),
+            new \DateInterval('P1D'),
+            $endDate->copy()->endOfDay()->toDateTimeImmutable(),
+        );
+
+        foreach ($period as $day) {
+            $key = $day->format('Y-m-d');
+            if (!$allDates->contains($key)) {
+                $emptyDays[] = \Carbon\Carbon::parse($key)->format('D');
+            }
+        }
+
+        foreach ($allDates as $dateKey) {
+            $dayLabel = \Carbon\Carbon::parse($dateKey)->format('D, d M');
+            $lines[] = "\xE2\x94\x81\xE2\x94\x81 *{$dayLabel}* \xE2\x94\x81\xE2\x94\x81";
+
+            // Reminders/events for this day
+            $dayReminders = $remindersByDate->get($dateKey, collect());
+            foreach ($dayReminders as $reminder) {
+                $isCalendar = $reminder->source === 'google_calendar';
+                $emoji = $isCalendar ? "\xF0\x9F\x93\x86" : "\xF0\x9F\x94\x94";
+                $lines[] = "{$emoji} {$reminder->title}";
+
+                $dateTime = $reminder->event_at ?? $reminder->reminder_at;
+                $timePart = "   \xF0\x9F\x93\x85 " . $dateTime->format('g:i A');
+                if ($reminder->location) {
+                    $timePart .= " \xC2\xB7 \xF0\x9F\x93\x8D {$reminder->location}";
+                }
+                $lines[] = $timePart;
+            }
+
+            // Birthdays for this day
+            $dayBirthdays = $birthdaysByDate[$dateKey] ?? [];
+            foreach ($dayBirthdays as $b) {
+                $lines[] = "\xF0\x9F\x8E\x82 {$b['name']}";
+            }
+
             $lines[] = '';
+        }
+
+        // Show empty days summary
+        if (!empty($emptyDays)) {
+            $lines[] = "\xF0\x9F\x93\xAD Nothing on " . implode(', ', $emptyDays);
+        }
+
+        if (!$calConn) {
+            $lines[] = '';
+            $lines[] = "_Connect Google Calendar to see events & birthdays._";
         }
 
         return implode("\n", $lines);

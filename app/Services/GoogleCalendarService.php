@@ -188,6 +188,47 @@ class GoogleCalendarService
         return $syncedCount;
     }
 
+    /**
+     * Fetch upcoming birthdays from the user's Google birthday calendar.
+     * Returns empty array on any failure (best-effort).
+     */
+    public function getUpcomingBirthdays(GoogleCalendarConnection $conn, int $days = 7): array
+    {
+        try {
+            $client = $this->refreshTokenIfNeeded($conn);
+            $calendar = new GoogleCalendar($client);
+
+            $events = $calendar->events->listEvents(
+                '#contacts@group.v.calendar.google.com',
+                [
+                    'singleEvents' => true,
+                    'timeMin' => now()->startOfDay()->toRfc3339String(),
+                    'timeMax' => now()->addDays($days)->endOfDay()->toRfc3339String(),
+                    'orderBy' => 'startTime',
+                    'maxResults' => 50,
+                ]
+            );
+
+            $birthdays = [];
+            foreach ($events->getItems() as $event) {
+                $dateStr = $event->getStart()->getDate();
+                if (!$dateStr) {
+                    continue;
+                }
+                $birthdays[] = [
+                    'name' => $event->getSummary() ?? 'Birthday',
+                    'date' => \Carbon\Carbon::parse($dateStr),
+                ];
+            }
+
+            return $birthdays;
+        } catch (\Exception $e) {
+            Log::debug('Birthday calendar fetch skipped', ['error' => $e->getMessage()]);
+
+            return [];
+        }
+    }
+
     public function createEvent(GoogleCalendarConnection $conn, array $data): ?string
     {
         $client = $this->refreshTokenIfNeeded($conn);
