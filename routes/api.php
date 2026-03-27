@@ -23,4 +23,8 @@ Route::middleware(['auth:sanctum', 'api.access'])->prefix('v1')->group(function 
 
     // Devices
     Route::get('/devices', [ApiController::class, 'devices']);
+
+    // Messaging
+    Route::post('/send-message', [ApiController::class, 'sendMessage']);
+    Route::post('/send-file', [ApiController::class, 'sendFile']);
 });

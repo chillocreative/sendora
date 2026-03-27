@@ -491,7 +491,7 @@ app.get('/status/:user_id/:phone_number', (req, res) => {
 
 // Send message from a specific user's connection
 app.post('/send-message', async (req, res) => {
-    const { user_id, phone_number, to, message, media_url, media_type, filename } = req.body;
+    const { user_id, phone_number, to, message, media_url, media_base64, media_type, filename } = req.body;
 
     if (!user_id || !phone_number || !to) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -500,7 +500,7 @@ app.post('/send-message', async (req, res) => {
     const key = `${user_id}_${phone_number}`;
     const conn = connections.get(key);
 
-    safeLog(`[${key}] Sending message to ${to}`, { hasMedia: !!media_url, type: media_type });
+    safeLog(`[${key}] Sending message to ${to}`, { hasMedia: !!(media_url || media_base64), type: media_type });
 
     if (!conn || conn.status !== 'connected') {
         safeLog(`[${key}] Failed: WhatsApp not connected. Status: ${conn ? conn.status : 'not_init'}`);
@@ -517,15 +517,20 @@ app.post('/send-message', async (req, res) => {
         conn.lastActivity = new Date();
         let sentResult;
 
-        if (media_url) {
-            safeLog(`[${key}] Downloading media: ${media_url}`);
+        if (media_url || media_base64) {
             try {
-                // Manually download media to handle 404s and timeouts gracefully
-                const mediaResponse = await axios.get(media_url, {
-                    responseType: 'arraybuffer',
-                    timeout: 15000 // 15s timeout
-                });
-                const mediaBuffer = Buffer.from(mediaResponse.data);
+                let mediaBuffer;
+                if (media_base64) {
+                    safeLog(`[${key}] Using base64 media (${media_type || 'application/pdf'})`);
+                    mediaBuffer = Buffer.from(media_base64, 'base64');
+                } else {
+                    safeLog(`[${key}] Downloading media: ${media_url}`);
+                    const mediaResponse = await axios.get(media_url, {
+                        responseType: 'arraybuffer',
+                        timeout: 15000
+                    });
+                    mediaBuffer = Buffer.from(mediaResponse.data);
+                }
 
                 let sendObj = {};
                 if (media_type === 'image') {
@@ -540,9 +545,9 @@ app.post('/send-message', async (req, res) => {
 
                 sentResult = await conn.sock.sendMessage(jid, sendObj);
             } catch (dlError) {
-                safeLog(`[${key}] Media download failed: ${dlError.message}`);
+                safeLog(`[${key}] Media processing failed: ${dlError.message}`);
                 return res.status(422).json({
-                    error: `Media download failed: ${dlError.message}. Accessing: ${media_url}. Ensure storage link is correct.`
+                    error: `Media processing failed: ${dlError.message}`
                 });
             }
         } else {

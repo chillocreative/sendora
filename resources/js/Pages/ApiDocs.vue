@@ -66,7 +66,7 @@ const endpoints = [
         name: 'List Devices',
         method: 'GET',
         path: '/api/v1/devices',
-        description: 'Get all your connected WhatsApp devices and their status.',
+        description: 'Get all your connected WhatsApp devices and their status. Use the "id" field as the device_id when sending messages.',
         params: [],
         response: `{
   "success": true,
@@ -85,6 +85,41 @@ const endpoints = [
       "updated_at": "2026-02-05T18:08:40.000000Z"
     }
   ]
+}`
+    },
+    {
+        id: 'send-message',
+        name: 'Send Message',
+        method: 'POST',
+        path: '/api/v1/send-message',
+        description: 'Send a WhatsApp text message through one of your connected devices.',
+        params: [
+            { name: 'device_id', type: 'integer', required: true, description: 'The ID of your WhatsApp device (from List Devices endpoint)' },
+            { name: 'to', type: 'string', required: true, description: 'Recipient phone number (e.g. 60148885659)' },
+            { name: 'message', type: 'string', required: true, description: 'The message text to send' },
+        ],
+        response: `{
+  "success": true,
+  "message_id": "BAE5F2C7A8B3D1E0"
+}`
+    },
+    {
+        id: 'send-file',
+        name: 'Send File',
+        method: 'POST',
+        path: '/api/v1/send-file',
+        description: 'Send a WhatsApp message with a file attachment (PDF, image, etc.) via base64 encoding.',
+        params: [
+            { name: 'device_id', type: 'integer', required: true, description: 'The ID of your WhatsApp device (from List Devices endpoint)' },
+            { name: 'to', type: 'string', required: true, description: 'Recipient phone number (e.g. 60148885659)' },
+            { name: 'message', type: 'string', required: false, description: 'Optional caption text for the file' },
+            { name: 'file_base64', type: 'string', required: true, description: 'Base64-encoded file content' },
+            { name: 'filename', type: 'string', required: false, description: 'File name (default: document.pdf)' },
+            { name: 'mimetype', type: 'string', required: false, description: 'MIME type (default: application/pdf)' },
+        ],
+        response: `{
+  "success": true,
+  "message_id": "BAE5F2C7A8B3D1E1"
 }`
     },
 ];

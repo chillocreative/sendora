@@ -153,6 +153,7 @@ const deleteDevice = (id) => {
                                         <div class="font-bold text-lg text-slate-900 mb-1 max-w-[180px] truncate">
                                             {{ number.phone_number || 'Unnamed Device' }}
                                         </div>
+                                        <div class="text-xs text-slate-400 font-mono mb-1">Device ID: {{ number.id }}</div>
                                         <div 
                                             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
                                             :class="number.status === 'connected' 
