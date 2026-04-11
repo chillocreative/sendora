@@ -337,7 +337,7 @@ const formatDate = (dateString) => {
                     <div class="flex items-center gap-4 pt-6">
                         <button type="button" @click="showCreateModal = false" class="flex-1 px-8 py-5 rounded-2xl border border-slate-200 text-slate-400 font-black text-[11px] uppercase tracking-[0.2em] hover:bg-slate-50 transition active:scale-95">Cancel</button>
                         <button type="submit" :disabled="createForm.processing || !createForm.name" class="flex-[1.5] px-10 py-5 rounded-2xl bg-[#780116] text-white font-black text-[11px] uppercase tracking-[0.2em] hover:bg-[#c32f27] transition shadow-2xl shadow-red-200/50 disabled:opacity-50 active:scale-95">
-                            {{ createForm.processing ? 'Transmitting...' : 'Initialize Key' }}
+                            {{ createForm.processing ? 'Transmitting...' : 'Submit' }}
                         </button>
                     </div>
                 </form>
