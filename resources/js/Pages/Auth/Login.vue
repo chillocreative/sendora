@@ -82,7 +82,7 @@ const submit = () => {
                 </Link>
 
                 <PrimaryButton class="px-8 py-4 bg-[#780116] hover:bg-[#c32f27] rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-red-200" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    Authorize
+                    Login
                 </PrimaryButton>
             </div>
         </form>
