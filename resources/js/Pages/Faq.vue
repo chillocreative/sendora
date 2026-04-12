@@ -233,7 +233,7 @@ const toggleFaq = (index) => {
         <section class="py-16 sm:py-20 bg-slate-50 text-center px-4">
             <h3 class="text-xl sm:text-2xl font-black text-slate-900 mb-6">Still have questions?</h3>
             <div class="flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
-                <Link :href="route('support.index')" class="w-full sm:w-auto px-6 sm:px-8 py-4 bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-50 transition">
+                <Link :href="route('tickets.create')" class="w-full sm:w-auto px-6 sm:px-8 py-4 bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-50 transition">
                     Contact Support
                 </Link>
                 <Link :href="route('register')" class="w-full sm:w-auto px-6 sm:px-8 py-4 bg-[#780116] text-white font-bold rounded-2xl hover:bg-[#c32f27] shadow-xl shadow-red-100 transition">
