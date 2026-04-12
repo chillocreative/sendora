@@ -111,7 +111,7 @@ class AdminNotificationService
 
             $response = $this->whatsappService->sendMessage($device, $adminMobile, $message);
 
-            if ($response) {
+            if ($response && $response->successful()) {
                 $notification->markAsSent();
                 Log::info('Admin notification sent', [
                     'type' => $notification->notification_type,
@@ -141,6 +141,11 @@ class AdminNotificationService
     {
         $data = $notification->data;
         $user = $notification->user;
+
+        if (!$user) {
+            return "[SENDORA NOTIFICATION]\n\nType: {$notification->notification_type}\n"
+                . json_encode($data, JSON_PRETTY_PRINT);
+        }
 
         switch ($notification->notification_type) {
             case 'payment':

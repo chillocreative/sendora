@@ -30,15 +30,15 @@ class CreateNewUser implements CreatesNewUsers
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();
 
-        return DB::transaction(function () use ($input) {
+        $planName = 'Free';
+
+        $user = DB::transaction(function () use ($input, &$planName) {
             return tap(User::create([
                 'name' => $input['name'],
                 'email' => $input['email'],
                 'password' => Hash::make($input['password']),
-            ]), function (User $user) use ($input) {
+            ]), function (User $user) use ($input, &$planName) {
                 $this->createTeam($user);
-
-                $planName = 'Free';
 
                 if (!empty($input['plan_id'])) {
                     $plan = \App\Models\SubscriptionPlan::find($input['plan_id']);
@@ -59,21 +59,27 @@ class CreateNewUser implements CreatesNewUsers
                         session(['registration_billing_cycle' => $cycle]);
                     }
                 }
-
-                // Notify admin of new user registration
-                try {
-                    $notificationService = new AdminNotificationService();
-                    $notificationService->sendNotification('registration', $user->id, [
-                        'plan_name' => $planName,
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Failed to queue registration notification', [
-                        'user_id' => $user->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
             });
         });
+
+        // Notify admin after transaction commits and after response is sent to user
+        // This prevents WhatsApp HTTP timeouts from blocking registration
+        $userId = $user->id;
+        dispatch(function () use ($userId, $planName) {
+            try {
+                $notificationService = new AdminNotificationService();
+                $notificationService->sendNotification('registration', $userId, [
+                    'plan_name' => $planName,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send registration notification', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        })->afterResponse();
+
+        return $user;
     }
 
     /**
