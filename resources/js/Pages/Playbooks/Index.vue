@@ -85,6 +85,29 @@ const getAssignedNumbers = (playbookId) => {
                         </div>
                     </div>
 
+                    <!-- WhatsApp Commands Info -->
+                    <div class="mx-8 my-6 p-5 bg-gradient-to-r from-slate-50 to-blue-50/50 rounded-2xl border border-slate-100">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-black text-slate-700 uppercase tracking-widest mb-2">WhatsApp Commands</h4>
+                                <p class="text-sm text-slate-500 mb-3">Control AI replies per conversation directly from WhatsApp:</p>
+                                <div class="flex flex-wrap gap-3">
+                                    <div class="inline-flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-slate-200">
+                                        <code class="text-sm font-black text-red-600">/stopchat</code>
+                                        <span class="text-xs text-slate-400">Pause AI for that conversation</span>
+                                    </div>
+                                    <div class="inline-flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-slate-200">
+                                        <code class="text-sm font-black text-green-600">/startchat</code>
+                                        <span class="text-xs text-slate-400">Resume AI for that conversation</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- List -->
                     <div class="overflow-x-auto">
                         <table v-if="playbooks.data.length > 0" class="w-full text-left">

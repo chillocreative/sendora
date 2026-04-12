@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ProcessAiReplyJob;
 use App\Jobs\ProcessMediaReminderJob;
 use App\Jobs\ProcessSendoraCommandJob;
+use App\Models\Conversation;
 use App\Models\WhatsappNumber;
+use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -153,6 +155,12 @@ class WhatsappWebhookController extends Controller
                 return response()->json(['success' => true, 'queued' => true, 'type' => 'media_reminder']);
             }
 
+            // Check for /stopchat and /startchat commands (AI toggle per conversation)
+            $lowerMessage = strtolower(trim($messageText));
+            if (in_array($lowerMessage, ['/stopchat', '/startchat'])) {
+                return $this->handleAiChatToggle($whatsappNumber, (string) $request->from, $lowerMessage === '/startchat');
+            }
+
             // Check for /sendora command
             if (str_starts_with(strtolower(trim($messageText)), '/sendora')) {
                 ProcessSendoraCommandJob::dispatch(
@@ -195,6 +203,65 @@ class WhatsappWebhookController extends Controller
         $cleaned = preg_replace('/^\/sendora\s*/i', '', trim($text));
 
         return $cleaned !== '' ? $cleaned : null;
+    }
+
+    protected function handleAiChatToggle(WhatsappNumber $whatsappNumber, string $contactJid, bool $enable)
+    {
+        $cleanPhone = $this->cleanPhoneForConversation($contactJid);
+
+        $conversation = Conversation::firstOrCreate(
+            [
+                'whatsapp_number_id' => $whatsappNumber->id,
+                'contact_phone' => $cleanPhone,
+            ],
+            [
+                'user_id' => $whatsappNumber->user_id,
+                'status' => 'active',
+                'contact_jid' => $contactJid,
+            ]
+        );
+
+        $newStatus = $enable ? 'active' : 'paused';
+        $conversation->update(['status' => $newStatus]);
+
+        Log::info('AI chat toggled via command', [
+            'conversation_id' => $conversation->id,
+            'contact_phone' => $cleanPhone,
+            'whatsapp_number_id' => $whatsappNumber->id,
+            'new_status' => $newStatus,
+        ]);
+
+        // Send confirmation after response to avoid blocking the webhook
+        dispatch(function () use ($whatsappNumber, $contactJid, $enable) {
+            $message = $enable
+                ? "AI assistant has been resumed for this conversation.\n\nSend /stopchat to pause again."
+                : "AI assistant has been paused for this conversation.\n\nSend /startchat to resume.";
+
+            (new WhatsappService())->sendMessage($whatsappNumber, $contactJid, $message);
+        })->afterResponse();
+
+        return response()->json([
+            'success' => true,
+            'type' => 'ai_toggle',
+            'status' => $newStatus,
+        ]);
+    }
+
+    protected function cleanPhoneForConversation(string $phone): string
+    {
+        if (str_contains($phone, '@lid')) {
+            $phone = str_replace('@lid', '', $phone);
+            $phone = preg_replace('/:.*$/', '', $phone);
+
+            return $phone;
+        }
+
+        $phone = str_replace('@s.whatsapp.net', '', $phone);
+        $phone = str_replace('@g.us', '', $phone);
+        $phone = preg_replace('/:.*$/', '', $phone);
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+
+        return $phone;
     }
 
     public function messageReceipt(Request $request)

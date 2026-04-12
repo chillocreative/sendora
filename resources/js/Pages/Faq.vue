@@ -48,7 +48,12 @@ const faqs = ref([
     },
     {
         question: "What are AI Playbooks?",
-        answer: "AI Playbooks are automated WhatsApp response scripts powered by AI. You create a Playbook document containing instructions, FAQs, or workflows, and when someone messages your connected WhatsApp number, the AI reads the Playbook and responds on your behalf. This is useful for handling common questions, providing information, or automating repetitive conversations while you focus on what matters.",
+        answer: "AI Playbooks are automated WhatsApp response scripts powered by AI. You create a Playbook document containing instructions, FAQs, or workflows, and when someone messages your connected WhatsApp number, the AI reads the Playbook and responds on your behalf. This is useful for handling common questions, providing information, or automating repetitive conversations while you focus on what matters. You can pause AI for any specific conversation by sending /stopchat in that chat, and resume it with /startchat.",
+        open: false
+    },
+    {
+        question: "How do I pause or resume AI in a conversation?",
+        answer: "You can control the AI assistant per conversation using simple WhatsApp commands. Send /stopchat in any conversation to pause the AI for that specific chat — the AI will stop replying to messages in that conversation while continuing to work normally in all other conversations. When you want the AI to start responding again, send /startchat in the same conversation. This gives you full control to take over conversations manually whenever needed, without affecting other chats.",
         open: false
     },
     {
