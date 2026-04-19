@@ -1,4 +1,5 @@
 <script setup>
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
@@ -23,6 +24,12 @@
                     <p class="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">
                         CH GLOBAL EMPIRE (003124386-V)
                     </p>
+                </div>
+
+                <div class="pt-2">
+                    <Link href="/privacy-policy" class="text-[10px] font-black text-white/40 hover:text-[#f7b538] uppercase tracking-[0.3em] transition">
+                        Privacy Policy
+                    </Link>
                 </div>
             </div>
         </div>
