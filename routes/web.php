@@ -377,3 +377,12 @@ Route::get('/faq', function () {
         'canRegister' => Route::has('register'),
     ]);
 })->name('faq');
+
+// Public Developer Documentation
+Route::get('/docs', function () {
+    return Inertia::render('Docs', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'baseUrl' => rtrim(config('app.url'), '/'),
+    ]);
+})->name('docs');

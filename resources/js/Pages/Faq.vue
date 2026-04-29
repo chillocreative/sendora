@@ -100,6 +100,7 @@ const toggleFaq = (index) => {
                         <Link :href="'/'" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Home</Link>
                         <Link :href="route('pricing')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Pricing</Link>
                         <Link :href="route('faq')" class="text-sm font-bold text-[#780116] transition">FAQ</Link>
+                        <Link :href="route('docs')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Docs</Link>
                         <template v-if="canLogin">
                             <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="text-sm font-semibold text-slate-600 hover:text-[#780116] transition">Dashboard</Link>
                             <template v-else>
@@ -145,6 +146,9 @@ const toggleFaq = (index) => {
                 </Link>
                 <Link :href="route('faq')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-[#780116] bg-red-50" @click="showMobileMenu = false">
                     FAQ
+                </Link>
+                <Link :href="route('docs')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
+                    Docs
                 </Link>
                 <template v-if="canLogin">
                     <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="flex items-center px-4 py-4 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50" @click="showMobileMenu = false">
