@@ -21,13 +21,25 @@ class ReminderService
         $this->calendarService = $calendarService;
     }
 
-    public function createReminder(User $user, array $data): Reminder
+    public function createReminder(User $user, array $data, ?string $idempotencyKey = null): Reminder
     {
         $eventAt = Carbon::parse($data['event_at'] ?? $data['reminder_at']);
         $minutesBefore = (int) ($data['minutes_before'] ?? 15);
         $reminderAt = isset($data['event_at'])
             ? $eventAt->copy()->subMinutes($minutesBefore)
             : Carbon::parse($data['reminder_at']);
+
+        // Guard against duplicates: same user/title/start created in the last 10 minutes
+        $existing = Reminder::where('user_id', $user->id)
+            ->where('title', $data['title'])
+            ->where('reminder_at', $reminderAt)
+            ->where('created_at', '>=', now()->subMinutes(10))
+            ->latest('id')
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
 
         $reminder = Reminder::create([
             'user_id' => $user->id,
@@ -53,7 +65,7 @@ class ReminderService
                     'location' => $reminder->location,
                     'event_at' => $reminder->event_at ?? $reminder->reminder_at,
                     'minutes_before' => $reminder->minutes_before,
-                ]);
+                ], $idempotencyKey);
 
                 if ($googleEventId) {
                     $reminder->update([

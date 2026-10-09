@@ -17,6 +17,9 @@ const path = require('path');
 const axios = require('axios');
 require('dotenv').config();
 
+// Seen WhatsApp message ids (module-level so it survives socket reconnects)
+const seenMessageIds = new Set();
+
 const app = express();
 const port = process.env.PORT || process.env.WA_SERVER_PORT || 3000;
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
@@ -270,6 +273,20 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
         sock.ev.on('messages.upsert', async ({ messages }) => {
             for (const msg of messages) {
                 if (!msg.message) continue;
+
+                // Dedupe redelivered messages (bounded, oldest evicted)
+                const msgId = msg.key?.id;
+                if (msgId) {
+                    if (seenMessageIds.has(msgId)) continue;
+                    seenMessageIds.add(msgId);
+                    if (seenMessageIds.size > 2000) {
+                        seenMessageIds.delete(seenMessageIds.values().next().value);
+                    }
+                }
+
+                // Skip stale messages (older than 120s)
+                const ts = Number(msg.messageTimestamp?.low ?? msg.messageTimestamp ?? 0);
+                if (ts && (Date.now() / 1000 - ts) > 120) continue;
 
                 const from = msg.key.remoteJid;
 

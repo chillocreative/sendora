@@ -10,6 +10,7 @@ use App\Models\Conversation;
 use App\Models\WhatsappNumber;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class WhatsappWebhookController extends Controller
@@ -141,6 +142,10 @@ class WhatsappWebhookController extends Controller
             // Self-sent media with /sendora caption → extract event
             if ($request->media_base64 && $this->isSelfMessage($request, $whatsappNumber)
                 && str_starts_with(strtolower(trim($messageText)), '/sendora')) {
+                if ($this->isDuplicateMessage($request, $whatsappNumber)) {
+                    return response()->json(['success' => true, 'skipped' => 'duplicate']);
+                }
+
                 ProcessMediaReminderJob::dispatch(
                     (int) $request->user_id,
                     (int) $request->phone_number,
@@ -163,6 +168,10 @@ class WhatsappWebhookController extends Controller
 
             // Check for /sendora command
             if (str_starts_with(strtolower(trim($messageText)), '/sendora')) {
+                if ($this->isDuplicateMessage($request, $whatsappNumber)) {
+                    return response()->json(['success' => true, 'skipped' => 'duplicate']);
+                }
+
                 ProcessSendoraCommandJob::dispatch(
                     (int) $request->user_id,
                     (int) $request->phone_number,
@@ -175,6 +184,10 @@ class WhatsappWebhookController extends Controller
             }
 
             // Dispatch AI reply job to queue
+            if ($this->isDuplicateMessage($request, $whatsappNumber)) {
+                return response()->json(['success' => true, 'skipped' => 'duplicate']);
+            }
+
             ProcessAiReplyJob::dispatch(
                 (int) $request->user_id,
                 (int) $request->phone_number,
@@ -189,6 +202,22 @@ class WhatsappWebhookController extends Controller
 
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Returns true if this WhatsApp message_id was already accepted (redelivery).
+     */
+    protected function isDuplicateMessage(Request $request, WhatsappNumber $whatsappNumber): bool
+    {
+        if (empty($request->message_id)) {
+            return false;
+        }
+
+        return ! Cache::add(
+            "wa_msg:{$whatsappNumber->id}:{$request->message_id}",
+            1,
+            now()->addDays(2)
+        );
     }
 
     protected function isSelfMessage(Request $request, WhatsappNumber $whatsappNumber): bool

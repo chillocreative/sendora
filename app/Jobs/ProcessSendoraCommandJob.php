@@ -17,7 +17,7 @@ class ProcessSendoraCommandJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 2;
+    public int $tries = 1;
 
     public int $timeout = 60;
 
@@ -60,8 +60,17 @@ class ProcessSendoraCommandJob implements ShouldQueue
             }
         }
 
-        $reply = $commandService->executeCommand($user, $waNumber, $this->messageText);
+        $reply = $commandService->executeCommand($user, $waNumber, $this->messageText, $this->waMessageId);
 
-        $whatsappService->sendMessage($waNumber, $this->contactPhone, $reply);
+        // The command has already been executed; a send failure must not rethrow (would risk re-running creation)
+        try {
+            $whatsappService->sendMessage($waNumber, $this->contactPhone, $reply);
+        } catch (\Throwable $e) {
+            Log::error('ProcessSendoraCommandJob: failed to send reply', [
+                'user_id' => $this->userId,
+                'wa_number_id' => $this->whatsappNumberId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

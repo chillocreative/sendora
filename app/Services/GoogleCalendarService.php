@@ -230,7 +230,7 @@ class GoogleCalendarService
         }
     }
 
-    public function createEvent(GoogleCalendarConnection $conn, array $data): ?string
+    public function createEvent(GoogleCalendarConnection $conn, array $data, ?string $idempotencyKey = null): ?string
     {
         $client = $this->refreshTokenIfNeeded($conn);
         $calendar = new GoogleCalendar($client);
@@ -255,11 +255,24 @@ class GoogleCalendarService
             ],
         ]);
 
+        // Deterministic event id (base32hex chars only: a-v, 0-9) makes the insert idempotent
+        if ($idempotencyKey) {
+            $event->setId('sdr'.substr(md5($idempotencyKey), 0, 29));
+        }
+
         try {
             $created = $calendar->events->insert($conn->calendar_id, $event);
 
             return $created->getId();
         } catch (\Exception $e) {
+            if ($idempotencyKey && (int) $e->getCode() === 409) {
+                try {
+                    return $calendar->events->get($conn->calendar_id, $event->getId())->getId();
+                } catch (\Exception $inner) {
+                    return $event->getId();
+                }
+            }
+
             Log::error('Google Calendar create event error', ['error' => $e->getMessage()]);
 
             return null;

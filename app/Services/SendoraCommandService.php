@@ -52,14 +52,14 @@ class SendoraCommandService
         return 'create';
     }
 
-    public function executeCommand(User $user, WhatsappNumber $waNumber, string $text): string
+    public function executeCommand(User $user, WhatsappNumber $waNumber, string $text, ?string $idempotencyKey = null): string
     {
         return match ($this->detectCommandType($text)) {
             'help' => $this->executeHelp(),
             'list' => $this->executeList($user),
             'cancel' => $this->executeCancel($user, $waNumber, $text),
             'edit' => $this->executeEdit($user, $waNumber, $text),
-            default => $this->executeCreate($user, $waNumber, $text),
+            default => $this->executeCreate($user, $waNumber, $text, $idempotencyKey),
         };
     }
 
@@ -470,7 +470,7 @@ class SendoraCommandService
         return implode("\n", $lines);
     }
 
-    protected function executeCreate(User $user, WhatsappNumber $waNumber, string $text): string
+    protected function executeCreate(User $user, WhatsappNumber $waNumber, string $text, ?string $idempotencyKey = null): string
     {
         $parsed = $this->parseCommand($text);
 
@@ -491,7 +491,7 @@ class SendoraCommandService
             'whatsapp_number_id' => $waNumber->id,
             'source' => 'whatsapp_command',
             'add_to_calendar' => $user->googleCalendarConnection !== null,
-        ]);
+        ], $idempotencyKey);
 
         return $this->formatConfirmation($reminder);
     }
