@@ -275,7 +275,8 @@ async function connectToWhatsApp(userId, whatsappNumberId) {
                 if (!msg.message) continue;
 
                 // Dedupe redelivered messages (bounded, oldest evicted)
-                const msgId = msg.key?.id;
+                // Scoped per connected number: the same message id can reach several accounts (e.g. shared groups)
+                const msgId = msg.key?.id ? `${whatsappNumberId}:${msg.key.id}` : null;
                 if (msgId) {
                     if (seenMessageIds.has(msgId)) continue;
                     seenMessageIds.add(msgId);
