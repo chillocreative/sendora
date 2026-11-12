@@ -7,6 +7,7 @@ use App\Models\Reminder;
 use App\Models\ReminderLog;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 
 class ReminderService
@@ -69,21 +70,25 @@ class ReminderService
             return $existing;
         }
 
-        $this->assertWithinMonthlyLimit($user);
+        // Serialise the count and the insert per user so concurrent creations (web, WhatsApp,
+        // media jobs) cannot all pass the limit check before any of them is saved.
+        $reminder = Cache::lock("reminder-create:{$user->id}", 10)->block(5, function () use ($user, $data, $reminderAt, $minutesBefore) {
+            $this->assertWithinMonthlyLimit($user);
 
-        $reminder = Reminder::create([
-            'user_id' => $user->id,
-            'whatsapp_number_id' => $data['whatsapp_number_id'] ?? null,
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'reminder_at' => $reminderAt,
-            'event_at' => $data['event_at'] ?? null,
-            'minutes_before' => $minutesBefore,
-            'location' => $data['location'] ?? null,
-            'recurrence_rule' => $data['recurrence_rule'] ?? null,
-            'source' => $data['source'] ?? 'web',
-            'status' => 'pending',
-        ]);
+            return Reminder::create([
+                'user_id' => $user->id,
+                'whatsapp_number_id' => $data['whatsapp_number_id'] ?? null,
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'reminder_at' => $reminderAt,
+                'event_at' => $data['event_at'] ?? null,
+                'minutes_before' => $minutesBefore,
+                'location' => $data['location'] ?? null,
+                'recurrence_rule' => $data['recurrence_rule'] ?? null,
+                'source' => $data['source'] ?? 'web',
+                'status' => 'pending',
+            ]);
+        });
 
         // Sync to Google Calendar if requested and connected
         if (! empty($data['add_to_calendar'])) {
