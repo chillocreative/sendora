@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Models\Reminder;
 use App\Models\WhatsappNumber;
 use App\Models\WhatsappTemplate;
 use App\Services\WhatsappCloudService;
 use App\Services\WhatsappInboundHandler;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class MetaWebhookController extends Controller
 {
@@ -102,6 +105,7 @@ class MetaWebhookController extends Controller
 
         foreach ((array) ($value['statuses'] ?? []) as $status) {
             $this->logStatus($number, $status);
+            $this->recordReminderDelivery($number, (array) $status);
         }
     }
 
@@ -174,6 +178,48 @@ class MetaWebhookController extends Controller
             $conversation->contact_name = $profileName;
         }
         $conversation->save();
+    }
+
+    /**
+     * Persist delivery state on the reminder. Scoped to the receiving number (tenant isolation),
+     * idempotent and order-tolerant: timestamps are only ever set once, never overwritten.
+     */
+    protected function recordReminderDelivery(WhatsappNumber $number, array $status): void
+    {
+        $id = $status['id'] ?? null;
+        $state = $status['status'] ?? null;
+
+        if (! is_string($id) || $id === '' || ! in_array($state, ['delivered', 'read', 'failed'], true)) {
+            return;
+        }
+
+        $reminder = Reminder::where('wa_message_id', $id)
+            ->where('whatsapp_number_id', $number->id)
+            ->first();
+
+        if (! $reminder) {
+            return;
+        }
+
+        $at = isset($status['timestamp']) && is_numeric($status['timestamp'])
+            ? Carbon::createFromTimestamp((int) $status['timestamp'])
+            : now();
+
+        if ($state === 'delivered') {
+            $reminder->delivered_at ??= $at;
+        } elseif ($state === 'read') {
+            $reminder->delivered_at ??= $at;
+            $reminder->read_at ??= $at;
+        } else {
+            $error = (array) (($status['errors'][0] ?? null) ?: []);
+            $code = $error['code'] ?? null;
+            $title = $error['title'] ?? $error['message'] ?? 'Delivery failed';
+            $reminder->delivery_error = Str::limit(trim(($code !== null ? "({$code}) " : '').$title), 255, '');
+        }
+
+        if ($reminder->isDirty()) {
+            $reminder->save();
+        }
     }
 
     protected function logStatus(WhatsappNumber $number, array $status): void
