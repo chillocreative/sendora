@@ -7,6 +7,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return; // MODIFY COLUMN is MySQL-only (sqlite is used by the test suite)
+        }
+
         // Step 1: Add 'paused' alongside 'escalated' so no data is lost
         DB::statement("ALTER TABLE conversations MODIFY COLUMN status ENUM('active', 'escalated', 'paused', 'closed') NOT NULL DEFAULT 'active'");
 
@@ -19,6 +23,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement("ALTER TABLE conversations MODIFY COLUMN status ENUM('active', 'escalated', 'paused', 'closed') NOT NULL DEFAULT 'active'");
         DB::table('conversations')->where('status', 'paused')->update(['status' => 'escalated']);
         DB::statement("ALTER TABLE conversations MODIFY COLUMN status ENUM('active', 'escalated', 'closed') NOT NULL DEFAULT 'active'");

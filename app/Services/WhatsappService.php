@@ -22,7 +22,7 @@ class WhatsappService
     public function generateQrCode(WhatsappNumber $whatsappNumber)
     {
         // This would call the Node.js bridge to initiate a session and return a QR string
-        return "simulate_qr_code_data_" . $whatsappNumber->id;
+        return 'simulate_qr_code_data_'.$whatsappNumber->id;
     }
 
     /**
@@ -30,15 +30,19 @@ class WhatsappService
      */
     public function sendMessage(WhatsappNumber $whatsappNumber, $to, $message, $mediaUrl = null, $mediaType = null, $mediaBase64 = null, $filename = null)
     {
+        if ($whatsappNumber->isCloud()) {
+            return $this->sendViaCloud($whatsappNumber, $to, $message, $mediaUrl, $mediaType, $mediaBase64, $filename);
+        }
+
         $waServerUrl = \App\Models\Setting::where('key', 'wa_server_url')->value('value')
                        ?? env('WA_SERVER_URL', 'http://127.0.0.1:3005');
         $waServerUrl = rtrim($waServerUrl, '/');
 
         // Clean the recipient number (skip if already a full JID with @lid or @s.whatsapp.net)
-        if (!str_contains($to, '@')) {
+        if (! str_contains($to, '@')) {
             $to = preg_replace('/[^0-9]/', '', $to);
             if (str_starts_with($to, '0')) {
-                $to = '6' . $to; // Default to Malaysia country code if starting with 0
+                $to = '6'.$to; // Default to Malaysia country code if starting with 0
             }
         }
 
@@ -55,10 +59,10 @@ class WhatsappService
             $payload['filename'] = $filename ?? 'document.pdf';
         } elseif ($mediaUrl) {
             // Ensure media URL is absolute
-            if (!str_starts_with($mediaUrl, 'http')) {
+            if (! str_starts_with($mediaUrl, 'http')) {
                 $appUrl = \App\Models\Setting::where('key', 'app_url')->value('value') ?? config('app.url');
                 $appUrl = rtrim($appUrl, '/');
-                $mediaUrl = $appUrl . '/' . ltrim($mediaUrl, '/');
+                $mediaUrl = $appUrl.'/'.ltrim($mediaUrl, '/');
             }
             $payload['media_url'] = $mediaUrl;
             $payload['media_type'] = $mediaType;
@@ -89,7 +93,28 @@ class WhatsappService
                 'message' => $e->getMessage(),
                 'payload' => array_diff_key($payload, ['media_base64' => true]),
             ]);
+
             return null;
         }
+    }
+
+    /**
+     * Cloud API delivery. The returned WhatsappSendResult is duck-compatible with the
+     * Http Response the Baileys path returns (successful(), json('message_id'), body()).
+     */
+    protected function sendViaCloud(WhatsappNumber $whatsappNumber, $to, $message, $mediaUrl, $mediaType, $mediaBase64, $filename): WhatsappSendResult
+    {
+        $cloud = app(WhatsappCloudService::class);
+
+        if ($mediaBase64 || $mediaUrl) {
+            if ($mediaUrl && ! $mediaBase64 && ! str_starts_with($mediaUrl, 'http')) {
+                $appUrl = \App\Models\Setting::where('key', 'app_url')->value('value') ?? config('app.url');
+                $mediaUrl = rtrim($appUrl, '/').'/'.ltrim($mediaUrl, '/');
+            }
+
+            return $cloud->sendMedia($whatsappNumber, $to, $mediaType, $mediaUrl, $mediaBase64, $filename, $message ?: null);
+        }
+
+        return $cloud->sendText($whatsappNumber, $to, (string) $message);
     }
 }

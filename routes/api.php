@@ -1,9 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\ApiController;
+use App\Http\Controllers\Api\MetaWebhookController;
+use App\Http\Controllers\Api\WhatsappWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\WhatsappWebhookController;
-use App\Http\Controllers\Api\ApiController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -14,6 +15,10 @@ Route::post('/whatsapp/qr-update', [WhatsappWebhookController::class, 'qrUpdate'
 Route::post('/whatsapp/status-update', [WhatsappWebhookController::class, 'statusUpdate']);
 Route::post('/whatsapp/incoming-message', [WhatsappWebhookController::class, 'incomingMessage']);
 Route::post('/whatsapp/message-receipt', [WhatsappWebhookController::class, 'messageReceipt']);
+
+// Meta WhatsApp Cloud API webhook (verified by verify token / HMAC signature)
+Route::get('/meta/webhook', [MetaWebhookController::class, 'verify']);
+Route::post('/meta/webhook', [MetaWebhookController::class, 'handle']);
 
 // Business Plan API Routes
 Route::middleware(['auth:sanctum', 'api.access'])->prefix('v1')->group(function () {

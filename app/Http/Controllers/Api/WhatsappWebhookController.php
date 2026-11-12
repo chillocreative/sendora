@@ -3,14 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\ProcessAiReplyJob;
-use App\Jobs\ProcessMediaReminderJob;
-use App\Jobs\ProcessSendoraCommandJob;
-use App\Models\Conversation;
 use App\Models\WhatsappNumber;
-use App\Services\WhatsappService;
+use App\Services\WhatsappInboundHandler;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class WhatsappWebhookController extends Controller
@@ -103,7 +98,7 @@ class WhatsappWebhookController extends Controller
         }
     }
 
-    public function incomingMessage(Request $request)
+    public function incomingMessage(Request $request, WhatsappInboundHandler $handler)
     {
         Log::info('Incoming Message Webhook', [
             'user_id' => $request->user_id,
@@ -132,165 +127,23 @@ class WhatsappWebhookController extends Controller
                 return response()->json(['success' => false, 'error' => 'Number not found or disconnected'], 404);
             }
 
-            // Skip group messages
-            if (str_contains($request->from, '@g.us')) {
-                return response()->json(['success' => true, 'skipped' => 'group_message']);
-            }
+            $fromPhone = preg_replace('/@.*$/', '', $request->from);
 
-            $messageText = (string) ($request->message ?? '');
-
-            // Self-sent media with /sendora caption → extract event
-            if ($request->media_base64 && $this->isSelfMessage($request, $whatsappNumber)
-                && str_starts_with(strtolower(trim($messageText)), '/sendora')) {
-                if ($this->isDuplicateMessage($request, $whatsappNumber)) {
-                    return response()->json(['success' => true, 'skipped' => 'duplicate']);
-                }
-
-                ProcessMediaReminderJob::dispatch(
-                    (int) $request->user_id,
-                    (int) $request->phone_number,
-                    (string) $request->from,
-                    $request->media_base64,
-                    $request->media_mimetype ?? 'application/octet-stream',
-                    $request->media_filename,
-                    $this->cleanSendoraCaption($messageText),
-                    $request->message_id ?? null
-                );
-
-                return response()->json(['success' => true, 'queued' => true, 'type' => 'media_reminder']);
-            }
-
-            // Check for /stopchat and /startchat commands (AI toggle per conversation)
-            $lowerMessage = strtolower(trim($messageText));
-            if (in_array($lowerMessage, ['/stopchat', '/startchat'])) {
-                return $this->handleAiChatToggle($whatsappNumber, (string) $request->from, $lowerMessage === '/startchat');
-            }
-
-            // Check for /sendora command
-            if (str_starts_with(strtolower(trim($messageText)), '/sendora')) {
-                if ($this->isDuplicateMessage($request, $whatsappNumber)) {
-                    return response()->json(['success' => true, 'skipped' => 'duplicate']);
-                }
-
-                ProcessSendoraCommandJob::dispatch(
-                    (int) $request->user_id,
-                    (int) $request->phone_number,
-                    (string) $request->from,
-                    $messageText,
-                    $request->message_id ?? null
-                );
-
-                return response()->json(['success' => true, 'queued' => true, 'type' => 'sendora']);
-            }
-
-            // Dispatch AI reply job to queue
-            if ($this->isDuplicateMessage($request, $whatsappNumber)) {
-                return response()->json(['success' => true, 'skipped' => 'duplicate']);
-            }
-
-            ProcessAiReplyJob::dispatch(
-                (int) $request->user_id,
-                (int) $request->phone_number,
+            return response()->json($handler->handle(
+                $whatsappNumber,
                 (string) $request->from,
-                $messageText,
-                $request->message_id ?? null
-            );
-
-            return response()->json(['success' => true, 'queued' => true]);
+                $request->message,
+                $request->message_id ?? null,
+                $request->media_base64,
+                $request->media_mimetype,
+                $request->media_filename,
+                $fromPhone === $whatsappNumber->phone_number,
+            ));
         } catch (\Exception $e) {
             Log::error('Incoming Message Error: '.$e->getMessage());
 
             return response()->json(['error' => $e->getMessage()], 500);
         }
-    }
-
-    /**
-     * Returns true if this WhatsApp message_id was already accepted (redelivery).
-     */
-    protected function isDuplicateMessage(Request $request, WhatsappNumber $whatsappNumber): bool
-    {
-        if (empty($request->message_id)) {
-            return false;
-        }
-
-        return ! Cache::add(
-            "wa_msg:{$whatsappNumber->id}:{$request->message_id}",
-            1,
-            now()->addDays(2)
-        );
-    }
-
-    protected function isSelfMessage(Request $request, WhatsappNumber $whatsappNumber): bool
-    {
-        $fromPhone = preg_replace('/@.*$/', '', $request->from);
-
-        return $fromPhone === $whatsappNumber->phone_number;
-    }
-
-    protected function cleanSendoraCaption(string $text): ?string
-    {
-        $cleaned = preg_replace('/^\/sendora\s*/i', '', trim($text));
-
-        return $cleaned !== '' ? $cleaned : null;
-    }
-
-    protected function handleAiChatToggle(WhatsappNumber $whatsappNumber, string $contactJid, bool $enable)
-    {
-        $cleanPhone = $this->cleanPhoneForConversation($contactJid);
-
-        $conversation = Conversation::firstOrCreate(
-            [
-                'whatsapp_number_id' => $whatsappNumber->id,
-                'contact_phone' => $cleanPhone,
-            ],
-            [
-                'user_id' => $whatsappNumber->user_id,
-                'status' => 'active',
-                'contact_jid' => $contactJid,
-            ]
-        );
-
-        $newStatus = $enable ? 'active' : 'paused';
-        $conversation->update(['status' => $newStatus]);
-
-        Log::info('AI chat toggled via command', [
-            'conversation_id' => $conversation->id,
-            'contact_phone' => $cleanPhone,
-            'whatsapp_number_id' => $whatsappNumber->id,
-            'new_status' => $newStatus,
-        ]);
-
-        // Send confirmation after response to avoid blocking the webhook
-        dispatch(function () use ($whatsappNumber, $contactJid, $enable) {
-            $message = $enable
-                ? "AI assistant has been resumed for this conversation.\n\nSend /stopchat to pause again."
-                : "AI assistant has been paused for this conversation.\n\nSend /startchat to resume.";
-
-            (new WhatsappService())->sendMessage($whatsappNumber, $contactJid, $message);
-        })->afterResponse();
-
-        return response()->json([
-            'success' => true,
-            'type' => 'ai_toggle',
-            'status' => $newStatus,
-        ]);
-    }
-
-    protected function cleanPhoneForConversation(string $phone): string
-    {
-        if (str_contains($phone, '@lid')) {
-            $phone = str_replace('@lid', '', $phone);
-            $phone = preg_replace('/:.*$/', '', $phone);
-
-            return $phone;
-        }
-
-        $phone = str_replace('@s.whatsapp.net', '', $phone);
-        $phone = str_replace('@g.us', '', $phone);
-        $phone = preg_replace('/:.*$/', '', $phone);
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-
-        return $phone;
     }
 
     public function messageReceipt(Request $request)
