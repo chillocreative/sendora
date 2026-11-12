@@ -183,4 +183,15 @@ class RecaptchaTest extends TestCase
         $response->assertSessionDoesntHaveErrors('recaptcha_token');
         Http::assertNothingSent();
     }
+
+    public function test_percent_encoded_login_path_cannot_bypass_check(): void
+    {
+        $this->withSecret();
+        Http::fake();
+        $user = User::factory()->create(['password' => bcrypt('password')]);
+
+        $this->post('/%6cogin', ['email' => $user->email, 'password' => 'password']);
+
+        $this->assertGuest();
+    }
 }

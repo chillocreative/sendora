@@ -12,9 +12,11 @@ class VerifyRecaptcha
 {
     private const PROTECTED_PATHS = ['login', 'register', 'forgot-password'];
 
+    private const PROTECTED_ROUTES = ['login.store', 'register.store', 'password.email'];
+
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->isMethod('POST') || ! in_array(trim($request->path(), '/'), self::PROTECTED_PATHS, true)) {
+        if (! $request->isMethod('POST') || ! $this->isProtected($request)) {
             return $next($request);
         }
 
@@ -34,6 +36,16 @@ class VerifyRecaptcha
         }
 
         return $next($request);
+    }
+
+    /**
+     * Decide on the matched route name and on the DECODED path. The router matches the
+     * decoded path, so comparing the raw path would let "/%6cogin" skip the check.
+     */
+    private function isProtected(Request $request): bool
+    {
+        return $request->routeIs(...self::PROTECTED_ROUTES)
+            || in_array(trim($request->decodedPath(), '/'), self::PROTECTED_PATHS, true);
     }
 
     private function verify(string $secret, string $token, ?string $ip): bool
