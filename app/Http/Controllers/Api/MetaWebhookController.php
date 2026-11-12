@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\WhatsappNumber;
+use App\Models\WhatsappTemplate;
 use App\Services\WhatsappCloudService;
 use App\Services\WhatsappInboundHandler;
 use Illuminate\Http\Request;
@@ -51,6 +52,7 @@ class MetaWebhookController extends Controller
                     match ($field) {
                         'messages' => $this->handleMessagesChange($value),
                         'phone_number_quality_update', 'account_update' => $this->handleAccountChange($entry['id'] ?? null, $value),
+                        'message_template_status_update' => $this->handleTemplateStatusUpdate($entry['id'] ?? null, $value),
                         default => null,
                     };
                 } catch (\Throwable $e) {
@@ -225,5 +227,47 @@ class MetaWebhookController extends Controller
         if ($updates !== []) {
             $number->update($updates);
         }
+    }
+
+    protected function handleTemplateStatusUpdate(?string $wabaId, array $value): void
+    {
+        $name = $value['message_template_name'] ?? null;
+        $language = $value['message_template_language'] ?? null;
+        $metaId = isset($value['message_template_id']) ? (string) $value['message_template_id'] : null;
+
+        $template = null;
+        if ($wabaId && $name && $language) {
+            $template = WhatsappTemplate::where('waba_id', $wabaId)
+                ->where('name', $name)
+                ->where('language', $language)
+                ->first();
+        }
+        if (! $template && $metaId) {
+            $template = WhatsappTemplate::where('meta_template_id', $metaId)->first();
+        }
+
+        if (! $template) {
+            Log::info('Meta template status update for unknown template', [
+                'waba_id' => $wabaId,
+                'name' => $name,
+                'language' => $language,
+            ]);
+
+            return;
+        }
+
+        $event = strtoupper((string) ($value['event'] ?? ''));
+        if ($event === '') {
+            return;
+        }
+
+        $status = $event === 'FLAGGED' ? 'paused' : strtolower($event);
+        $reason = $value['reason'] ?? null;
+
+        $template->update([
+            'status' => $status,
+            'meta_template_id' => $metaId ?: $template->meta_template_id,
+            'rejection_reason' => ($reason === null || $reason === '' || strtoupper((string) $reason) === 'NONE') ? null : (string) $reason,
+        ]);
     }
 }

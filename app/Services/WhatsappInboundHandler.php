@@ -37,6 +37,16 @@ class WhatsappInboundHandler
         $userId = (int) $whatsappNumber->user_id;
         $numberId = (int) $whatsappNumber->id;
 
+        // Cloud only: owner-phone verification ("VERIFY ABC123"), handled before any other routing.
+        if ($whatsappNumber->isCloud()
+            && preg_match('/^\s*verify\s+([A-Z0-9]{6})\s*$/i', $messageText, $m)) {
+            return [
+                'success' => true,
+                'type' => 'owner_verification',
+                'verified' => $whatsappNumber->confirmOwnerVerification($from, $m[1]),
+            ];
+        }
+
         // Self-sent media with /sendora caption → extract event
         if ($mediaBase64 && $fromMe && str_starts_with(strtolower(trim($messageText)), '/sendora')) {
             if ($this->isDuplicateMessage($messageId, $whatsappNumber)) {

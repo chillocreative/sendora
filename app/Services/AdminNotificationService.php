@@ -100,6 +100,10 @@ class AdminNotificationService
                 return false;
             }
 
+            if ($device->isCloud()) {
+                return $this->processCloudNotification($notification, $device);
+            }
+
             $adminMobile = $this->getAdminMobileNumber($device);
 
             if (!$adminMobile) {
@@ -132,6 +136,42 @@ class AdminNotificationService
             ]);
             return false;
         }
+    }
+
+    /**
+     * Cloud devices cannot message themselves and need an approved template, so the
+     * recipient is the configured admin mobile number or the verified owner phone.
+     */
+    private function processCloudNotification(AdminNotification $notification, $device): bool
+    {
+        $recipient = Setting::where('key', 'admin_mobile_number')->value('value');
+
+        if (!$recipient && $device->hasVerifiedOwnerPhone()) {
+            $recipient = $device->owner_phone;
+        }
+
+        if (!$recipient) {
+            $notification->incrementFailure('No admin mobile number / owner phone for Cloud device');
+            return false;
+        }
+
+        $response = app(WhatsappTemplateSender::class)->send($device, 'admin_notification', $recipient, [
+            'type' => $notification->notification_type,
+            'message' => $this->formatMessage($notification),
+        ]);
+
+        if ($response->successful()) {
+            $notification->markAsSent();
+            Log::info('Admin notification sent', [
+                'type' => $notification->notification_type,
+                'id' => $notification->id,
+                'to' => $recipient,
+            ]);
+            return true;
+        }
+
+        $notification->incrementFailure($response->body());
+        return false;
     }
 
     /**

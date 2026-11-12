@@ -175,11 +175,28 @@ class ReminderService
             return false;
         }
 
-        $message = $this->formatMessage($reminder);
+        if ($waNumber->isCloud()) {
+            // Cloud: the business number cannot message itself, and reminders are
+            // business-initiated, so they go to the verified owner phone via a template.
+            if (! $waNumber->hasVerifiedOwnerPhone()) {
+                $response = WhatsappSendResult::failed('Owner phone not verified for this Cloud number');
+            } else {
+                $dateTime = $reminder->event_at ?? $reminder->reminder_at;
+                $response = app(WhatsappTemplateSender::class)->send($waNumber, 'reminder', $waNumber->owner_phone, [
+                    'title' => $reminder->title,
+                    'datetime' => $dateTime->format('l, d M Y \a\t g:i A'),
+                    'location' => $reminder->location,
+                    'description' => $reminder->description,
+                    'owner' => $reminder->user?->name,
+                ]);
+            }
+        } else {
+            $message = $this->formatMessage($reminder);
 
-        // Send to the user's own phone number
-        $to = $waNumber->phone_number;
-        $response = $this->whatsapp->sendMessage($waNumber, $to, $message);
+            // Send to the user's own phone number
+            $to = $waNumber->phone_number;
+            $response = $this->whatsapp->sendMessage($waNumber, $to, $message);
+        }
 
         if ($response && $response->successful()) {
             $reminder->update([
