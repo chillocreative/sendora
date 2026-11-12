@@ -24,6 +24,11 @@ class WhatsappWebhookController extends Controller
                 ->where('id', $request->phone_number)
                 ->first();
 
+            if ($number && $number->isCloud()) {
+                // Cloud numbers have no Baileys session; never let Node callbacks overwrite them.
+                return response()->json(['success' => true]);
+            }
+
             if ($number) {
                 $number->update([
                     'qr_code' => $request->qr_code,
@@ -64,6 +69,11 @@ class WhatsappWebhookController extends Controller
             $number = WhatsappNumber::where('user_id', $request->user_id)
                 ->where('id', $request->phone_number)
                 ->first();
+
+            if ($number && $number->isCloud()) {
+                // Cloud numbers have no Baileys session; Node callbacks must not touch them.
+                return response()->json(['success' => true]);
+            }
 
             if ($number) {
                 $updateData = [

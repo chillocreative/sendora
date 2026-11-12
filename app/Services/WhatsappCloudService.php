@@ -140,6 +140,44 @@ class WhatsappCloudService
     }
 
     /**
+     * Look up a phone number on the Graph API to verify credentials.
+     * Returns the decoded payload, or null when Meta rejects the request.
+     * The access token is never logged.
+     */
+    public function fetchPhoneNumber(string $phoneNumberId, string $accessToken): ?array
+    {
+        try {
+            $response = Http::withToken($accessToken)
+                ->acceptJson()
+                ->timeout(30)
+                ->get($this->graphUrl($phoneNumberId), [
+                    'fields' => 'display_phone_number,verified_name,quality_rating,messaging_limit_tier',
+                ]);
+        } catch (ConnectionException $e) {
+            Log::warning('WhatsappCloudService phone number lookup connection error', [
+                'phone_number_id' => $phoneNumberId,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        if (! $response->successful()) {
+            Log::warning('WhatsappCloudService phone number lookup failed', [
+                'phone_number_id' => $phoneNumberId,
+                'status' => $response->status(),
+                'error' => $response->json('error.message'),
+            ]);
+
+            return null;
+        }
+
+        $data = $response->json();
+
+        return is_array($data) ? $data : null;
+    }
+
+    /**
      * Digits only; a leading 0 is replaced by the configured default country code.
      */
     public function normalizePhone(string $phone): string

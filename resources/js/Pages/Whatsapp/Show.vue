@@ -8,6 +8,7 @@ const props = defineProps({
     number: Object,
 });
 
+const isCloud = props.number.provider === 'cloud';
 const refreshInterval = ref(null);
 
 const refreshQr = () => {
@@ -18,7 +19,7 @@ const refreshQr = () => {
 
 onMounted(() => {
     // Auto-refresh every 5 seconds if not connected
-    if (props.number.status !== 'connected') {
+    if (!isCloud && props.number.status !== 'connected') {
         refreshInterval.value = setInterval(() => {
             refreshQr();
         }, 5000);
@@ -42,12 +43,32 @@ onUnmounted(() => {
                     </svg>
                 </Link>
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Link Device via QR Code
+                    {{ isCloud ? 'Cloud API Number' : 'Link Device via QR Code' }}
                 </h2>
             </div>
         </template>
 
-        <div class="py-12">
+        <div v-if="isCloud" class="py-12">
+            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-12">
+                    <div class="flex items-center gap-3 mb-8">
+                        <h3 class="text-2xl font-bold text-gray-900">{{ number.display_phone_number || number.phone_number }}</h3>
+                        <span class="px-2 py-0.5 rounded-md text-xs font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200">Cloud API</span>
+                    </div>
+                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><dt class="text-xs uppercase text-gray-500">Status</dt><dd class="font-bold text-gray-900">{{ number.status }}</dd></div>
+                        <div><dt class="text-xs uppercase text-gray-500">Display number</dt><dd class="font-bold text-gray-900">{{ number.display_phone_number || '-' }}</dd></div>
+                        <div><dt class="text-xs uppercase text-gray-500">Quality rating</dt><dd class="font-bold text-gray-900">{{ number.quality_rating || '-' }}</dd></div>
+                        <div><dt class="text-xs uppercase text-gray-500">Messaging limit</dt><dd class="font-bold text-gray-900">{{ number.messaging_limit || '-' }}</dd></div>
+                    </dl>
+                    <p class="mt-8 text-sm text-gray-500">
+                        Inbound messages arrive through the Meta webhook configured on your Meta app. No QR code is needed for Cloud API numbers.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-12">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">

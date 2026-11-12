@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Link, router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Link, router, usePage, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     numbers: Array,
@@ -21,6 +21,21 @@ const usagePercentage = computed(() => (devicesUsed.value / props.deviceLimit) *
 
 const createDevice = () => {
     router.post(route('whatsapp.create'));
+};
+
+const showCloudForm = ref(false);
+const cloudForm = useForm({
+    waba_id: '',
+    phone_number_id: '',
+    access_token: '',
+});
+
+const connectCloud = () => {
+    cloudForm.post(route('whatsapp.store-cloud'), {
+        preserveScroll: true,
+        onSuccess: () => cloudForm.reset(),
+        onFinish: () => cloudForm.reset('access_token'),
+    });
 };
 
 const deleteDevice = (id) => {
@@ -96,8 +111,40 @@ const deleteDevice = (id) => {
                             <Link v-else href="/subscription" class="text-sm text-[#780116] hover:text-[#c32f27] font-medium">
                                 Upgrade plan for more devices →
                             </Link>
+                            <button
+                                v-if="canAddDevice"
+                                type="button"
+                                @click="showCloudForm = !showCloudForm"
+                                class="text-sm font-semibold text-[#780116] hover:text-[#c32f27] underline"
+                            >
+                                {{ showCloudForm ? 'Hide Cloud API form' : 'Connect Cloud API number' }}
+                            </button>
                         </div>
                     </div>
+
+                    <!-- Cloud API Connect Form -->
+                    <form v-if="showCloudForm && canAddDevice" @submit.prevent="connectCloud" class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4" autocomplete="off">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">WABA ID</label>
+                            <input v-model="cloudForm.waba_id" type="text" inputmode="numeric" class="w-full rounded-xl border-slate-200 focus:border-[#780116] focus:ring-[#780116]" />
+                            <p v-if="cloudForm.errors.waba_id" class="text-sm text-red-600 mt-1">{{ cloudForm.errors.waba_id }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Phone Number ID</label>
+                            <input v-model="cloudForm.phone_number_id" type="text" inputmode="numeric" class="w-full rounded-xl border-slate-200 focus:border-[#780116] focus:ring-[#780116]" />
+                            <p v-if="cloudForm.errors.phone_number_id" class="text-sm text-red-600 mt-1">{{ cloudForm.errors.phone_number_id }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Access Token</label>
+                            <input v-model="cloudForm.access_token" type="password" autocomplete="new-password" class="w-full rounded-xl border-slate-200 focus:border-[#780116] focus:ring-[#780116]" />
+                            <p v-if="cloudForm.errors.access_token" class="text-sm text-red-600 mt-1">{{ cloudForm.errors.access_token }}</p>
+                        </div>
+                        <div class="md:col-span-3 flex justify-end">
+                            <button type="submit" :disabled="cloudForm.processing" class="bg-gradient-to-r from-[#780116] to-[#db7c26] text-white px-6 py-2.5 rounded-xl font-bold disabled:opacity-50">
+                                {{ cloudForm.processing ? 'Verifying with Meta...' : 'Connect Cloud API number' }}
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Empty State -->
@@ -151,8 +198,9 @@ const deleteDevice = (id) => {
                                     
                                     <div>
                                         <div class="font-bold text-lg text-slate-900 mb-1 max-w-[180px] truncate">
-                                            {{ number.phone_number || 'Unnamed Device' }}
+                                            {{ number.display_phone_number || number.phone_number || 'Unnamed Device' }}
                                         </div>
+                                        <span v-if="number.provider === 'cloud'" class="inline-block mb-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">Cloud API</span>
                                         <div class="text-xs text-slate-400 font-mono mb-1">Device ID: {{ number.id }}</div>
                                         <div 
                                             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
@@ -196,7 +244,7 @@ const deleteDevice = (id) => {
                                         <circle v-if="number.status === 'connected'" cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
                                         <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                                     </svg>
-                                    {{ number.status === 'connected' ? 'Manage Session' : 'Scan QR Code' }}
+                                    {{ number.provider === 'cloud' ? 'View Details' : (number.status === 'connected' ? 'Manage Session' : 'Scan QR Code') }}
                                 </Link>
                                 
                                 <button 
