@@ -34,8 +34,13 @@ class MediaParserService
         $this->openAi = $openAi;
     }
 
-    public function parseMediaForEvent(string $base64, string $mimetype, ?string $filename, ?string $caption): ?array
+    /** Set per parse so the AI calls are metered against the sender's token allowance. */
+    protected ?int $userId = null;
+
+    public function parseMediaForEvent(string $base64, string $mimetype, ?string $filename, ?string $caption, ?int $userId = null): ?array
     {
+        $this->userId = $userId;
+
         if (in_array($mimetype, self::IMAGE_MIMETYPES)) {
             return $this->extractEventFromImage($base64, $mimetype, $caption);
         }
@@ -49,6 +54,11 @@ class MediaParserService
         }
 
         return ['error' => 'unsupported_type'];
+    }
+
+    protected function ai(): OpenAiService
+    {
+        return $this->userId ? $this->openAi->forUser($this->userId) : $this->openAi;
     }
 
     protected function extractEventFromImage(string $base64, string $mimetype, ?string $caption): ?array
@@ -66,7 +76,7 @@ class MediaParserService
             'image_url' => ['url' => "data:{$mimetype};base64,{$base64}"],
         ];
 
-        $result = $this->openAi->chatCompletion(
+        $result = $this->ai()->chatCompletion(
             messages: [
                 [
                     'role' => 'system',
@@ -143,7 +153,7 @@ class MediaParserService
             $prompt .= "\n\nAdditional context from user: {$caption}";
         }
 
-        $result = $this->openAi->chatCompletion(
+        $result = $this->ai()->chatCompletion(
             messages: [
                 [
                     'role' => 'system',

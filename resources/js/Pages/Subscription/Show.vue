@@ -178,7 +178,7 @@ const formatDate = (date) => {
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
                     <div v-for="plan in plans.filter(p => !p.is_lifetime && p.monthly_price > 0)" :key="plan.id"
                          class="bg-white rounded-[2.5rem] border border-slate-100 p-8 flex flex-col transition-all duration-500 hover:shadow-2xl sm:hover:-translate-y-4"
-                         :class="{'ring-2 ring-[#780116] ring-offset-4': plan.name === 'Pro'}">
+                         :class="{'ring-2 ring-[#780116] ring-offset-4': plan.name === 'Growth'}">
 
                         <div class="mb-10 lg:mb-12">
                             <h4 class="text-xl font-black text-slate-900 mb-4 tracking-tight">{{ plan.name }}</h4>
@@ -221,7 +221,7 @@ const formatDate = (date) => {
                             :class="[
                                 subscription?.plan?.id === plan.id ? 'bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100' :
                                 isDowngrade(plan) ? 'bg-slate-50 text-slate-200 cursor-not-allowed border border-slate-50 shadow-none' :
-                                (plan.name === 'Pro' ? 'bg-[#780116] text-white hover:bg-[#c32f27] shadow-xl shadow-red-200/50' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-200/30'),
+                                (plan.name === 'Growth' ? 'bg-[#780116] text-white hover:bg-[#c32f27] shadow-xl shadow-red-200/50' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-200/30'),
                                 'w-full py-5 rounded-2xl font-black text-[11px] tracking-[0.2em] uppercase transition-all flex items-center justify-center transform active:scale-95'
                             ]"
                         >

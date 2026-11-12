@@ -142,7 +142,7 @@ class AiReplyService
         $messages = $this->buildPrompt($playbook, $conversation);
 
         // -- Step 5: Call OpenAI --
-        $result = $this->openAi->chatCompletion(
+        $result = $this->openAi->forUser($whatsappNumber->user_id)->chatCompletion(
             $messages,
             $playbook->model ?? 'gpt-4o',
             (float) ($playbook->temperature ?? 0.7),

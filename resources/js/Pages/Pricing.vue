@@ -173,16 +173,16 @@ const selectPlan = (plan) => {
                 <!-- Pricing Cards -->
                 <!-- Main Paid Plans -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-20">
-                    <div v-for="plan in plans.filter(p => !['Starter', 'Free'].includes(p.name) && !p.is_lifetime)" :key="plan.id"
+                    <div v-for="plan in plans.filter(p => !['Free'].includes(p.name) && !p.is_lifetime)" :key="plan.id"
                          class="relative group rounded-[3.5rem] border border-slate-100 p-12 flex flex-col transition-all duration-500 hover:shadow-[0_48px_80px_-16px_rgba(120,1,22,0.12)] hover:-translate-y-4"
                          :class="{
-                            'ring-2 ring-[#780116] ring-offset-8': plan.name === 'Pro',
-                            'bg-white': plan.name === 'Basic',
-                            'bg-gradient-to-br from-white via-red-50/20 to-slate-50': plan.name === 'Pro',
+                            'ring-2 ring-[#780116] ring-offset-8': plan.name === 'Growth',
+                            'bg-white': plan.name === 'Starter',
+                            'bg-gradient-to-br from-white via-red-50/20 to-slate-50': plan.name === 'Growth',
                             'bg-gradient-to-br from-[#780116] via-[#c32f27] to-[#db7c26] text-white': plan.name === 'Business'
                          }">
 
-                        <div v-if="plan.name === 'Pro'" class="absolute -top-5 left-1/2 -translate-x-1/2 px-8 py-2.5 bg-[#780116] text-white text-[10px] font-black tracking-[0.25em] rounded-full shadow-2xl shadow-red-300 whitespace-nowrap z-30 transform hover:scale-110 transition-transform">
+                        <div v-if="plan.name === 'Growth'" class="absolute -top-5 left-1/2 -translate-x-1/2 px-8 py-2.5 bg-[#780116] text-white text-[10px] font-black tracking-[0.25em] rounded-full shadow-2xl shadow-red-300 whitespace-nowrap z-30 transform hover:scale-110 transition-transform">
                             RECOMMENDED
                         </div>
 
@@ -214,6 +214,12 @@ const selectPlan = (plan) => {
                                     </span>
                                     <span>{{ formatReminders(plan.limits.reminders_per_month) }} Reminders / month</span>
                                 </li>
+                                <li v-if="plan.limits.ai_tokens_per_month" class="flex items-center text-sm font-bold" :class="plan.name === 'Business' ? 'text-white/80' : 'text-slate-600'">
+                                    <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
+                                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                    </span>
+                                    <span>{{ (plan.limits.ai_tokens_per_month / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }) }}M AI tokens / month</span>
+                                </li>
                                 <li v-for="feature in getActiveFeatures(plan)" :key="feature" class="flex items-center text-sm font-bold" :class="plan.name === 'Business' ? 'text-white/80' : 'text-slate-600'">
                                     <span class="w-8 h-8 rounded-[0.75rem] flex items-center justify-center mr-4 shrink-0 transition-colors" :class="plan.name === 'Business' ? 'bg-white/10 text-[#f7b538]' : 'bg-red-50 text-[#780116]'">
                                         <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
@@ -228,7 +234,7 @@ const selectPlan = (plan) => {
                                 :class="[
                                     currentPlanId === plan.id ? (plan.name === 'Business' ? 'bg-white/5 text-slate-400 cursor-not-allowed shadow-none' : 'bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100 shadow-none') :
                                     isDowngrade(plan) ? (plan.name === 'Business' ? 'bg-white/5 text-slate-400 cursor-not-allowed shadow-none' : 'bg-slate-50 text-slate-200 cursor-not-allowed border border-slate-50 shadow-none') :
-                                    (plan.name === 'Pro' ? 'bg-[#780116] text-white hover:bg-[#c32f27] shadow-xl shadow-red-300/30' :
+                                    (plan.name === 'Growth' ? 'bg-[#780116] text-white hover:bg-[#c32f27] shadow-xl shadow-red-300/30' :
                                      (plan.name === 'Business' ? 'bg-[#f7b538] text-[#780116] hover:bg-white hover:text-[#780116] shadow-xl shadow-orange-900/40' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-200')),
                                     'w-full py-6 rounded-2xl font-black text-xs tracking-[0.2em] uppercase transition-all duration-300 transform active:scale-95'
                                 ]"

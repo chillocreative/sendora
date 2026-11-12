@@ -2,20 +2,29 @@
 
 namespace Database\Seeders;
 
+use App\Models\SubscriptionPlan;
 use Illuminate\Database\Seeder;
 
 class SubscriptionPlanSeeder extends Seeder
 {
-    public function run(): void
+    /**
+     * Meta's per-message template fees are billed by Meta to the customer's own WhatsApp
+     * Business account (Embedded Signup), so plan prices cover the platform only.
+     *
+     * ai_tokens_per_month: 0 or missing means unlimited (see AiUsageService).
+     * reminders_per_month: 0 means unlimited.
+     */
+    public static function plans(): array
     {
-        $plans = [
+        return [
             [
-                'name' => 'Basic',
-                'monthly_price' => 59,
-                'yearly_price' => 0,
+                'name' => 'Starter',
+                'monthly_price' => 49,
+                'yearly_price' => 490,
                 'limits' => [
                     'whatsapp_nos' => 1,
-                    'reminders_per_month' => 50,
+                    'reminders_per_month' => 300,
+                    'ai_tokens_per_month' => 200_000,
                     'features' => [
                         'google_calendar' => true,
                         'ai_command_parsing' => false,
@@ -25,12 +34,13 @@ class SubscriptionPlanSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Pro',
-                'monthly_price' => 129,
-                'yearly_price' => 0,
+                'name' => 'Growth',
+                'monthly_price' => 89,
+                'yearly_price' => 890,
                 'limits' => [
                     'whatsapp_nos' => 2,
-                    'reminders_per_month' => 500,
+                    'reminders_per_month' => 1500,
+                    'ai_tokens_per_month' => 500_000,
                     'features' => [
                         'google_calendar' => true,
                         'ai_command_parsing' => true,
@@ -41,11 +51,12 @@ class SubscriptionPlanSeeder extends Seeder
             ],
             [
                 'name' => 'Business',
-                'monthly_price' => 249,
-                'yearly_price' => 0,
+                'monthly_price' => 149,
+                'yearly_price' => 1490,
                 'limits' => [
                     'whatsapp_nos' => 5,
                     'reminders_per_month' => 0,
+                    'ai_tokens_per_month' => 1_500_000,
                     'features' => [
                         'google_calendar' => true,
                         'ai_command_parsing' => true,
@@ -55,13 +66,27 @@ class SubscriptionPlanSeeder extends Seeder
                 ],
             ],
         ];
+    }
 
-        foreach ($plans as $plan) {
-            \App\Models\SubscriptionPlan::updateOrCreate(['name' => $plan['name']], $plan);
+    public function run(): void
+    {
+        foreach (self::plans() as $plan) {
+            // Existing subscribers keep their old terms: a same-named plan with a different
+            // price is retired (renamed, hidden from pricing) rather than overwritten.
+            $legacy = SubscriptionPlan::where('name', $plan['name'])
+                ->where('is_lifetime', false)
+                ->where('monthly_price', '!=', $plan['monthly_price'])
+                ->first();
+
+            if ($legacy) {
+                $legacy->update(['name' => $plan['name'].' (Legacy)', 'is_active' => false]);
+            }
+
+            SubscriptionPlan::updateOrCreate(['name' => $plan['name']], $plan + ['is_active' => true]);
         }
 
         // Lifetime plan — only insert if it doesn't already exist
-        \App\Models\SubscriptionPlan::firstOrCreate(['name' => 'Lifetime'], [
+        SubscriptionPlan::firstOrCreate(['name' => 'Lifetime'], [
             'monthly_price' => 1999,
             'yearly_price' => 0,
             'is_lifetime' => true,

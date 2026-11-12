@@ -11,6 +11,9 @@ class OpenAiService
     protected string $openAiKey;
     protected string $deepSeekKey;
 
+    /** When set, calls are metered against this user's monthly AI token allowance. */
+    protected ?int $meteredUserId = null;
+
     protected const PROVIDER_URLS = [
         'openai' => 'https://api.openai.com/v1/chat/completions',
         'deepseek' => 'https://api.deepseek.com/chat/completions',
@@ -38,6 +41,17 @@ class OpenAiService
         return $provider === 'deepseek' ? $this->deepSeekKey : $this->openAiKey;
     }
 
+    /**
+     * A copy of this service whose calls are checked and recorded against the user's AI tokens.
+     */
+    public function forUser(int $userId): static
+    {
+        $clone = clone $this;
+        $clone->meteredUserId = $userId;
+
+        return $clone;
+    }
+
     public function isConfigured(?string $model = null): bool
     {
         $provider = $model ? $this->resolveProvider($model) : 'openai';
@@ -59,6 +73,18 @@ class OpenAiService
         $provider = $this->resolveProvider($model);
         $apiKey = $this->apiKeyFor($provider);
         $apiUrl = self::PROVIDER_URLS[$provider];
+
+        $meteredUser = $this->meteredUserId ? \App\Models\User::find($this->meteredUserId) : null;
+
+        if ($meteredUser && ! app(AiUsageService::class)->hasTokens($meteredUser)) {
+            return [
+                'success' => false,
+                'content' => null,
+                'usage' => null,
+                'error' => 'ai_token_limit_reached',
+                'latency_ms' => 0,
+            ];
+        }
 
         if (empty($apiKey)) {
             return [
@@ -98,6 +124,11 @@ class OpenAiService
 
             if ($response->successful()) {
                 $data = $response->json();
+
+                if ($meteredUser) {
+                    app(AiUsageService::class)->record($meteredUser, (int) ($data['usage']['total_tokens'] ?? 0));
+                }
+
                 return [
                     'success' => true,
                     'content' => $data['choices'][0]['message']['content'] ?? null,

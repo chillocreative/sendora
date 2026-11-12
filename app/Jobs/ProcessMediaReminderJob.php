@@ -61,11 +61,18 @@ class ProcessMediaReminderJob implements ShouldQueue
             return;
         }
 
+        if (! app(\App\Services\AiUsageService::class)->hasTokens($user)) {
+            $this->reply($whatsappService, $waNumber, "\xE2\x9D\x8C ".(new \App\Exceptions\AiTokenLimitReached)->getMessage());
+
+            return;
+        }
+
         $result = $mediaParser->parseMediaForEvent(
             $this->mediaBase64,
             $this->mediaMimetype,
             $this->mediaFilename,
             $this->caption,
+            $user->id,
         );
 
         if (! $result) {
