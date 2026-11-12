@@ -161,16 +161,32 @@ class MetaCloudServiceTest extends TestCase
         $this->assertSame('(190) Invalid OAuth access token', $result->error());
     }
 
-    public function test_server_errors_are_retried(): void
+    public function test_message_sends_are_not_retried_on_server_errors(): void
     {
+        // Re-POSTing a send could deliver the message twice if Meta processed the first attempt.
         Http::fake(['graph.facebook.com/*' => Http::sequence()
             ->push(['error' => ['message' => 'oops']], 500)
             ->push(['messages' => [['id' => 'wamid.R1']]])]);
 
         $result = app(WhatsappCloudService::class)->sendTemplate($this->number(), '60111222333', 'hello', 'en');
 
-        $this->assertSame('wamid.R1', $result->json('message_id'));
-        Http::assertSentCount(2);
+        $this->assertFalse($result->successful());
+        $this->assertSame(500, $result->status());
+        Http::assertSentCount(1);
+    }
+
+    public function test_media_download_is_retried_on_server_errors(): void
+    {
+        Http::fake([
+            'graph.facebook.com/*/MEDIA1' => Http::sequence()
+                ->push(['error' => ['message' => 'oops']], 500)
+                ->push(['url' => 'https://lookaside.fbsbx.com/file', 'mime_type' => 'image/png']),
+            'lookaside.fbsbx.com/*' => Http::response('png-bytes'),
+        ]);
+
+        $media = app(WhatsappCloudService::class)->downloadMedia($this->number(), 'MEDIA1');
+
+        $this->assertSame(base64_encode('png-bytes'), $media['base64']);
     }
 
     public function test_client_errors_are_not_retried(): void

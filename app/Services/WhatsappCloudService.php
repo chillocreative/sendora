@@ -107,14 +107,14 @@ class WhatsappCloudService
     public function downloadMedia(WhatsappNumber $number, string $mediaId): ?array
     {
         try {
-            $meta = $this->client($number)->get($this->graphUrl($mediaId));
+            $meta = $this->client($number, true)->get($this->graphUrl($mediaId));
             if (! $meta->successful() || ! $meta->json('url')) {
                 $this->logFailure('media lookup', $number, WhatsappSendResult::fromResponse($meta));
 
                 return null;
             }
 
-            $file = $this->client($number)->timeout(60)->get($meta->json('url'));
+            $file = $this->client($number, true)->timeout(60)->get($meta->json('url'));
             if (! $file->successful()) {
                 $this->logFailure('media download', $number, WhatsappSendResult::fromResponse($file));
 
@@ -261,19 +261,25 @@ class WhatsappCloudService
     }
 
     /**
-     * Retries only on 5xx responses.
+     * No retries by default: re-POSTing a send could deliver the message twice.
+     * Pass $retryOnServerError only for idempotent requests (GET).
      */
-    protected function client(WhatsappNumber $number): PendingRequest
+    protected function client(WhatsappNumber $number, bool $retryOnServerError = false): PendingRequest
     {
-        return Http::withToken($number->access_token)
+        $request = Http::withToken($number->access_token)
             ->acceptJson()
-            ->timeout(30)
-            ->retry(
-                2,
-                500,
-                fn ($exception) => $exception instanceof RequestException && $exception->response->serverError(),
-                throw: false,
-            );
+            ->timeout(30);
+
+        if (! $retryOnServerError) {
+            return $request;
+        }
+
+        return $request->retry(
+            2,
+            500,
+            fn ($exception) => $exception instanceof RequestException && $exception->response->serverError(),
+            throw: false,
+        );
     }
 
     protected function graphUrl(string $path): string
