@@ -70,6 +70,19 @@ class SubscriptionPlanSeeder extends Seeder
 
     public function run(): void
     {
+        // Retire every other sellable plan (Basic, Pro, ...). They keep their old terms for
+        // existing subscribers, but are hidden and cannot be bought, so legacy plans without
+        // an AI token allowance (unlimited) cannot be chosen by new customers.
+        $current = array_column(self::plans(), 'name');
+        SubscriptionPlan::where('is_lifetime', false)
+            ->where('is_active', true)
+            ->whereNotIn('name', $current)
+            ->get()
+            ->each(fn ($old) => $old->update([
+                'name' => str_ends_with($old->name, '(Legacy)') ? $old->name : $old->name.' (Legacy)',
+                'is_active' => false,
+            ]));
+
         foreach (self::plans() as $plan) {
             // Existing subscribers keep their old terms: a same-named plan with a different
             // price is retired (renamed, hidden from pricing) rather than overwritten.

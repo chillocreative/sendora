@@ -136,4 +136,26 @@ class AiTokenMeteringTest extends TestCase
         $this->assertSame(1_500_000, $new->first()->limits['ai_tokens_per_month']);
         $this->assertSame(['Starter', 'Growth', 'Business'], SubscriptionPlan::where('is_active', true)->where('is_lifetime', false)->orderBy('monthly_price')->pluck('name')->all());
     }
+
+    public function test_seeder_retires_other_sellable_plans_and_checkout_refuses_them(): void
+    {
+        $pro = SubscriptionPlan::create([
+            'name' => 'Pro', 'monthly_price' => 129, 'yearly_price' => 0,
+            'limits' => ['whatsapp_nos' => 2, 'reminders_per_month' => 500, 'features' => ['auto_reply' => true]],
+        ]);
+        $lifetime = SubscriptionPlan::create([
+            'name' => 'Lifetime', 'monthly_price' => 1999, 'yearly_price' => 0, 'is_lifetime' => true,
+            'limits' => ['whatsapp_nos' => 2, 'reminders_per_month' => 500, 'features' => []],
+        ]);
+
+        $this->seed(SubscriptionPlanSeeder::class);
+
+        $this->assertFalse($pro->fresh()->is_active);
+        $this->assertTrue($lifetime->fresh()->is_active);
+
+        $user = User::factory()->create();
+        $this->actingAs($user)
+            ->post(route('payments.initiate'), ['plan_id' => $pro->id, 'billing_cycle' => 'monthly'])
+            ->assertStatus(422);
+    }
 }

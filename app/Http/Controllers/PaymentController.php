@@ -46,6 +46,11 @@ class PaymentController extends Controller
         $user = auth()->user();
         $plan = \App\Models\SubscriptionPlan::findOrFail($request->plan_id);
 
+        // Retired plans stay available only to people who already subscribed to them (renewals).
+        if (! $plan->is_active && ! $user->subscriptions()->where('subscription_plan_id', $plan->id)->exists()) {
+            abort(422, 'This plan is no longer available.');
+        }
+
         if ($plan->is_lifetime) {
             $amount = $plan->monthly_price; // one-time price stored in monthly_price
         } else {
