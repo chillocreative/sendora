@@ -25,6 +25,30 @@ class ReminderService
         $this->calendarService = $calendarService;
     }
 
+    /**
+     * The plan's monthly cap applies to every creation path (web, WhatsApp command, media
+     * upload), not just the web form. A limit of 0 means unlimited.
+     *
+     * @throws \App\Exceptions\ReminderLimitReached
+     */
+    public function assertWithinMonthlyLimit(User $user): void
+    {
+        $limit = (int) ($user->current_plan?->limits['reminders_per_month'] ?? 0);
+
+        if ($limit <= 0) {
+            return;
+        }
+
+        $used = Reminder::where('user_id', $user->id)
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count();
+
+        if ($used >= $limit) {
+            throw new \App\Exceptions\ReminderLimitReached($limit);
+        }
+    }
+
     public function createReminder(User $user, array $data, ?string $idempotencyKey = null): Reminder
     {
         $eventAt = Carbon::parse($data['event_at'] ?? $data['reminder_at']);
@@ -44,6 +68,8 @@ class ReminderService
         if ($existing) {
             return $existing;
         }
+
+        $this->assertWithinMonthlyLimit($user);
 
         $reminder = Reminder::create([
             'user_id' => $user->id,

@@ -119,4 +119,44 @@ class ProcessMediaReminderJobReplyTest extends TestCase
 
         $this->assertSame(2, \App\Models\Reminder::where('user_id', $user->id)->count());
     }
+
+    public function test_limit_reached_mid_upload_replies_with_partial_count(): void
+    {
+        $plan = \App\Models\SubscriptionPlan::create([
+            'name' => 'Tiny', 'monthly_price' => 1, 'yearly_price' => 1,
+            'limits' => ['whatsapp_nos' => 1, 'reminders_per_month' => 1, 'features' => ['ai_command_parsing' => true]],
+        ]);
+        $user = User::factory()->create();
+        \App\Models\UserSubscription::create(['user_id' => $user->id, 'subscription_plan_id' => $plan->id, 'status' => 'active']);
+        $number = WhatsappNumber::create(['user_id' => $user->id, 'status' => 'connected', 'phone_number' => '60123456789']);
+
+        $parser = Mockery::mock(MediaParserService::class);
+        $parser->shouldReceive('parseMediaForEvent')->andReturn(['events' => [
+            ['title' => 'A', 'date' => now()->addDays(3)->format('Y-m-d'), 'time' => '10:00'],
+            ['title' => 'B', 'date' => now()->addDays(4)->format('Y-m-d'), 'time' => '11:00'],
+        ]]);
+
+        $sent = null;
+        $wa = Mockery::mock(WhatsappService::class);
+        $wa->shouldReceive('sendMessage')->once()->andReturnUsing(function ($n, $to, $msg) use (&$sent) {
+            $sent = $msg;
+
+            return new WhatsappSendResult(true, 200);
+        });
+
+        $real = app(ReminderService::class);
+        $service = Mockery::mock(ReminderService::class);
+        $service->shouldReceive('createReminder')->andReturnUsing(function ($u, $d, $k = null) use ($real) {
+            $d['source'] = 'web'; // sqlite CHECK predates 'whatsapp_media'
+
+            return $real->createReminder($u, $d, $k);
+        });
+
+        (new ProcessMediaReminderJob($user->id, $number->id, '60111222333', 'x', 'image/png', null, null, 'wamid.7'))
+            ->handle($parser, $service, app(SendoraCommandService::class), $wa);
+
+        $this->assertStringContainsString('monthly reminder limit (1)', $sent);
+        $this->assertStringContainsString('1 of 2 events', $sent);
+        $this->assertSame(1, \App\Models\Reminder::where('user_id', $user->id)->count());
+    }
 }

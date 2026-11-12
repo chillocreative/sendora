@@ -480,18 +480,22 @@ class SendoraCommandService
 
         $eventAt = $parsed['date'].' '.($parsed['time'] ?? '09:00');
 
-        $reminder = $this->reminderService->createReminder($user, [
-            'title' => $parsed['title'],
-            'description' => $parsed['description'] ?? null,
-            'event_at' => $eventAt,
-            'minutes_before' => $parsed['minutes_before'] ?? 15,
-            'location' => $parsed['location'] ?? null,
-            'recurrence_rule' => $parsed['recurrence_rule'] ?? null,
-            'notify_email' => $parsed['notify_email'] ?? null,
-            'whatsapp_number_id' => $waNumber->id,
-            'source' => 'whatsapp_command',
-            'add_to_calendar' => $user->googleCalendarConnection !== null,
-        ], $idempotencyKey);
+        try {
+            $reminder = $this->reminderService->createReminder($user, [
+                'title' => $parsed['title'],
+                'description' => $parsed['description'] ?? null,
+                'event_at' => $eventAt,
+                'minutes_before' => $parsed['minutes_before'] ?? 15,
+                'location' => $parsed['location'] ?? null,
+                'recurrence_rule' => $parsed['recurrence_rule'] ?? null,
+                'notify_email' => $parsed['notify_email'] ?? null,
+                'whatsapp_number_id' => $waNumber->id,
+                'source' => 'whatsapp_command',
+                'add_to_calendar' => $user->googleCalendarConnection !== null,
+            ], $idempotencyKey);
+        } catch (\App\Exceptions\ReminderLimitReached $e) {
+            return "\xE2\x9D\x8C ".$e->getMessage();
+        }
 
         return $this->formatConfirmation($reminder);
     }

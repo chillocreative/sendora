@@ -93,18 +93,32 @@ class ProcessMediaReminderJob implements ShouldQueue
         foreach ($events as $index => $event) {
             $eventAt = $event['date'].' '.($event['time'] ?? '09:00');
 
-            $reminders[] = $reminderService->createReminder($user, [
-                'title' => $event['title'],
-                'description' => $event['description'] ?? null,
-                'event_at' => $eventAt,
-                'minutes_before' => 15,
-                'location' => $event['location'] ?? null,
-                'whatsapp_number_id' => $waNumber->id,
-                'source' => 'whatsapp_media',
-                'add_to_calendar' => $addToCalendar,
-                // createReminder() already de-duplicates on user/title/time for 10 minutes, so a
-                // retry reuses the reminders it made; this key does the same for the calendar event.
-            ], $this->waMessageId ? "media:{$this->waMessageId}:{$index}" : null);
+            try {
+                $reminders[] = $reminderService->createReminder($user, [
+                    'title' => $event['title'],
+                    'description' => $event['description'] ?? null,
+                    'event_at' => $eventAt,
+                    'minutes_before' => 15,
+                    'location' => $event['location'] ?? null,
+                    'whatsapp_number_id' => $waNumber->id,
+                    'source' => 'whatsapp_media',
+                    'add_to_calendar' => $addToCalendar,
+                    // createReminder() already de-duplicates on user/title/time for 10 minutes, so a
+                    // retry reuses the reminders it made; this key does the same for the calendar event.
+                ], $this->waMessageId ? "media:{$this->waMessageId}:{$index}" : null);
+            } catch (\App\Exceptions\ReminderLimitReached $e) {
+                $limitMessage = "\xE2\x9D\x8C ".$e->getMessage();
+                break;
+            }
+        }
+
+        if (isset($limitMessage)) {
+            $made = count($reminders);
+            $this->reply($whatsappService, $waNumber, $made > 0
+                ? "{$limitMessage}\n\n{$made} of ".count($events).' events were added before the limit was reached.'
+                : $limitMessage);
+
+            return;
         }
 
         if (count($reminders) === 1) {
