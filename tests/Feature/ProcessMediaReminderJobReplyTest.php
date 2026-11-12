@@ -71,4 +71,52 @@ class ProcessMediaReminderJobReplyTest extends TestCase
 
         Log::shouldNotHaveReceived('warning');
     }
+
+    public function test_retry_after_partial_failure_does_not_duplicate_reminders(): void
+    {
+        $plan = \App\Models\SubscriptionPlan::create([
+            'name' => 'Pro', 'monthly_price' => 1, 'yearly_price' => 1,
+            'limits' => ['whatsapp_nos' => 1, 'reminders_per_month' => 0, 'features' => ['ai_command_parsing' => true]],
+        ]);
+        $user = User::factory()->create();
+        \App\Models\UserSubscription::create(['user_id' => $user->id, 'subscription_plan_id' => $plan->id, 'status' => 'active']);
+        $number = WhatsappNumber::create(['user_id' => $user->id, 'status' => 'connected', 'phone_number' => '60123456789']);
+
+        $events = [
+            ['title' => 'Event A', 'date' => now()->addDays(3)->format('Y-m-d'), 'time' => '10:00'],
+            ['title' => 'Event B', 'date' => now()->addDays(4)->format('Y-m-d'), 'time' => '11:00'],
+        ];
+
+        $parser = Mockery::mock(MediaParserService::class);
+        $parser->shouldReceive('parseMediaForEvent')->andReturn(['events' => $events]);
+
+        $wa = Mockery::mock(WhatsappService::class);
+        $wa->shouldReceive('sendMessage')->andReturn(new WhatsappSendResult(true, 200));
+
+        $real = app(ReminderService::class);
+        $calls = 0;
+        $service = Mockery::mock(ReminderService::class);
+        $service->shouldReceive('createReminder')->andReturnUsing(function ($u, $d, $k = null) use ($real, &$calls) {
+            if (++$calls === 2) {
+                throw new \RuntimeException('boom'); // first attempt dies on event B
+            }
+
+            // sqlite's reminders.source CHECK predates 'whatsapp_media' (MySQL-only migration)
+            $d['source'] = 'web';
+
+            return $real->createReminder($u, $d, $k);
+        });
+
+        $job = new ProcessMediaReminderJob($user->id, $number->id, '60111222333', 'x', 'image/png', null, null, 'wamid.9');
+        $commands = app(SendoraCommandService::class);
+
+        try {
+            $job->handle($parser, $service, $commands, $wa);
+        } catch (\RuntimeException) {
+        }
+
+        $job->handle($parser, $service, $commands, $wa); // the retry
+
+        $this->assertSame(2, \App\Models\Reminder::where('user_id', $user->id)->count());
+    }
 }

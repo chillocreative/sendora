@@ -90,7 +90,7 @@ class ProcessMediaReminderJob implements ShouldQueue
         $addToCalendar = $user->googleCalendarConnection !== null;
         $reminders = [];
 
-        foreach ($events as $event) {
+        foreach ($events as $index => $event) {
             $eventAt = $event['date'].' '.($event['time'] ?? '09:00');
 
             $reminders[] = $reminderService->createReminder($user, [
@@ -102,7 +102,9 @@ class ProcessMediaReminderJob implements ShouldQueue
                 'whatsapp_number_id' => $waNumber->id,
                 'source' => 'whatsapp_media',
                 'add_to_calendar' => $addToCalendar,
-            ]);
+                // createReminder() already de-duplicates on user/title/time for 10 minutes, so a
+                // retry reuses the reminders it made; this key does the same for the calendar event.
+            ], $this->waMessageId ? "media:{$this->waMessageId}:{$index}" : null);
         }
 
         if (count($reminders) === 1) {
