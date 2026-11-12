@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\ProcessAiReplyJob;
+use App\Jobs\ProcessSendoraCommandJob;
 use App\Models\User;
 use App\Models\WhatsappNumber;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -172,6 +173,35 @@ class MetaWebhookTest extends TestCase
         Queue::assertPushed(ProcessAiReplyJob::class, fn (ProcessAiReplyJob $job) => $this->jobProperty($job, 'messageText') === 'Look at this');
         Http::assertSent(fn ($request) => $request->url() === 'https://lookaside.fbsbx.com/file'
             && $request->hasHeader('Authorization', 'Bearer EAAG-secret-token'));
+    }
+
+    public function test_sendora_command_from_customer_on_cloud_number_is_not_executed(): void
+    {
+        Queue::fake();
+        Http::fake();
+        $this->cloudNumber();
+        $payload = $this->payload(['from' => '60111222333', 'id' => 'wamid.CMD', 'type' => 'text', 'text' => ['body' => '/sendora meeting tomorrow 3pm']]);
+
+        $this->signedPost($payload)->assertOk();
+
+        Queue::assertNotPushed(ProcessSendoraCommandJob::class);
+    }
+
+    public function test_baileys_incoming_endpoint_rejects_cloud_numbers(): void
+    {
+        Queue::fake();
+        $number = $this->cloudNumber();
+        $number->update(['status' => 'connected']);
+
+        $this->postJson('/api/whatsapp/incoming-message', [
+            'user_id' => $number->user_id,
+            'phone_number' => $number->id,
+            'from' => '60111222333@s.whatsapp.net',
+            'message' => '/sendora x',
+            'message_id' => 'm1',
+        ])->assertNotFound();
+
+        Queue::assertNothingPushed();
     }
 
     public function test_unsupported_message_type_is_ignored(): void

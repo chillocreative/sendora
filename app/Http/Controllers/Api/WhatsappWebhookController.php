@@ -116,6 +116,7 @@ class WhatsappWebhookController extends Controller
             $whatsappNumber = WhatsappNumber::where('user_id', $request->user_id)
                 ->where('id', $request->phone_number)
                 ->where('status', 'connected')
+                ->where('provider', '!=', 'cloud')
                 ->first();
 
             if (! $whatsappNumber) {

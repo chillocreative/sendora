@@ -63,8 +63,11 @@ class WhatsappInboundHandler
             return $this->handleAiChatToggle($whatsappNumber, $from, $lowerMessage === '/startchat');
         }
 
-        // Check for /sendora command
-        if (str_starts_with(strtolower(trim($messageText)), '/sendora')) {
+        // Check for /sendora command. On Cloud numbers any customer can message the
+        // business number, so owner commands are not honoured until an
+        // owner-phone allowlist exists; the text falls through to the AI reply.
+        if (! $whatsappNumber->isCloud()
+            && str_starts_with(strtolower(trim($messageText)), '/sendora')) {
             if ($this->isDuplicateMessage($messageId, $whatsappNumber)) {
                 return ['success' => true, 'skipped' => 'duplicate'];
             }
