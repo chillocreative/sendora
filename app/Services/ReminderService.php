@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Mail;
 
 class ReminderService
 {
+    public const ERROR_OWNER_PHONE_UNVERIFIED = 'Owner phone not verified for this Cloud number';
+
+    public const ERROR_NO_CONNECTED_NUMBER = 'No connected WhatsApp number available';
+
     protected WhatsappService $whatsapp;
 
     protected GoogleCalendarService $calendarService;
@@ -162,24 +166,14 @@ class ReminderService
             ?? $reminder->user->whatsappNumbers()->where('status', 'connected')->first();
 
         if (! $waNumber || $waNumber->status !== 'connected') {
-            $reminder->update([
-                'status' => 'failed',
-                'error_message' => 'No connected WhatsApp number available',
-            ]);
-            ReminderLog::create([
-                'reminder_id' => $reminder->id,
-                'action' => 'failed',
-                'details' => 'No connected WhatsApp number',
-            ]);
-
-            return false;
+            return $this->markFailed($reminder, null, self::ERROR_NO_CONNECTED_NUMBER);
         }
 
         if ($waNumber->isCloud()) {
             // Cloud: the business number cannot message itself, and reminders are
             // business-initiated, so they go to the verified owner phone via a template.
             if (! $waNumber->hasVerifiedOwnerPhone()) {
-                $response = WhatsappSendResult::failed('Owner phone not verified for this Cloud number');
+                $response = WhatsappSendResult::failed(self::ERROR_OWNER_PHONE_UNVERIFIED);
             } else {
                 $dateTime = $reminder->event_at ?? $reminder->reminder_at;
                 $response = app(WhatsappTemplateSender::class)->send($waNumber, 'reminder', $waNumber->owner_phone, [
@@ -224,18 +218,103 @@ class ReminderService
             return true;
         }
 
-        $errorMsg = $response ? $response->body() : 'WhatsApp service unavailable';
+        return $this->markFailed($reminder, $response);
+    }
+
+    /**
+     * Record a failed send: friendly reason on the reminder, technical detail in the log,
+     * notify the owner by email and keep a recurring series alive.
+     */
+    protected function markFailed(Reminder $reminder, ?object $response, ?string $technical = null): bool
+    {
+        $reason = $this->failureReason($response, $technical);
+        $technical ??= $this->technicalDetail($response);
+
         $reminder->update([
             'status' => 'failed',
-            'error_message' => $errorMsg,
+            'error_message' => mb_substr($reason, 0, 255),
         ]);
         ReminderLog::create([
             'reminder_id' => $reminder->id,
             'action' => 'failed',
-            'details' => $errorMsg,
+            'details' => $technical,
         ]);
 
+        if ($reminder->notify_email) {
+            Mail::to($reminder->notify_email)->queue(new ReminderEmailNotification($reminder, 'failed', $reason));
+        }
+
+        if ($reminder->recurrence_rule) {
+            $this->generateNextRecurrence($reminder);
+        }
+
         return false;
+    }
+
+    /**
+     * Map a failed send to a short, user-facing sentence. Never exposes tokens or raw bodies.
+     *
+     * @param  object|null  $response  WhatsappSendResult, Http response, or null (service unreachable)
+     * @param  string|null  $errorKey  A known error string when there is no response object
+     */
+    public function failureReason(?object $response, ?string $errorKey = null): string
+    {
+        if ($errorKey === self::ERROR_NO_CONNECTED_NUMBER) {
+            return 'No WhatsApp number is connected. Connect one in WhatsApp settings.';
+        }
+
+        if ($response === null) {
+            return 'WhatsApp is temporarily unavailable. We could not deliver this reminder.';
+        }
+
+        $error = $response instanceof WhatsappSendResult ? (string) $response->error() : '';
+
+        if (str_starts_with($error, WhatsappTemplateSender::ERROR_NO_TEMPLATE_PREFIX)) {
+            return 'No approved WhatsApp template is set up yet. Please contact support.';
+        }
+
+        if ($error === self::ERROR_OWNER_PHONE_UNVERIFIED) {
+            return 'Your WhatsApp phone number is not verified. Verify it in WhatsApp settings.';
+        }
+
+        $status = method_exists($response, 'status') ? (int) $response->status() : 0;
+
+        if ($error === 'connection_error' || $status >= 500) {
+            return 'WhatsApp is temporarily unavailable. We could not deliver this reminder.';
+        }
+
+        if ($response instanceof WhatsappSendResult && $error !== '') {
+            return 'WhatsApp rejected this message: '.mb_substr($this->redact($error), 0, 150);
+        }
+
+        $message = (string) data_get($response->json(), 'error.message', '');
+        $code = data_get($response->json(), 'error.code');
+        if ($message !== '') {
+            $text = $code ? "({$code}) {$message}" : $message;
+
+            return 'WhatsApp rejected this message: '.mb_substr($this->redact($text), 0, 150);
+        }
+
+        return 'WhatsApp could not deliver this reminder. Please try again later.';
+    }
+
+    protected function technicalDetail(?object $response): string
+    {
+        if ($response === null) {
+            return 'WhatsApp service unavailable (no response)';
+        }
+
+        $status = method_exists($response, 'status') ? (int) $response->status() : 0;
+        $body = $this->redact((string) $response->body());
+
+        return mb_substr($status > 0 ? "HTTP {$status}: {$body}" : $body, 0, 500);
+    }
+
+    protected function redact(string $text): string
+    {
+        $text = preg_replace('/Bearer\s+[A-Za-z0-9._~+\/=-]+/i', 'Bearer [redacted]', $text);
+
+        return preg_replace('/\bEAA[A-Za-z0-9_-]{8,}/', '[redacted]', $text);
     }
 
     public function formatMessage(Reminder $reminder): string
@@ -272,6 +351,22 @@ class ReminderService
 
         if (! $nextDate) {
             return null;
+        }
+
+        $nextReminderAt = $reminder->event_at
+            ? $nextDate->copy()->subMinutes($reminder->minutes_before)
+            : $nextDate;
+
+        // Idempotent: never create the same occurrence twice for one series.
+        $existing = Reminder::where('user_id', $reminder->user_id)
+            ->where('title', $reminder->title)
+            ->where('recurrence_rule', $reminder->recurrence_rule)
+            ->where('reminder_at', $nextReminderAt)
+            ->where('id', '!=', $reminder->id)
+            ->first();
+
+        if ($existing) {
+            return $existing;
         }
 
         $nextReminder = Reminder::create([

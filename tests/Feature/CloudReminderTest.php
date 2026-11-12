@@ -124,7 +124,7 @@ class CloudReminderTest extends TestCase
         Http::assertNothingSent();
         $reminder->refresh();
         $this->assertSame('failed', $reminder->status);
-        $this->assertSame('Owner phone not verified for this Cloud number', $reminder->error_message);
+        $this->assertSame('Your WhatsApp phone number is not verified. Verify it in WhatsApp settings.', $reminder->error_message);
         $this->assertDatabaseHas('reminder_logs', [
             'reminder_id' => $reminder->id,
             'action' => 'failed',
@@ -144,7 +144,7 @@ class CloudReminderTest extends TestCase
         Http::assertNothingSent();
         $reminder->refresh();
         $this->assertSame('failed', $reminder->status);
-        $this->assertStringContainsString("No approved WhatsApp template for purpose 'reminder'", $reminder->error_message);
+        $this->assertStringContainsString('No approved WhatsApp template is set up yet', $reminder->error_message);
     }
 
     public function test_cloud_reminder_records_meta_error_on_failure(): void

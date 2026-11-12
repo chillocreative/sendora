@@ -1,6 +1,8 @@
 <x-mail::message>
 @if($type === 'due')
 # Upcoming Reminder
+@elseif($type === 'failed')
+# Reminder Not Delivered
 @else
 # Reminder Created
 @endif
@@ -23,6 +25,10 @@ $dateTime = $reminder->event_at ?? $reminder->reminder_at;
 
 @if($type === 'due')
 This is a reminder that your event is coming up soon.
+@elseif($type === 'failed')
+We could not deliver this reminder on WhatsApp.
+
+**Reason:** {{ $reason ?? 'Unknown error.' }}
 @else
 A reminder has been set and you will be notified before the event.
 @endif

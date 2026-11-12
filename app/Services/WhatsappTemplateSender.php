@@ -10,6 +10,9 @@ use App\Models\WhatsappTemplate;
  */
 class WhatsappTemplateSender
 {
+    /** Stable prefix of the error returned when no approved template exists for a purpose. */
+    public const ERROR_NO_TEMPLATE_PREFIX = 'No approved WhatsApp template for purpose';
+
     public function __construct(protected WhatsappCloudService $cloud) {}
 
     /**
@@ -20,7 +23,7 @@ class WhatsappTemplateSender
         $template = $this->pickTemplate($number, $purpose);
 
         if (! $template) {
-            return WhatsappSendResult::failed("No approved WhatsApp template for purpose '{$purpose}'");
+            return WhatsappSendResult::failed(self::ERROR_NO_TEMPLATE_PREFIX." '{$purpose}'");
         }
 
         $parameters = [];
