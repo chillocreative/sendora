@@ -158,4 +158,32 @@ class AiTokenMeteringTest extends TestCase
             ->post(route('payments.initiate'), ['plan_id' => $pro->id, 'billing_cycle' => 'monthly'])
             ->assertStatus(422);
     }
+
+    public function test_low_token_email_sent_once_when_crossing_threshold(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $svc = app(AiUsageService::class);
+        $user = $this->userWithAllowance(1000);
+
+        $svc->record($user, 700); // 300 left: above 20%
+        \Illuminate\Support\Facades\Mail::assertNothingQueued();
+
+        $svc->record($user, 600); // exhausted: crosses threshold
+        $svc->record($user, 50);  // already notified this period
+        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\AiTokensLowMail::class, 1);
+    }
+
+    public function test_no_low_token_email_for_unlimited_or_with_bonus_headroom(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $svc = app(AiUsageService::class);
+
+        $svc->record($this->userWithAllowance(null), 5000);
+
+        $user = $this->userWithAllowance(1000);
+        $user->forceFill(['ai_bonus_tokens' => 1_000_000])->save();
+        $svc->record($user, 1000);
+
+        \Illuminate\Support\Facades\Mail::assertNothingQueued();
+    }
 }
