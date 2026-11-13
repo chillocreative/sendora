@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\AdminNotificationService;
+use App\Services\ChipInService;
+use App\Services\TokenPackService;
 
 class PaymentController extends Controller
 {
@@ -110,7 +112,7 @@ class PaymentController extends Controller
             'success_callback' => $successUrl,
             'failure_redirect' => $failureUrl,
             'cancel_redirect' => $failureUrl,
-            'test' => true,
+            'test' => app(ChipInService::class)->testMode(),
         ];
 
         try {
@@ -132,6 +134,9 @@ class PaymentController extends Controller
                      return back()->with('error', 'Payment provider returned an invalid response.');
                 }
                 
+                // Needed later to verify with Chip-in that this purchase was really paid.
+                $transaction->update(['gateway_id' => $response->json('id')]);
+
                 return \Inertia\Inertia::location($checkoutUrl);
             } else {
                 \Illuminate\Support\Facades\Log::error('Chip-in API Error', ['status' => $response->status(), 'body' => $response->body()]);
@@ -148,9 +153,27 @@ class PaymentController extends Controller
         $reference = $request->query('ref');
         
         if ($reference) {
-            $transaction = \App\Models\Transaction::where('reference_id', $reference)->first();
-            
+            // Only the buyer can complete their own transaction.
+            $transaction = \App\Models\Transaction::where('reference_id', $reference)
+                ->where('user_id', auth()->id())
+                ->first();
+
             if ($transaction && $transaction->status !== 'paid') {
+                // The redirect URL proves nothing: confirm with Chip-in that it is really paid.
+                if (! app(ChipInService::class)->isPaid($transaction)) {
+                    return redirect()->route('subscription.show')
+                        ->with('flash.banner', 'We could not confirm your payment yet. If you were charged it will be applied shortly; otherwise please contact support.')
+                        ->with('flash.bannerStyle', 'danger');
+                }
+
+                if ($transaction->token_pack_id) {
+                    app(TokenPackService::class)->fulfil($transaction);
+
+                    return redirect()->route('subscription.show')
+                        ->with('flash.banner', 'Payment successful! Your AI tokens have been added.')
+                        ->with('flash.bannerStyle', 'success');
+                }
+
                 $transaction->update(['status' => 'paid']);
                 
                 // Activate Subscription
@@ -246,23 +269,24 @@ class PaymentController extends Controller
 
     public function fail(Request $request)
     {
-        return redirect()->route('campaigns.index')->with('flash.banner', 'Payment failed! Please try again or contact support.')
+        return redirect()->route('subscription.show')->with('flash.banner', 'Payment failed! Please try again or contact support.')
                                                   ->with('flash.bannerStyle', 'danger');
     }
 
     public function handleWebhook(Request $request)
     {
-        // Webhook signature validation should be here
+        // The payload is never trusted: it only tells us which transaction to re-check with Chip-in.
+        $reference = $request->input('reference');
 
-        $payload = $request->all();
-        
-        // Example logic:
-        // $userId = $payload['reference'];
-        // $status = $payload['status'];
-        
-        // if ($status === 'paid') {
-        //     UserSubscription::updateOrCreate(...);
-        // }
+        $transaction = $reference
+            ? \App\Models\Transaction::where('reference_id', $reference)->first()
+            : null;
+
+        if ($transaction && $transaction->token_pack_id && ! $transaction->fulfilled_at
+            && app(ChipInService::class)->isPaid($transaction)) {
+            app(TokenPackService::class)->fulfil($transaction);
+        }
 
         return response('OK', 200);
-    }}
+    }
+}

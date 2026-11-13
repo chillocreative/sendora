@@ -14,7 +14,13 @@ class Transaction extends Model
         'status',
         'reference_id',
         'payment_method',
+        'gateway_id',
+        'token_pack_id',
+        'token_amount',
+        'fulfilled_at',
     ];
+
+    protected $casts = ['fulfilled_at' => 'datetime'];
 
     public function user()
     {
