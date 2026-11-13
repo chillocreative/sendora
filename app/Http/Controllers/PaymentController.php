@@ -174,92 +174,7 @@ class PaymentController extends Controller
                         ->with('flash.bannerStyle', 'success');
                 }
 
-                $transaction->update(['status' => 'paid']);
-                
-                // Activate Subscription
-                $subscription = \App\Models\UserSubscription::where('user_id', $transaction->user_id)
-                    ->where(function($query) {
-                        $query->where('status', 'waiting_for_payment')
-                              ->orWhere('status', 'active'); // Allow renewing active subs
-                    })
-                    ->latest()
-                    ->first();
-
-                if (!$subscription) {
-                    // Create if not exists (fallback)
-                    $subscription = \App\Models\UserSubscription::create([
-                        'user_id' => $transaction->user_id,
-                        'subscription_plan_id' => $transaction->subscription_plan_id,
-                        'status' => 'waiting_for_payment',
-                    ]);
-                }
-                    
-                // Calculate Expiry based on Amount vs Plan Price
-                $plan = \App\Models\SubscriptionPlan::find($transaction->subscription_plan_id);
-                $isLifetime = $plan && $plan->is_lifetime;
-
-                if ($isLifetime) {
-                    // Cancel any existing active subscription and set permanent access
-                    $currentActive = \App\Models\UserSubscription::where('user_id', $transaction->user_id)
-                        ->where('status', 'active')
-                        ->where('id', '!=', $subscription->id)
-                        ->orderBy('ends_at', 'desc')
-                        ->first();
-
-                    if ($currentActive) {
-                        $currentActive->update(['status' => 'cancelled']);
-                    }
-
-                    $subscription->update([
-                        'status' => 'active',
-                        'subscription_plan_id' => $transaction->subscription_plan_id,
-                        'ends_at' => null, // Permanent — no expiry
-                        'cancelled_at' => null,
-                    ]);
-                } else {
-                    // Determine start date: extend if current active, otherwise start now
-                    $currentActive = \App\Models\UserSubscription::where('user_id', $transaction->user_id)
-                        ->where('status', 'active')
-                        ->where('id', '!=', $subscription->id)
-                        ->where('ends_at', '>', now())
-                        ->orderBy('ends_at', 'desc')
-                        ->first();
-
-                    $startDate = now();
-                    if ($subscription->status === 'active' && $subscription->ends_at > now()) {
-                        $startDate = $subscription->ends_at;
-                    } elseif ($currentActive) {
-                        $startDate = $currentActive->ends_at;
-                        $currentActive->update(['status' => 'cancelled']);
-                        $subscription->subscription_plan_id = $transaction->subscription_plan_id;
-                    }
-
-                    $endsAt = $startDate->copy()->addMonth();
-
-                    $subscription->update([
-                        'status' => 'active',
-                        'subscription_plan_id' => $transaction->subscription_plan_id,
-                        'ends_at' => $endsAt,
-                        'cancelled_at' => null,
-                    ]);
-                }
-
-                // Notify admin of successful payment
-                try {
-                    $notificationService = new AdminNotificationService();
-                    $notificationService->sendNotification('payment', $transaction->user_id, [
-                        'transaction_id' => $transaction->id,
-                        'plan_name' => $plan->name ?? 'Unknown',
-                        'amount' => number_format($transaction->amount, 2),
-                        'currency' => $transaction->currency,
-                        'billing_cycle' => $isLifetime ? 'Lifetime' : 'Monthly',
-                    ]);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Failed to queue payment notification', [
-                        'transaction_id' => $transaction->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                app(\App\Services\SubscriptionActivationService::class)->activate($transaction);
             }
         }
 
@@ -285,6 +200,9 @@ class PaymentController extends Controller
         if ($transaction && $transaction->token_pack_id && ! $transaction->fulfilled_at
             && app(ChipInService::class)->isPaid($transaction)) {
             app(TokenPackService::class)->fulfil($transaction);
+        } elseif ($transaction && ! $transaction->token_pack_id && ! $transaction->fulfilled_at
+            && $transaction->status !== 'paid' && app(ChipInService::class)->isPaid($transaction)) {
+            app(\App\Services\SubscriptionActivationService::class)->activate($transaction);
         }
 
         return response('OK', 200);
