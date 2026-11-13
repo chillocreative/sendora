@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticationCard from '@/Components/AuthenticationCard.vue';
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
@@ -6,6 +7,7 @@ import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import RecaptchaField from '@/Components/RecaptchaField.vue';
 import TextInput from '@/Components/TextInput.vue';
 
 defineProps({
@@ -17,13 +19,17 @@ const form = useForm({
     email: '',
     password: '',
     remember: false,
+    recaptcha_token: '',
 });
+
+const recaptcha = ref(null);
 
 const submit = () => {
     form.transform(data => ({
         ...data,
         remember: form.remember ? 'on' : '',
     })).post(route('login'), {
+        onError: () => recaptcha.value?.reset(),
         onFinish: () => form.reset('password'),
     });
 };
@@ -74,6 +80,11 @@ const submit = () => {
                     <Checkbox v-model:checked="form.remember" name="remember" />
                     <span class="ms-2 text-sm text-gray-600">Remember me</span>
                 </label>
+            </div>
+
+            <div class="mt-4">
+                <RecaptchaField ref="recaptcha" v-model="form.recaptcha_token" />
+                <InputError class="mt-2" :message="form.errors.recaptcha_token" />
             </div>
 
             <div class="flex items-center justify-between mt-8">

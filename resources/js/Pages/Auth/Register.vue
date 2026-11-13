@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticationCard from '@/Components/AuthenticationCard.vue';
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
@@ -6,6 +7,7 @@ import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import RecaptchaField from '@/Components/RecaptchaField.vue';
 import TextInput from '@/Components/TextInput.vue';
 
 
@@ -15,12 +17,16 @@ const form = useForm({
     password: '',
     password_confirmation: '',
     terms: false,
+    recaptcha_token: '',
     plan_id: new URLSearchParams(window.location.search).get('plan_id') || '',
     billing_cycle: new URLSearchParams(window.location.search).get('billing_cycle') || 'monthly',
 });
 
+const recaptcha = ref(null);
+
 const submit = () => {
     form.post(route('register'), {
+        onError: () => recaptcha.value?.reset(),
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
@@ -99,6 +105,11 @@ const submit = () => {
                     </div>
                     <InputError class="mt-2" :message="form.errors.terms" />
                 </InputLabel>
+            </div>
+
+            <div class="mt-6">
+                <RecaptchaField ref="recaptcha" v-model="form.recaptcha_token" />
+                <InputError class="mt-2" :message="form.errors.recaptcha_token" />
             </div>
 
             <div class="flex items-center justify-between mt-10">
