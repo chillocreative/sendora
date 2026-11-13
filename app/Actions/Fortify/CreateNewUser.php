@@ -41,7 +41,7 @@ class CreateNewUser implements CreatesNewUsers
                 $this->createTeam($user);
 
                 if (!empty($input['plan_id'])) {
-                    $plan = \App\Models\SubscriptionPlan::find($input['plan_id']);
+                    $plan = \App\Models\SubscriptionPlan::where('is_active', true)->find($input['plan_id']);
                     if ($plan) {
                         $planName = $plan->name;
                         $cycle = $plan->is_lifetime ? 'lifetime' : 'monthly';

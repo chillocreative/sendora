@@ -100,7 +100,7 @@ const closeEdit = () => {
                     <div v-for="plan in plans" :key="plan.id"
                          class="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 overflow-hidden border border-slate-100 flex flex-col transition-all hover:-translate-y-2 duration-500"
                          :class="{
-                            'ring-2 ring-[#780116] ring-offset-4': plan.name === 'Pro',
+                            'ring-2 ring-[#780116] ring-offset-4': plan.name === 'Growth',
                             'ring-2 ring-amber-400 ring-offset-4': plan.is_lifetime,
                          }">
 
@@ -108,7 +108,7 @@ const closeEdit = () => {
                             <div class="flex justify-between items-start mb-6">
                                 <h3 class="text-2xl font-black text-slate-900 leading-none">{{ plan.name }}</h3>
                                 <div v-if="plan.is_lifetime" class="px-4 py-1.5 bg-amber-400 text-amber-900 text-[9px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-amber-200">Lifetime</div>
-                                <div v-else-if="plan.name === 'Pro'" class="px-4 py-1.5 bg-[#780116] text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-red-200">Recommended</div>
+                                <div v-else-if="plan.name === 'Growth'" class="px-4 py-1.5 bg-[#780116] text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-red-200">Recommended</div>
                             </div>
 
                             <!-- Lifetime is_active toggle -->

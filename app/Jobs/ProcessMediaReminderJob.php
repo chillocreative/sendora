@@ -56,11 +56,13 @@ class ProcessMediaReminderJob implements ShouldQueue
         $plan = $user->current_plan;
         $features = $plan?->limits['features'] ?? [];
         if (! ($features['ai_command_parsing'] ?? false)) {
-            $whatsappService->sendMessage(
-                $waNumber,
-                $this->contactPhone,
-                "\xE2\x9D\x8C AI features are not available on your current plan. Please upgrade to extract events from files and images."
-            );
+            $this->reply($whatsappService, $waNumber, "\xE2\x9D\x8C AI features are not available on your current plan. Please upgrade to extract events from files and images.");
+
+            return;
+        }
+
+        if (! app(\App\Services\AiUsageService::class)->hasTokens($user)) {
+            $this->reply($whatsappService, $waNumber, "\xE2\x9D\x8C ".(new \App\Exceptions\AiTokenLimitReached)->getMessage());
 
             return;
         }
@@ -70,14 +72,11 @@ class ProcessMediaReminderJob implements ShouldQueue
             $this->mediaMimetype,
             $this->mediaFilename,
             $this->caption,
+            $user->id,
         );
 
         if (! $result) {
-            $whatsappService->sendMessage(
-                $waNumber,
-                $this->contactPhone,
-                "\xF0\x9F\x93\x84 Could not find event details in this file/image. Try sending an event poster, invitation, or document with date/time information."
-            );
+            $this->reply($whatsappService, $waNumber, "\xF0\x9F\x93\x84 Could not find event details in this file/image. Try sending an event poster, invitation, or document with date/time information.");
 
             return;
         }
@@ -89,7 +88,7 @@ class ProcessMediaReminderJob implements ShouldQueue
                 default => "\xE2\x9D\x8C Could not process this file.",
             };
 
-            $whatsappService->sendMessage($waNumber, $this->contactPhone, $message);
+            $this->reply($whatsappService, $waNumber, $message);
 
             return;
         }
@@ -98,19 +97,35 @@ class ProcessMediaReminderJob implements ShouldQueue
         $addToCalendar = $user->googleCalendarConnection !== null;
         $reminders = [];
 
-        foreach ($events as $event) {
+        foreach ($events as $index => $event) {
             $eventAt = $event['date'].' '.($event['time'] ?? '09:00');
 
-            $reminders[] = $reminderService->createReminder($user, [
-                'title' => $event['title'],
-                'description' => $event['description'] ?? null,
-                'event_at' => $eventAt,
-                'minutes_before' => 15,
-                'location' => $event['location'] ?? null,
-                'whatsapp_number_id' => $waNumber->id,
-                'source' => 'whatsapp_media',
-                'add_to_calendar' => $addToCalendar,
-            ]);
+            try {
+                $reminders[] = $reminderService->createReminder($user, [
+                    'title' => $event['title'],
+                    'description' => $event['description'] ?? null,
+                    'event_at' => $eventAt,
+                    'minutes_before' => 15,
+                    'location' => $event['location'] ?? null,
+                    'whatsapp_number_id' => $waNumber->id,
+                    'source' => 'whatsapp_media',
+                    'add_to_calendar' => $addToCalendar,
+                    // createReminder() already de-duplicates on user/title/time for 10 minutes, so a
+                    // retry reuses the reminders it made; this key does the same for the calendar event.
+                ], $this->waMessageId ? "media:{$this->waMessageId}:{$index}" : null);
+            } catch (\App\Exceptions\ReminderLimitReached $e) {
+                $limitMessage = "\xE2\x9D\x8C ".$e->getMessage();
+                break;
+            }
+        }
+
+        if (isset($limitMessage)) {
+            $made = count($reminders);
+            $this->reply($whatsappService, $waNumber, $made > 0
+                ? "{$limitMessage}\n\n{$made} of ".count($events).' events were added before the limit was reached.'
+                : $limitMessage);
+
+            return;
         }
 
         if (count($reminders) === 1) {
@@ -119,7 +134,28 @@ class ProcessMediaReminderJob implements ShouldQueue
             $reply = $this->formatMultiEventConfirmation($reminders);
         }
 
-        $whatsappService->sendMessage($waNumber, $this->contactPhone, $reply);
+        $this->reply($whatsappService, $waNumber, $reply);
+    }
+
+    /**
+     * Send a reply without ever throwing: the reminders are already created by now, so a
+     * retry of the job would duplicate them. A failed reply (for example outside the 24h
+     * Cloud API window) is logged with enough context to trace it.
+     */
+    protected function reply(WhatsappService $whatsappService, WhatsappNumber $waNumber, string $message): void
+    {
+        $response = $whatsappService->sendMessage($waNumber, $this->contactPhone, $message);
+
+        if ($response !== null && $response->successful()) {
+            return;
+        }
+
+        Log::warning('ProcessMediaReminderJob: reply could not be delivered', [
+            'wa_number_id' => $waNumber->id,
+            'wa_message_id' => $this->waMessageId,
+            'status' => $response?->status(),
+            'error' => $response && method_exists($response, 'error') ? $response->error() : null,
+        ]);
     }
 
     protected function formatMultiEventConfirmation(array $reminders): string

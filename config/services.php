@@ -35,6 +35,15 @@ return [
         ],
     ],
 
+    'meta' => [
+        'app_id' => env('META_APP_ID'),
+        'app_secret' => env('META_APP_SECRET'),
+        'webhook_verify_token' => env('META_WEBHOOK_VERIFY_TOKEN'),
+        'graph_version' => env('META_GRAPH_VERSION') ?: 'v21.0',
+        'graph_base_url' => env('META_GRAPH_BASE_URL') ?: 'https://graph.facebook.com',
+        'default_country_code' => env('META_DEFAULT_COUNTRY_CODE') ?: '60',
+    ],
+
     'recaptcha' => [
         'site_key' => env('RECAPTCHA_SITE_KEY'),
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),

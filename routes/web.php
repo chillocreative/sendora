@@ -81,6 +81,7 @@ Route::middleware([
     // WhatsApp & Features Routes
     Route::get('/whatsapp', [WhatsappNumberController::class, 'index'])->name('whatsapp.index');
     Route::post('/whatsapp', [WhatsappNumberController::class, 'create'])->name('whatsapp.create')->middleware('subscription.limit:whatsapp_nos');
+    Route::post('/whatsapp/cloud', [WhatsappNumberController::class, 'storeCloud'])->name('whatsapp.store-cloud')->middleware('subscription.limit:whatsapp_nos');
     Route::get('/whatsapp/{id}', [WhatsappNumberController::class, 'show'])->name('whatsapp.show');
     Route::get('/whatsapp/{id}/refresh-qr', [WhatsappNumberController::class, 'refreshQr'])->name('whatsapp.refresh-qr');
     Route::delete('/whatsapp/{id}', [WhatsappNumberController::class, 'destroy'])->name('whatsapp.destroy');

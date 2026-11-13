@@ -24,7 +24,8 @@ class ApiTest extends TestCase
         // Create Business plan with API access
         $this->businessPlan = SubscriptionPlan::create([
             'name' => 'Business',
-            'price' => 199,
+            'monthly_price' => 199,
+            'yearly_price' => 1990,
             'limits' => [
                 'whatsapp_nos' => 5,
                 'reminders_per_month' => 0,
@@ -45,7 +46,7 @@ class ApiTest extends TestCase
 
         UserSubscription::create([
             'user_id' => $this->user->id,
-            'plan_id' => $this->businessPlan->id,
+            'subscription_plan_id' => $this->businessPlan->id,
             'status' => 'active',
         ]);
 
@@ -122,7 +123,8 @@ class ApiTest extends TestCase
     {
         $freePlan = SubscriptionPlan::create([
             'name' => 'Basic',
-            'price' => 0,
+            'monthly_price' => 0,
+            'yearly_price' => 0,
             'limits' => [
                 'whatsapp_nos' => 1,
                 'reminders_per_month' => 50,
@@ -136,7 +138,7 @@ class ApiTest extends TestCase
         $freeUser = User::factory()->create();
         UserSubscription::create([
             'user_id' => $freeUser->id,
-            'plan_id' => $freePlan->id,
+            'subscription_plan_id' => $freePlan->id,
             'status' => 'active',
         ]);
 

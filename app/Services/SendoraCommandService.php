@@ -221,6 +221,10 @@ class SendoraCommandService
             return $this->formatReminderListForCancel($pendingReminders);
         }
 
+        if ($limitMessage = $this->aiLimitMessage($user)) {
+            return $limitMessage;
+        }
+
         // Use AI to match description to a reminder
         $reminderList = $pendingReminders->map(function ($r, $i) {
             $dateTime = $r->event_at ?? $r->reminder_at;
@@ -234,7 +238,7 @@ class SendoraCommandService
             ];
         })->values()->toArray();
 
-        $result = $this->openAi->chatCompletion(
+        $result = $this->aiFor($user)->chatCompletion(
             messages: [
                 [
                     'role' => 'system',
@@ -331,6 +335,10 @@ class SendoraCommandService
             return $this->formatReminderListForEdit($pendingReminders);
         }
 
+        if ($limitMessage = $this->aiLimitMessage($user)) {
+            return $limitMessage;
+        }
+
         // Build reminder list for AI matching
         $reminderList = $pendingReminders->map(function ($r, $i) {
             $dateTime = $r->event_at ?? $r->reminder_at;
@@ -348,7 +356,7 @@ class SendoraCommandService
         $today = now()->format('Y-m-d (l)');
         $timezone = config('app.timezone', 'Asia/Kuala_Lumpur');
 
-        $result = $this->openAi->chatCompletion(
+        $result = $this->aiFor($user)->chatCompletion(
             messages: [
                 [
                     'role' => 'system',
@@ -470,9 +478,27 @@ class SendoraCommandService
         return implode("\n", $lines);
     }
 
+    protected function aiFor(?User $user): OpenAiService
+    {
+        return $user ? $this->openAi->forUser($user->id) : $this->openAi;
+    }
+
+    protected function aiLimitMessage(?User $user): ?string
+    {
+        if ($user && ! app(AiUsageService::class)->hasTokens($user)) {
+            return "\xE2\x9D\x8C ".(new \App\Exceptions\AiTokenLimitReached)->getMessage();
+        }
+
+        return null;
+    }
+
     protected function executeCreate(User $user, WhatsappNumber $waNumber, string $text, ?string $idempotencyKey = null): string
     {
-        $parsed = $this->parseCommand($text);
+        if ($limitMessage = $this->aiLimitMessage($user)) {
+            return $limitMessage;
+        }
+
+        $parsed = $this->parseCommand($text, $user);
 
         if (! $parsed) {
             return "\xE2\x9D\x8C Could not understand the command. Try:\n/sendora Meeting tomorrow at 3pm in my office";
@@ -480,23 +506,27 @@ class SendoraCommandService
 
         $eventAt = $parsed['date'].' '.($parsed['time'] ?? '09:00');
 
-        $reminder = $this->reminderService->createReminder($user, [
-            'title' => $parsed['title'],
-            'description' => $parsed['description'] ?? null,
-            'event_at' => $eventAt,
-            'minutes_before' => $parsed['minutes_before'] ?? 15,
-            'location' => $parsed['location'] ?? null,
-            'recurrence_rule' => $parsed['recurrence_rule'] ?? null,
-            'notify_email' => $parsed['notify_email'] ?? null,
-            'whatsapp_number_id' => $waNumber->id,
-            'source' => 'whatsapp_command',
-            'add_to_calendar' => $user->googleCalendarConnection !== null,
-        ], $idempotencyKey);
+        try {
+            $reminder = $this->reminderService->createReminder($user, [
+                'title' => $parsed['title'],
+                'description' => $parsed['description'] ?? null,
+                'event_at' => $eventAt,
+                'minutes_before' => $parsed['minutes_before'] ?? 15,
+                'location' => $parsed['location'] ?? null,
+                'recurrence_rule' => $parsed['recurrence_rule'] ?? null,
+                'notify_email' => $parsed['notify_email'] ?? null,
+                'whatsapp_number_id' => $waNumber->id,
+                'source' => 'whatsapp_command',
+                'add_to_calendar' => $user->googleCalendarConnection !== null,
+            ], $idempotencyKey);
+        } catch (\App\Exceptions\ReminderLimitReached $e) {
+            return "\xE2\x9D\x8C ".$e->getMessage();
+        }
 
         return $this->formatConfirmation($reminder);
     }
 
-    public function parseCommand(string $text): ?array
+    public function parseCommand(string $text, ?User $user = null): ?array
     {
         // Strip the /sendora prefix
         $text = preg_replace('/^\/sendora\s*/i', '', $text);
@@ -508,7 +538,7 @@ class SendoraCommandService
         $today = now()->format('Y-m-d (l)');
         $timezone = config('app.timezone', 'Asia/Kuala_Lumpur');
 
-        $result = $this->openAi->chatCompletion(
+        $result = $this->aiFor($user)->chatCompletion(
             messages: [
                 [
                     'role' => 'system',

@@ -42,7 +42,7 @@ class AdminController extends Controller
 
             $planId = $request->plan_id;
             if (!$planId) {
-                $planId = SubscriptionPlan::where('name', 'Basic')->value('id');
+                $planId = SubscriptionPlan::where('name', 'Starter')->value('id');
             }
 
             if ($planId) {

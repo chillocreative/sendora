@@ -17,6 +17,7 @@ class ReminderEmailNotification extends Mailable implements ShouldQueue
     public function __construct(
         public Reminder $reminder,
         public string $type = 'created',
+        public ?string $reason = null,
     ) {}
 
     public function envelope(): Envelope
@@ -24,9 +25,11 @@ class ReminderEmailNotification extends Mailable implements ShouldQueue
         $dateTime = $this->reminder->event_at ?? $this->reminder->reminder_at;
         $dateStr = $dateTime->format('D, d M Y \a\t g:i A');
 
-        $subject = $this->type === 'due'
-            ? "Upcoming: {$this->reminder->title}"
-            : "Reminder: {$this->reminder->title} on {$dateStr}";
+        $subject = match ($this->type) {
+            'due' => "Upcoming: {$this->reminder->title}",
+            'failed' => "Reminder not delivered: {$this->reminder->title}",
+            default => "Reminder: {$this->reminder->title} on {$dateStr}",
+        };
 
         return new Envelope(subject: $subject);
     }

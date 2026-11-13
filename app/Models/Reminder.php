@@ -24,6 +24,9 @@ class Reminder extends Model
         'status',
         'sent_at',
         'wa_message_id',
+        'delivered_at',
+        'read_at',
+        'delivery_error',
         'error_message',
         'source',
         'notify_email',
@@ -35,6 +38,8 @@ class Reminder extends Model
             'reminder_at' => 'datetime',
             'event_at' => 'datetime',
             'sent_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'read_at' => 'datetime',
             'minutes_before' => 'integer',
         ];
     }
