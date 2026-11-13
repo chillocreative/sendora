@@ -112,7 +112,7 @@ class PaymentController extends Controller
             'success_callback' => $successUrl,
             'failure_redirect' => $failureUrl,
             'cancel_redirect' => $failureUrl,
-            'test' => true,
+            'test' => app(ChipInService::class)->testMode(),
         ];
 
         try {

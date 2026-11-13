@@ -87,6 +87,14 @@ class ChipInService
             return false;
         }
 
+        // A sandbox purchase reports status "paid" without any money moving, so it must never
+        // be accepted in live mode (and a live one is not expected in test mode).
+        if ((bool) $response->json('is_test') !== $this->testMode()) {
+            Log::warning('Chip-in purchase mode mismatch', ['gateway_id' => $transaction->gateway_id]);
+
+            return false;
+        }
+
         $total = $response->json('purchase.total');
 
         return $total === null || (int) $total === (int) round($transaction->amount * 100);
@@ -102,9 +110,14 @@ class ChipInService
         return Setting::where('key', 'chip_in_private_key')->value('value');
     }
 
-    /** Sandbox unless explicitly switched off, matching the existing subscription checkout. */
-    protected function testMode(): bool
+    /**
+     * Live in production, sandbox elsewhere, unless the chip_in_test_mode setting
+     * ('1' or '0') says otherwise.
+     */
+    public function testMode(): bool
     {
-        return Setting::where('key', 'chip_in_test_mode')->value('value') !== '0';
+        $setting = Setting::where('key', 'chip_in_test_mode')->value('value');
+
+        return $setting === null || $setting === '' ? ! app()->isProduction() : $setting === '1';
     }
 }

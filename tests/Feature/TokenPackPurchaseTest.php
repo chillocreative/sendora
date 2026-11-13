@@ -46,10 +46,10 @@ class TokenPackPurchaseTest extends TestCase
         ]);
     }
 
-    private function fakeStatus(Transaction $t, string $status, ?int $total = null): void
+    private function fakeStatus(Transaction $t, string $status, ?int $total = null, bool $isTest = true): void
     {
         Http::fake(['gate.chip-in.asia/api/v1/purchases/'.$t->gateway_id.'/' => Http::response([
-            'id' => $t->gateway_id, 'status' => $status, 'reference' => $t->reference_id,
+            'id' => $t->gateway_id, 'status' => $status, 'reference' => $t->reference_id, 'is_test' => $isTest,
             'purchase' => ['total' => $total ?? (int) round($t->amount * 100)],
         ])]);
     }
@@ -175,5 +175,38 @@ class TokenPackPurchaseTest extends TestCase
         $this->actingAs($user)->get(route('payments.success', ['ref' => 'txn_sub']));
 
         $this->assertSame('active', $user->subscriptions()->latest('id')->first()->status);
+    }
+
+    public function test_sandbox_purchase_is_rejected_in_live_mode(): void
+    {
+        $this->gateway();
+        Setting::create(['key' => 'chip_in_test_mode', 'value' => '0']);
+        $user = $this->user();
+        $t = $this->pendingPackTransaction($user);
+        $this->fakeStatus($t, 'paid', null, true); // paid, but only in the sandbox
+
+        $this->actingAs($user)->get(route('payments.success', ['ref' => $t->reference_id]));
+
+        $this->assertSame(0, (int) $user->fresh()->ai_bonus_tokens);
+    }
+
+    public function test_live_purchase_is_accepted_in_live_mode(): void
+    {
+        $this->gateway();
+        Setting::create(['key' => 'chip_in_test_mode', 'value' => '0']);
+        $user = $this->user();
+        $t = $this->pendingPackTransaction($user);
+        $this->fakeStatus($t, 'paid', null, false);
+
+        $this->actingAs($user)->get(route('payments.success', ['ref' => $t->reference_id]));
+
+        $this->assertSame(1_000_000, (int) $user->fresh()->ai_bonus_tokens);
+    }
+
+    public function test_test_mode_defaults_to_live_in_production(): void
+    {
+        $this->app['env'] = 'production';
+
+        $this->assertFalse(app(\App\Services\ChipInService::class)->testMode());
     }
 }
