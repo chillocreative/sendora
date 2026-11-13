@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Exceptions\AiTokenLimitReached;
 use App\Models\User;
+use App\Mail\AiTokensLowMail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Monthly AI token metering. The allowance comes from plan limits['ai_tokens_per_month'];
@@ -95,6 +98,38 @@ class AiUsageService
                     ->update(['ai_bonus_tokens' => max(0, $bonus - $fromBonus)]);
             }
         });
+
+        $this->notifyIfLow($user, $allowance);
+    }
+
+    /** Fraction of the monthly allowance (counting purchased packs) at or below which we warn once. */
+    protected const LOW_THRESHOLD = 0.2;
+
+    /**
+     * Email the user once per period when tokens run low (or out). The row is claimed with an
+     * atomic UPDATE so concurrent calls cannot send twice, and a failure here never affects metering.
+     */
+    protected function notifyIfLow(User $user, int $allowance): void
+    {
+        try {
+            $remaining = $this->remaining($user);
+
+            if ($remaining === null || $remaining > $allowance * self::LOW_THRESHOLD) {
+                return;
+            }
+
+            $claimed = DB::table('ai_token_usages')
+                ->where('user_id', $user->id)
+                ->where('period', $this->period())
+                ->whereNull('low_notice_sent_at')
+                ->update(['low_notice_sent_at' => now()]);
+
+            if ($claimed === 1) {
+                Mail::to($user->email)->queue(new AiTokensLowMail($user->name, $remaining, $allowance));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('AiUsageService: low-token notice failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+        }
     }
 
     protected function period(): string
