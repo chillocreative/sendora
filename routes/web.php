@@ -75,6 +75,7 @@ Route::middleware([
 
     Route::get('/checkout', [PaymentController::class, 'checkout'])->name('checkout');
     Route::post('/payments/initiate', [PaymentController::class, 'initiatePayment'])->name('payments.initiate');
+    Route::post('/payments/token-packs', [\App\Http\Controllers\TokenPackController::class, 'initiate'])->name('payments.token-pack.initiate');
     Route::get('/payments/success', [PaymentController::class, 'success'])->name('payments.success');
     Route::get('/payments/fail', [PaymentController::class, 'fail'])->name('payments.fail');
 

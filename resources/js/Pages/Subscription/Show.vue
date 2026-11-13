@@ -7,7 +7,16 @@ const props = defineProps({
     subscription: Object,
     plans: Array,
     currency: String,
+    aiTokens: Object,
+    tokenPacks: Array,
 });
+
+const packForm = useForm({ pack_id: null });
+const buyPack = (pack) => {
+    packForm.pack_id = pack.id;
+    packForm.post(route('payments.token-pack.initiate'));
+};
+const formatTokens = (n) => (n >= 1000000 ? (n / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'M' : Math.round(n / 1000).toLocaleString() + 'K');
 
 const form = useForm({
     plan_id: null,
@@ -144,6 +153,25 @@ const formatDate = (date) => {
                                 <span v-if="subscription.ends_at">Cancellation Scheduled for {{ formatDate(subscription.ends_at) }}</span>
                                 <span v-else>Subscription Cancelled - Access will continue until billing period ends</span>
                              </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Tokens -->
+                <div v-if="aiTokens && aiTokens.allowance > 0" class="bg-white overflow-hidden shadow-xl sm:rounded-3xl border border-slate-100 mb-12">
+                    <div class="p-8 sm:p-12">
+                        <h3 class="text-2xl font-black text-slate-900 mb-1 leading-none">AI Tokens</h3>
+                        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">
+                            {{ formatTokens(aiTokens.remaining) }} left
+                            <span v-if="aiTokens.bonus > 0">&bull; includes {{ formatTokens(aiTokens.bonus) }} purchased (never expire)</span>
+                            &bull; monthly allowance {{ formatTokens(aiTokens.allowance) }}
+                        </p>
+                        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div v-for="pack in tokenPacks" :key="pack.id" class="p-6 bg-slate-50/50 rounded-[2rem] border border-slate-100">
+                                <p class="text-xl font-black text-slate-900">{{ pack.name }}</p>
+                                <p class="text-slate-500 font-bold text-sm mt-1">{{ currency }} {{ Number(pack.price).toFixed(2) }}</p>
+                                <button @click="buyPack(pack)" :disabled="packForm.processing" class="mt-4 w-full py-3 rounded-xl bg-[#780116] text-white font-black text-xs uppercase tracking-widest hover:bg-[#c32f27] disabled:opacity-50">Buy tokens</button>
+                            </div>
                         </div>
                     </div>
                 </div>

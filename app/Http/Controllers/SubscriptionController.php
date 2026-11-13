@@ -28,6 +28,12 @@ class SubscriptionController extends Controller
             'subscription' => $subscription,
             'plans' => SubscriptionPlan::where('is_active', true)->get(),
             'currency' => Setting::where('key', 'currency')->value('value') ?? 'MYR',
+            'aiTokens' => [
+                'allowance' => $allowance = app(\App\Services\AiUsageService::class)->allowance($user),
+                'remaining' => $allowance > 0 ? app(\App\Services\AiUsageService::class)->remaining($user) : null,
+                'bonus' => (int) $user->ai_bonus_tokens,
+            ],
+            'tokenPacks' => \App\Models\TokenPack::where('is_active', true)->orderBy('price')->get(['id', 'name', 'tokens', 'price']),
         ]);
     }
 
