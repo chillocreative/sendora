@@ -209,4 +209,62 @@ class TokenPackPurchaseTest extends TestCase
 
         $this->assertFalse(app(\App\Services\ChipInService::class)->testMode());
     }
+
+    private function pendingSubscription(): array
+    {
+        $this->gateway();
+        $user = User::factory()->create();
+        $plan = SubscriptionPlan::create([
+            'name' => 'Paid', 'monthly_price' => 49, 'yearly_price' => 490,
+            'limits' => ['whatsapp_nos' => 1, 'reminders_per_month' => 10, 'features' => []],
+        ]);
+        UserSubscription::create(['user_id' => $user->id, 'subscription_plan_id' => $plan->id, 'status' => 'waiting_for_payment']);
+        $t = Transaction::create([
+            'user_id' => $user->id, 'subscription_plan_id' => $plan->id, 'amount' => 49, 'currency' => 'MYR',
+            'status' => 'pending', 'payment_method' => 'chip-in', 'reference_id' => 'txn_w', 'gateway_id' => 'pur_w',
+        ]);
+
+        return [$user, $t];
+    }
+
+    public function test_webhook_activates_subscription_once_without_the_redirect(): void
+    {
+        [$user, $t] = $this->pendingSubscription();
+        $this->fakeStatus($t, 'paid');
+
+        $this->post('/payments/webhook', ['reference' => 'txn_w'])->assertOk();
+        $sub = $user->subscriptions()->latest('id')->first();
+        $this->assertSame('active', $sub->status);
+        $endsAt = $sub->ends_at;
+
+        // Webhook retry and the buyer's redirect afterwards must not extend it again.
+        $this->post('/payments/webhook', ['reference' => 'txn_w'])->assertOk();
+        $this->actingAs($user)->get(route('payments.success', ['ref' => 'txn_w']));
+
+        $this->assertSame(1, $user->subscriptions()->count());
+        $this->assertEquals($endsAt, $user->subscriptions()->first()->ends_at);
+    }
+
+    public function test_webhook_does_not_activate_unpaid_subscription(): void
+    {
+        [$user, $t] = $this->pendingSubscription();
+        $this->fakeStatus($t, 'created');
+
+        $this->post('/payments/webhook', ['reference' => 'txn_w'])->assertOk();
+
+        $this->assertSame('waiting_for_payment', $user->subscriptions()->first()->status);
+        $this->assertSame('pending', $t->fresh()->status);
+    }
+
+    public function test_redirect_then_webhook_activates_only_once(): void
+    {
+        [$user, $t] = $this->pendingSubscription();
+        $this->fakeStatus($t, 'paid');
+
+        $this->actingAs($user)->get(route('payments.success', ['ref' => 'txn_w']));
+        $endsAt = $user->subscriptions()->first()->ends_at;
+        $this->post('/payments/webhook', ['reference' => 'txn_w'])->assertOk();
+
+        $this->assertEquals($endsAt, $user->subscriptions()->first()->ends_at);
+    }
 }
