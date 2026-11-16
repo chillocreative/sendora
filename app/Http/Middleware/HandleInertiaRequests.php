@@ -39,7 +39,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'appName' => config('app.name'),
-            'recaptchaSiteKey' => config('services.recaptcha.site_key'),
+            'turnstileSiteKey' => config('services.turnstile.site_key'),
             'auth' => [
                 'user' => $request->user() ? [
                     'id' => $request->user()->id,

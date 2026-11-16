@@ -7,7 +7,7 @@ import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
-import RecaptchaField from '@/Components/RecaptchaField.vue';
+import TurnstileField from '@/Components/TurnstileField.vue';
 import TextInput from '@/Components/TextInput.vue';
 
 defineProps({
@@ -19,17 +19,17 @@ const form = useForm({
     email: '',
     password: '',
     remember: false,
-    recaptcha_token: '',
+    'cf-turnstile-response': '',
 });
 
-const recaptcha = ref(null);
+const turnstile = ref(null);
 
 const submit = () => {
     form.transform(data => ({
         ...data,
         remember: form.remember ? 'on' : '',
     })).post(route('login'), {
-        onError: () => recaptcha.value?.reset(),
+        onError: () => turnstile.value?.reset(),
         onFinish: () => form.reset('password'),
     });
 };
@@ -83,8 +83,8 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <RecaptchaField ref="recaptcha" v-model="form.recaptcha_token" />
-                <InputError class="mt-2" :message="form.errors.recaptcha_token" />
+                <TurnstileField ref="turnstile" v-model="form['cf-turnstile-response']" />
+                <InputError class="mt-2" :message="form.errors['cf-turnstile-response']" />
             </div>
 
             <div class="flex items-center justify-between mt-8">

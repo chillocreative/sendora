@@ -1,26 +1,24 @@
 <script>
-// Shared across all instances: the Google script is loaded only once.
+// Shared across all instances: the Cloudflare script is loaded only once.
 let scriptPromise = null;
 
-function loadRecaptcha() {
+function loadTurnstile() {
     if (scriptPromise) return scriptPromise;
 
     scriptPromise = new Promise((resolve, reject) => {
-        const ready = () => window.grecaptcha.ready(() => resolve(window.grecaptcha));
-
-        if (window.grecaptcha && window.grecaptcha.render) {
-            ready();
+        if (window.turnstile) {
+            resolve(window.turnstile);
             return;
         }
 
         const script = document.createElement('script');
-        script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
         script.async = true;
         script.defer = true;
-        script.onload = ready;
+        script.onload = () => resolve(window.turnstile);
         script.onerror = () => {
             scriptPromise = null; // allow retry on next mount
-            reject(new Error('Failed to load reCAPTCHA'));
+            reject(new Error('Failed to load Turnstile'));
         };
         document.head.appendChild(script);
     });
@@ -39,7 +37,7 @@ defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 
-const siteKey = computed(() => usePage().props.recaptchaSiteKey);
+const siteKey = computed(() => usePage().props.turnstileSiteKey);
 const container = ref(null);
 let widgetId = null;
 let unmounted = false;
@@ -48,10 +46,10 @@ onMounted(async () => {
     if (!siteKey.value) return;
 
     try {
-        const grecaptcha = await loadRecaptcha();
+        const turnstile = await loadTurnstile();
         if (unmounted || !container.value) return;
 
-        widgetId = grecaptcha.render(container.value, {
+        widgetId = turnstile.render(container.value, {
             sitekey: siteKey.value,
             callback: (token) => emit('update:modelValue', token),
             'expired-callback': () => emit('update:modelValue', ''),
@@ -64,12 +62,15 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
     unmounted = true;
+    if (widgetId !== null && window.turnstile) {
+        window.turnstile.remove(widgetId);
+    }
 });
 
 const reset = () => {
     emit('update:modelValue', '');
-    if (widgetId !== null && window.grecaptcha) {
-        window.grecaptcha.reset(widgetId);
+    if (widgetId !== null && window.turnstile) {
+        window.turnstile.reset(widgetId);
     }
 };
 
@@ -77,5 +78,5 @@ defineExpose({ reset });
 </script>
 
 <template>
-    <div v-if="siteKey" ref="container" class="recaptcha-field"></div>
+    <div v-if="siteKey" ref="container" class="cf-turnstile-field flex justify-center sm:justify-start"></div>
 </template>

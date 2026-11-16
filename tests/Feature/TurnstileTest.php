@@ -10,15 +10,15 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\CustomResetPassword;
 use Tests\TestCase;
 
-class RecaptchaTest extends TestCase
+class TurnstileTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
+    private const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
     private function withSecret(): void
     {
-        config(['services.recaptcha.secret_key' => 'test-secret']);
+        config(['services.turnstile.secret_key' => 'test-secret']);
     }
 
     public function test_login_without_token_is_rejected(): void
@@ -29,7 +29,7 @@ class RecaptchaTest extends TestCase
 
         $response = $this->post('/login', ['email' => $user->email, 'password' => 'password']);
 
-        $response->assertSessionHasErrors('recaptcha_token');
+        $response->assertSessionHasErrors('cf-turnstile-response');
         $this->assertGuest();
         Http::assertNothingSent();
     }
@@ -41,10 +41,10 @@ class RecaptchaTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->post('/login', [
-            'email' => $user->email, 'password' => 'password', 'recaptcha_token' => 'abc',
+            'email' => $user->email, 'password' => 'password', 'cf-turnstile-response' => 'abc',
         ]);
 
-        $response->assertSessionHasErrors('recaptcha_token');
+        $response->assertSessionHasErrors('cf-turnstile-response');
         $this->assertGuest();
     }
 
@@ -55,7 +55,7 @@ class RecaptchaTest extends TestCase
         $user = User::factory()->create();
 
         $this->post('/login', [
-            'email' => $user->email, 'password' => 'password', 'recaptcha_token' => 'abc',
+            'email' => $user->email, 'password' => 'password', 'cf-turnstile-response' => 'abc',
         ]);
 
         $this->assertAuthenticatedAs($user);
@@ -63,29 +63,29 @@ class RecaptchaTest extends TestCase
             && $r['secret'] === 'test-secret' && $r['response'] === 'abc');
     }
 
-    public function test_google_connection_failure_fails_closed(): void
+    public function test_cloudflare_connection_failure_fails_closed(): void
     {
         $this->withSecret();
         Http::fake(fn () => throw new ConnectionException('timeout'));
         $user = User::factory()->create();
 
         $response = $this->post('/login', [
-            'email' => $user->email, 'password' => 'password', 'recaptcha_token' => 'abc',
+            'email' => $user->email, 'password' => 'password', 'cf-turnstile-response' => 'abc',
         ]);
 
-        $response->assertSessionHasErrors('recaptcha_token');
+        $response->assertSessionHasErrors('cf-turnstile-response');
         $this->assertGuest();
     }
 
-    public function test_google_http_error_fails_closed(): void
+    public function test_cloudflare_http_error_fails_closed(): void
     {
         $this->withSecret();
         Http::fake([self::VERIFY_URL => Http::response('boom', 500)]);
         $user = User::factory()->create();
 
         $this->post('/login', [
-            'email' => $user->email, 'password' => 'password', 'recaptcha_token' => 'abc',
-        ])->assertSessionHasErrors('recaptcha_token');
+            'email' => $user->email, 'password' => 'password', 'cf-turnstile-response' => 'abc',
+        ])->assertSessionHasErrors('cf-turnstile-response');
         $this->assertGuest();
     }
 
@@ -99,10 +99,10 @@ class RecaptchaTest extends TestCase
             'email' => 'new@example.com',
             'password' => 'Str0ng-Passw0rd!x',
             'password_confirmation' => 'Str0ng-Passw0rd!x',
-            'recaptcha_token' => 'abc',
+            'cf-turnstile-response' => 'abc',
         ]);
 
-        $response->assertSessionHasErrors('recaptcha_token');
+        $response->assertSessionHasErrors('cf-turnstile-response');
         $this->assertDatabaseMissing('users', ['email' => 'new@example.com']);
         $this->assertGuest();
     }
@@ -117,7 +117,7 @@ class RecaptchaTest extends TestCase
             'email' => 'new@example.com',
             'password' => 'Str0ng-Passw0rd!x',
             'password_confirmation' => 'Str0ng-Passw0rd!x',
-            'recaptcha_token' => 'abc',
+            'cf-turnstile-response' => 'abc',
         ]);
 
         $this->assertDatabaseHas('users', ['email' => 'new@example.com']);
@@ -130,9 +130,9 @@ class RecaptchaTest extends TestCase
         Http::fake([self::VERIFY_URL => Http::response(['success' => false])]);
         $user = User::factory()->create();
 
-        $response = $this->post('/forgot-password', ['email' => $user->email, 'recaptcha_token' => 'abc']);
+        $response = $this->post('/forgot-password', ['email' => $user->email, 'cf-turnstile-response' => 'abc']);
 
-        $response->assertSessionHasErrors('recaptcha_token');
+        $response->assertSessionHasErrors('cf-turnstile-response');
         Notification::assertNothingSent();
     }
 
@@ -143,14 +143,14 @@ class RecaptchaTest extends TestCase
         Http::fake([self::VERIFY_URL => Http::response(['success' => true])]);
         $user = User::factory()->create();
 
-        $this->post('/forgot-password', ['email' => $user->email, 'recaptcha_token' => 'abc']);
+        $this->post('/forgot-password', ['email' => $user->email, 'cf-turnstile-response' => 'abc']);
 
         Notification::assertSentTo($user, CustomResetPassword::class);
     }
 
     public function test_without_secret_login_works_without_token(): void
     {
-        config(['services.recaptcha.secret_key' => null]);
+        config(['services.turnstile.secret_key' => null]);
         Http::fake();
         $user = User::factory()->create();
 
@@ -179,8 +179,8 @@ class RecaptchaTest extends TestCase
 
         $response = $this->post('/two-factor-challenge', ['code' => '123456']);
 
-        // Fortify rejects the bogus code itself; the point is that no recaptcha check ran.
-        $response->assertSessionDoesntHaveErrors('recaptcha_token');
+        // Fortify rejects the bogus code itself; the point is that no turnstile check ran.
+        $response->assertSessionDoesntHaveErrors('cf-turnstile-response');
         Http::assertNothingSent();
     }
 
@@ -193,5 +193,29 @@ class RecaptchaTest extends TestCase
         $this->post('/%6cogin', ['email' => $user->email, 'password' => 'password']);
 
         $this->assertGuest();
+    }
+
+    public function test_production_without_secret_fails_closed(): void
+    {
+        config(['services.turnstile.secret_key' => null]);
+        $this->app['env'] = 'production';
+        Http::fake();
+        $user = User::factory()->create();
+
+        // CSRF is only skipped while the env is "testing", which this test deliberately leaves.
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+            ->post('/login', ['email' => $user->email, 'password' => 'password'])
+            ->assertSessionHasErrors('cf-turnstile-response');
+
+        $this->assertGuest();
+    }
+
+    public function test_secret_is_sent_only_to_cloudflare_and_not_shared_with_the_browser(): void
+    {
+        config(['services.turnstile.secret_key' => 'test-secret', 'services.turnstile.site_key' => 'site-key']);
+
+        $this->get('/login')->assertInertia(fn ($page) => $page
+            ->where('turnstileSiteKey', 'site-key')
+            ->missing('turnstileSecretKey'));
     }
 }

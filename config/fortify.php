@@ -101,7 +101,7 @@ return [
     |
     */
 
-    'middleware' => ['web', \App\Http\Middleware\VerifyRecaptcha::class],
+    'middleware' => ['web', \App\Http\Middleware\VerifyTurnstile::class],
 
     /*
     |--------------------------------------------------------------------------

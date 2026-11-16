@@ -6,7 +6,7 @@ import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
-import RecaptchaField from '@/Components/RecaptchaField.vue';
+import TurnstileField from '@/Components/TurnstileField.vue';
 import TextInput from '@/Components/TextInput.vue';
 
 defineProps({
@@ -15,15 +15,15 @@ defineProps({
 
 const form = useForm({
     email: '',
-    recaptcha_token: '',
+    'cf-turnstile-response': '',
 });
 
-const recaptcha = ref(null);
+const turnstile = ref(null);
 
 const submit = () => {
     form.post(route('password.email'), {
-        onError: () => recaptcha.value?.reset(),
-        onSuccess: () => recaptcha.value?.reset(),
+        onError: () => turnstile.value?.reset(),
+        onSuccess: () => turnstile.value?.reset(),
     });
 };
 </script>
@@ -60,8 +60,8 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <RecaptchaField ref="recaptcha" v-model="form.recaptcha_token" />
-                <InputError class="mt-2" :message="form.errors.recaptcha_token" />
+                <TurnstileField ref="turnstile" v-model="form['cf-turnstile-response']" />
+                <InputError class="mt-2" :message="form.errors['cf-turnstile-response']" />
             </div>
 
             <div class="flex items-center justify-end mt-4">
