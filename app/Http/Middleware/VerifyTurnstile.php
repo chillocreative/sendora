@@ -5,11 +5,19 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
-class VerifyRecaptcha
+/**
+ * Cloudflare Turnstile check for the public auth forms. Runs before Fortify looks at credentials.
+ */
+class VerifyTurnstile
 {
+    public const FIELD = 'cf-turnstile-response';
+
+    private const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+
     private const PROTECTED_PATHS = ['login', 'register', 'forgot-password'];
 
     private const PROTECTED_ROUTES = ['login.store', 'register.store', 'password.email'];
@@ -20,22 +28,32 @@ class VerifyRecaptcha
             return $next($request);
         }
 
-        $secret = config('services.recaptcha.secret_key');
+        $secret = config('services.turnstile.secret_key');
 
-        // Not configured yet: do not lock users out.
         if (empty($secret)) {
+            // Local/test environments without keys keep working; production never runs unprotected.
+            if (app()->isProduction()) {
+                Log::error('Turnstile: TURNSTILE_SECRET_KEY is not set; rejecting protected form submission.');
+                $this->fail();
+            }
+
             return $next($request);
         }
 
-        $token = $request->input('recaptcha_token');
+        $token = $request->input(self::FIELD);
 
         if (! is_string($token) || $token === '' || ! $this->verify($secret, $token, $request->ip())) {
-            throw ValidationException::withMessages([
-                'recaptcha_token' => 'Please complete the reCAPTCHA check and try again.',
-            ]);
+            $this->fail();
         }
 
         return $next($request);
+    }
+
+    private function fail(): never
+    {
+        throw ValidationException::withMessages([
+            self::FIELD => 'Please complete the security check and try again.',
+        ]);
     }
 
     /**
@@ -53,16 +71,25 @@ class VerifyRecaptcha
         try {
             $response = Http::asForm()
                 ->timeout(5)
-                ->post('https://www.google.com/recaptcha/api/siteverify', [
+                ->post(self::VERIFY_URL, array_filter([
                     'secret' => $secret,
                     'response' => $token,
                     'remoteip' => $ip,
-                ]);
+                ]));
 
-            return $response->successful() && $response->json('success') === true;
+            if ($response->successful() && $response->json('success') === true) {
+                return true;
+            }
+
+            Log::warning('Turnstile verification rejected', [
+                'status' => $response->status(),
+                'error_codes' => $response->json('error-codes'),
+            ]);
         } catch (\Throwable $e) {
-            // Fail closed. Deliberately log nothing that could include the secret or token.
-            return false;
+            // Fail closed. Never log the secret or the token.
+            Log::error('Turnstile verification request failed', ['error' => $e->getMessage()]);
         }
+
+        return false;
     }
 }

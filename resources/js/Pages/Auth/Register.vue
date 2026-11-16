@@ -7,7 +7,7 @@ import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
-import RecaptchaField from '@/Components/RecaptchaField.vue';
+import TurnstileField from '@/Components/TurnstileField.vue';
 import TextInput from '@/Components/TextInput.vue';
 
 
@@ -17,16 +17,16 @@ const form = useForm({
     password: '',
     password_confirmation: '',
     terms: false,
-    recaptcha_token: '',
+    'cf-turnstile-response': '',
     plan_id: new URLSearchParams(window.location.search).get('plan_id') || '',
     billing_cycle: new URLSearchParams(window.location.search).get('billing_cycle') || 'monthly',
 });
 
-const recaptcha = ref(null);
+const turnstile = ref(null);
 
 const submit = () => {
     form.post(route('register'), {
-        onError: () => recaptcha.value?.reset(),
+        onError: () => turnstile.value?.reset(),
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
@@ -108,8 +108,8 @@ const submit = () => {
             </div>
 
             <div class="mt-6">
-                <RecaptchaField ref="recaptcha" v-model="form.recaptcha_token" />
-                <InputError class="mt-2" :message="form.errors.recaptcha_token" />
+                <TurnstileField ref="turnstile" v-model="form['cf-turnstile-response']" />
+                <InputError class="mt-2" :message="form.errors['cf-turnstile-response']" />
             </div>
 
             <div class="flex items-center justify-between mt-10">
